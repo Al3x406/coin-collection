@@ -428,11 +428,22 @@ def owner_logout():
     return redirect(url_for("home"))
 
 
-# Tell Flask where our SQLite database is
-app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv(
-    "DATABASE_URL",
-    "sqlite:///coins.db",
-)
+# Database configuration.
+# Keep SQLite as the default until the one-time Turso migration is verified.
+if os.getenv("USE_TURSO") == "1":
+    from turso_config import turso_connect_args, turso_sqlalchemy_uri
+
+    app.config["SQLALCHEMY_DATABASE_URI"] = turso_sqlalchemy_uri()
+    app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
+        "connect_args": turso_connect_args(),
+        "pool_pre_ping": True,
+    }
+else:
+    app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv(
+        "DATABASE_URL",
+        "sqlite:///coins.db",
+    )
+
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 UPLOAD_FOLDER = os.path.join(
     app.root_path,
