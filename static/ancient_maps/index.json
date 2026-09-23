@@ -1,0 +1,242 @@
+{
+  "version": 2,
+  "dataset": "Cliopatria",
+  "source_url": "https://raw.githubusercontent.com/Seshat-Global-History-Databank/cliopatria/main/cliopatria.geojson.zip",
+  "coverage_note": "Ancient and medieval snapshots used before 1600.",
+  "maps": [
+    {
+      "year": -500,
+      "start_year": -500,
+      "end_year": -500,
+      "label": "500 BCE",
+      "file": "/static/ancient_maps/geojson/world_bce_500.geojson",
+      "source": "Cliopatria",
+      "feature_count": 48
+    },
+    {
+      "year": -400,
+      "start_year": -400,
+      "end_year": -400,
+      "label": "400 BCE",
+      "file": "/static/ancient_maps/geojson/world_bce_400.geojson",
+      "source": "Cliopatria",
+      "feature_count": 35
+    },
+    {
+      "year": -300,
+      "start_year": -300,
+      "end_year": -300,
+      "label": "300 BCE",
+      "file": "/static/ancient_maps/geojson/world_bce_300.geojson",
+      "source": "Cliopatria",
+      "feature_count": 40
+    },
+    {
+      "year": -200,
+      "start_year": -200,
+      "end_year": -200,
+      "label": "200 BCE",
+      "file": "/static/ancient_maps/geojson/world_bce_200.geojson",
+      "source": "Cliopatria",
+      "feature_count": 39
+    },
+    {
+      "year": -100,
+      "start_year": -100,
+      "end_year": -100,
+      "label": "100 BCE",
+      "file": "/static/ancient_maps/geojson/world_bce_100.geojson",
+      "source": "Cliopatria",
+      "feature_count": 38
+    },
+    {
+      "year": 1,
+      "start_year": 1,
+      "end_year": 1,
+      "label": "1 CE",
+      "file": "/static/ancient_maps/geojson/world_1.geojson",
+      "source": "Cliopatria",
+      "feature_count": 45
+    },
+    {
+      "year": 100,
+      "start_year": 100,
+      "end_year": 100,
+      "label": "100 CE",
+      "file": "/static/ancient_maps/geojson/world_100.geojson",
+      "source": "Cliopatria",
+      "feature_count": 41
+    },
+    {
+      "year": 200,
+      "start_year": 200,
+      "end_year": 200,
+      "label": "200 CE",
+      "file": "/static/ancient_maps/geojson/world_200.geojson",
+      "source": "Cliopatria",
+      "feature_count": 42
+    },
+    {
+      "year": 240,
+      "start_year": 240,
+      "end_year": 240,
+      "label": "240 CE",
+      "file": "/static/ancient_maps/geojson/world_240.geojson",
+      "source": "Cliopatria",
+      "feature_count": 42
+    },
+    {
+      "year": 300,
+      "start_year": 300,
+      "end_year": 300,
+      "label": "300 CE",
+      "file": "/static/ancient_maps/geojson/world_300.geojson",
+      "source": "Cliopatria",
+      "feature_count": 43
+    },
+    {
+      "year": 364,
+      "start_year": 364,
+      "end_year": 364,
+      "label": "364 CE",
+      "file": "/static/ancient_maps/geojson/world_364.geojson",
+      "source": "Cliopatria",
+      "feature_count": 50
+    },
+    {
+      "year": 380,
+      "start_year": 380,
+      "end_year": 380,
+      "label": "380 CE",
+      "file": "/static/ancient_maps/geojson/world_380.geojson",
+      "source": "Cliopatria",
+      "feature_count": 45
+    },
+    {
+      "year": 400,
+      "start_year": 400,
+      "end_year": 400,
+      "label": "400 CE",
+      "file": "/static/ancient_maps/geojson/world_400.geojson",
+      "source": "Cliopatria",
+      "feature_count": 53
+    },
+    {
+      "year": 500,
+      "start_year": 500,
+      "end_year": 500,
+      "label": "500 CE",
+      "file": "/static/ancient_maps/geojson/world_500.geojson",
+      "source": "Cliopatria",
+      "feature_count": 58
+    },
+    {
+      "year": 600,
+      "start_year": 600,
+      "end_year": 600,
+      "label": "600 CE",
+      "file": "/static/ancient_maps/geojson/world_600.geojson",
+      "source": "Cliopatria",
+      "feature_count": 75
+    },
+    {
+      "year": 700,
+      "start_year": 700,
+      "end_year": 700,
+      "label": "700 CE",
+      "file": "/static/ancient_maps/geojson/world_700.geojson",
+      "source": "Cliopatria",
+      "feature_count": 72
+    },
+    {
+      "year": 800,
+      "start_year": 800,
+      "end_year": 800,
+      "label": "800 CE",
+      "file": "/static/ancient_maps/geojson/world_800.geojson",
+      "source": "Cliopatria",
+      "feature_count": 81
+    },
+    {
+      "year": 900,
+      "start_year": 900,
+      "end_year": 900,
+      "label": "900 CE",
+      "file": "/static/ancient_maps/geojson/world_900.geojson",
+      "source": "Cliopatria",
+      "feature_count": 117
+    },
+    {
+      "year": 1000,
+      "start_year": 1000,
+      "end_year": 1000,
+      "label": "1000 CE",
+      "file": "/static/ancient_maps/geojson/world_1000.geojson",
+      "source": "Cliopatria",
+      "feature_count": 132
+    },
+    {
+      "year": 1100,
+      "start_year": 1100,
+      "end_year": 1100,
+      "label": "1100 CE",
+      "file": "/static/ancient_maps/geojson/world_1100.geojson",
+      "source": "Cliopatria",
+      "feature_count": 146
+    },
+    {
+      "year": 1200,
+      "start_year": 1200,
+      "end_year": 1200,
+      "label": "1200 CE",
+      "file": "/static/ancient_maps/geojson/world_1200.geojson",
+      "source": "Cliopatria",
+      "feature_count": 138
+    },
+    {
+      "year": 1300,
+      "start_year": 1300,
+      "end_year": 1300,
+      "label": "1300 CE",
+      "file": "/static/ancient_maps/geojson/world_1300.geojson",
+      "source": "Cliopatria",
+      "feature_count": 151
+    },
+    {
+      "year": 1400,
+      "start_year": 1400,
+      "end_year": 1400,
+      "label": "1400 CE",
+      "file": "/static/ancient_maps/geojson/world_1400.geojson",
+      "source": "Cliopatria",
+      "feature_count": 157
+    },
+    {
+      "year": 1450,
+      "start_year": 1450,
+      "end_year": 1450,
+      "label": "1450 CE",
+      "file": "/static/ancient_maps/geojson/world_1450.geojson",
+      "source": "Cliopatria",
+      "feature_count": 133
+    },
+    {
+      "year": 1500,
+      "start_year": 1500,
+      "end_year": 1500,
+      "label": "1500 CE",
+      "file": "/static/ancient_maps/geojson/world_1500.geojson",
+      "source": "Cliopatria",
+      "feature_count": 137
+    },
+    {
+      "year": 1550,
+      "start_year": 1550,
+      "end_year": 1550,
+      "label": "1550 CE",
+      "file": "/static/ancient_maps/geojson/world_1550.geojson",
+      "source": "Cliopatria",
+      "feature_count": 127
+    }
+  ]
+}

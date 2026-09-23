@@ -1,0 +1,547 @@
+{% extends "base.html" %}
+
+{% block title %}
+{{ mint.name }}
+{% endblock %}
+
+{% block content %}
+
+<div class="row">
+
+    <div class="col-lg-8">
+
+        <h1>
+            {{ mint.name }}
+        </h1>
+
+        {% set location_parts = [] %}
+
+        {% if mint.city %}
+            {% set _ = location_parts.append(mint.city) %}
+        {% endif %}
+
+        {% if mint.state %}
+            {% set _ = location_parts.append(mint.state) %}
+        {% endif %}
+
+        {% if mint.country %}
+            {% set _ = location_parts.append(mint.country) %}
+        {% endif %}
+
+
+        {% if location_parts %}
+
+        <p class="text-muted">
+
+            {{ location_parts | join(", ") }}
+
+        </p>
+
+        {% endif %}
+
+
+        <div class="card mb-4">
+
+            <div class="card-body">
+
+                <h4 class="card-title">
+                    Historical Information
+                </h4>
+
+
+                <table class="table">
+
+                    <tbody>
+
+
+                        <tr>
+
+                            <th style="width: 35%;">
+                                Operating Period
+                            </th>
+
+                            <td>
+
+                                {% if mint.start_year is not none %}
+
+                                    {% if mint.start_year < 0 %}
+                                        {{ mint.start_year | abs }} BC
+                                    {% else %}
+                                        {{ mint.start_year }} AD
+                                    {% endif %}
+
+                                {% else %}
+
+                                    Unknown
+
+                                {% endif %}
+
+
+                                —
+
+
+                                {% if mint.end_year == 9999 %}
+
+                                    Present
+
+                                {% elif mint.end_year is not none %}
+
+                                    {% if mint.end_year < 0 %}
+                                        {{ mint.end_year | abs }} BC
+                                    {% else %}
+                                        {{ mint.end_year }} AD
+                                    {% endif %}
+
+                                {% else %}
+
+                                    Unknown
+
+                                {% endif %}
+
+                            </td>
+
+                        </tr>
+
+
+                        <tr>
+
+                            <th>
+                                Latitude
+                            </th>
+
+                            <td>
+
+                                {% if mint.latitude is not none %}
+                                    {{ mint.latitude }}
+                                {% else %}
+                                    Unknown
+                                {% endif %}
+
+                            </td>
+
+                        </tr>
+
+
+                        <tr>
+
+                            <th>
+                                Longitude
+                            </th>
+
+                            <td>
+
+                                {% if mint.longitude is not none %}
+                                    {{ mint.longitude }}
+                                {% else %}
+                                    Unknown
+                                {% endif %}
+
+                            </td>
+
+                        </tr>
+
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+
+        <div class="card mb-4">
+
+            <div class="card-body">
+
+                <h4 class="card-title">
+                    My Collection
+                </h4>
+
+
+                {% if mint.coins %}
+
+
+                    <div class="table-responsive">
+
+                        <table class="table table-hover">
+
+                            <thead>
+
+                                <tr>
+
+                                    <th>
+                                        Coin
+                                    </th>
+
+                                    <th>
+                                        Year
+                                    </th>
+
+                                    <th>
+                                        Country
+                                    </th>
+
+                                    <th>
+                                        Mint Mark
+                                    </th>
+
+                                    <th>
+                                        Quantity
+                                    </th>
+
+                                </tr>
+
+                            </thead>
+
+
+                            <tbody>
+
+
+                                {% for coin in mint.coins %}
+
+                                <tr>
+
+                                    <td>
+
+                                        <a
+                                            href="{{ url_for('coin_detail', coin_id=coin.id) }}">
+
+                                            {{ coin.name }}
+
+                                        </a>
+
+                                    </td>
+
+
+                                    <td>
+
+                                        {% if coin.year is not none %}
+                                            {{ coin.year }}
+                                        {% else %}
+                                            —
+                                        {% endif %}
+
+                                    </td>
+
+
+                                    <td>
+
+                                        {{ coin.country or "—" }}
+
+                                    </td>
+
+
+                                    <td>
+
+                                        {{ coin.mint_mark or "—" }}
+
+                                    </td>
+
+
+                                    <td>
+
+                                        {{ coin.quantity or 1 }}
+
+                                    </td>
+
+                                </tr>
+
+                                {% endfor %}
+
+
+                            </tbody>
+
+                        </table>
+
+                    </div>
+
+
+                {% else %}
+
+
+                    <p class="text-muted">
+
+                        You do not currently have
+                        any coins connected to this mint.
+
+                    </p>
+
+
+                {% endif %}
+
+            </div>
+
+        </div>
+
+
+    </div>
+
+
+    <div class="col-lg-4">
+
+
+        <div class="card mb-4">
+
+            <div class="card-body">
+
+                <h4 class="card-title">
+                    Database Information
+                </h4>
+
+
+                <table class="table">
+
+                    <tbody>
+
+
+                        <tr>
+
+                            <th>
+                                Local ID
+                            </th>
+
+                            <td>
+                                {{ mint.id }}
+                            </td>
+
+                        </tr>
+
+
+                        <tr>
+
+                            <th>
+                                Numista
+                            </th>
+
+                            <td>
+
+                                {% if mint.numista_id %}
+                                    {{ mint.numista_id }}
+                                {% else %}
+                                    —
+                                {% endif %}
+
+                            </td>
+
+                        </tr>
+
+
+                        <tr>
+
+                            <th>
+                                CANOA
+                            </th>
+
+                            <td>
+
+                                {% if mint.canoa_id %}
+                                    {{ mint.canoa_id }}
+                                {% else %}
+                                    —
+                                {% endif %}
+
+                            </td>
+
+                        </tr>
+
+
+                        <tr>
+
+                            <th>
+                                Nomisma
+                            </th>
+
+                            <td>
+
+                                {% if mint.nomisma_id %}
+                                    {{ mint.nomisma_id }}
+                                {% else %}
+                                    —
+                                {% endif %}
+
+                            </td>
+
+                        </tr>
+
+
+                        <tr>
+
+                            <th>
+                                Wikidata
+                            </th>
+
+                            <td>
+
+                                {% if mint.wikidata_id %}
+                                    {{ mint.wikidata_id }}
+                                {% else %}
+                                    —
+                                {% endif %}
+
+                            </td>
+
+                        </tr>
+
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+
+        <div class="card mb-4">
+
+            <div class="card-body">
+
+                <h4 class="card-title">
+                    Map
+                </h4>
+
+
+                {% if mint.latitude is not none and mint.longitude is not none %}
+
+                    <div
+                        id="mintMap"
+                        style="
+                            width: 100%;
+                            height: 320px;
+                            border-radius: 10px;
+                            overflow: hidden;
+                        ">
+                    </div>
+
+                {% else %}
+
+                    <p class="text-muted">
+
+                        This mint does not have
+                        mapped coordinates yet.
+
+                    </p>
+
+                {% endif %}
+
+            </div>
+
+        </div>
+
+
+        <div class="d-grid gap-2">
+
+            <a
+                href="{{ url_for('mints') }}"
+                class="btn btn-outline-secondary">
+
+                ← Back to Mints
+
+            </a>
+
+
+            <a
+                href="{{ url_for('globe') }}"
+                class="btn btn-outline-primary">
+
+                View Historical Globe
+
+            </a>
+
+        </div>
+
+
+    </div>
+
+</div>
+
+
+{% if mint.latitude is not none and mint.longitude is not none %}
+
+<script src="https://unpkg.com/globe.gl">
+</script>
+
+
+<script>
+
+const mintLatitude =
+    {{ mint.latitude }};
+
+const mintLongitude =
+    {{ mint.longitude }};
+
+
+const miniGlobe =
+    Globe()
+    (
+        document.getElementById(
+            "mintMap"
+        )
+    )
+
+    .width(
+        document.getElementById(
+            "mintMap"
+        ).clientWidth
+    )
+
+    .height(
+        320
+    )
+
+    .globeImageUrl(
+        "//unpkg.com/three-globe/example/img/earth-blue-marble.jpg"
+    )
+
+    .backgroundColor(
+        "#000000"
+    )
+
+    .pointsData(
+        [
+            {
+                lat: mintLatitude,
+                lng: mintLongitude
+            }
+        ]
+    )
+
+    .pointLat(
+        "lat"
+    )
+
+    .pointLng(
+        "lng"
+    )
+
+    .pointRadius(
+        0.5
+    )
+
+    .pointAltitude(
+        0.1
+    )
+
+    .pointColor(
+        function() {
+            return "yellow";
+        }
+    );
+
+
+miniGlobe.pointOfView(
+    {
+        lat: mintLatitude,
+        lng: mintLongitude,
+        altitude: 1.8
+    },
+    0
+);
+
+</script>
+
+{% endif %}
+
+
+{% endblock %}

@@ -1,0 +1,19 @@
+body {
+    background-color: #f4f4f4;
+}
+
+h1 {
+    margin-bottom: 25px;
+}
+
+.card {
+    border-radius: 12px;
+}
+
+table {
+    background-color: white;
+}
+
+.navbar-brand {
+    font-weight: bold;
+}

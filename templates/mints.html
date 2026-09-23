@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+
+{% block title %}
+Mints
+{% endblock %}
+
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+
+    <h1>Mint Locations</h1>
+
+   {% if is_owner %}
+<a href="/mints/add" class="btn btn-success">
+    Add Mint
+</a>
+{% endif %}
+
+</div>
+
+
+<div class="card shadow-sm">
+
+    <div class="card-body">
+
+        {% if mints %}
+
+        <table class="table table-hover">
+
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>City</th>
+                    <th>State/Region</th>
+                    <th>Country</th>
+                    <th>Latitude</th>
+                    <th>Longitude</th>
+                </tr>
+            </thead>
+
+            <tbody>
+
+                {% for mint in mints %}
+
+                <tr>
+                    <td><a href="{{ url_for('mint_detail', mint_id=mint.id) }}">
+    {{ mint.name }}
+</a></td>
+                    <td>{{ mint.city }}</td>
+                    <td>{{ mint.state }}</td>
+                    <td>{{ mint.country }}</td>
+                    <td>{{ mint.latitude }}</td>
+                    <td>{{ mint.longitude }}</td>
+                </tr>
+
+                {% endfor %}
+
+            </tbody>
+
+        </table>
+
+        {% else %}
+
+        <div class="alert alert-info mb-0">
+            No mint locations have been added yet.
+        </div>
+
+        {% endif %}
+
+    </div>
+
+</div>
+
+{% endblock %}

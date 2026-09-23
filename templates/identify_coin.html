@@ -1,0 +1,1120 @@
+{% extends "base.html" %}
+
+{% block title %}
+Identify Coin
+{% endblock %}
+
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-start mb-4">
+
+    <div>
+
+        <h1 class="mb-1">
+            Identify Coin
+        </h1>
+
+        <p class="text-muted mb-0">
+            Upload photos for comparison and enter any clues
+            you can read from the coin.
+        </p>
+
+    </div>
+
+    <a
+        href="{{ url_for('add_coin') }}"
+        class="btn btn-outline-secondary">
+
+        Add Coin Manually
+
+    </a>
+
+</div>
+
+
+<form
+    method="POST"
+    enctype="multipart/form-data">
+
+    <div class="card mb-4">
+
+        <div class="card-body">
+
+            <h4 class="card-title">
+                Coin Photos
+            </h4>
+
+            <p class="text-muted">
+                Use clear, straight-on photos when possible.
+                The Read Text button sends the selected photos only
+                to your local Flask app, where Tesseract processes
+                them on your computer.
+            </p>
+
+
+            <div class="row g-3">
+
+                <div class="col-md-6">
+
+                    <div class="border rounded p-3 h-100">
+
+                        <label
+                            for="identifyObverse"
+                            class="form-label fw-semibold">
+
+                            Obverse / Front
+
+                        </label>
+
+                        <input
+                            type="file"
+                            name="identify_obverse"
+                            id="identifyObverse"
+                            class="form-control"
+                            accept="image/*">
+
+
+                        <div
+                            id="identifyObversePreviewArea"
+                            class="text-center mt-3 d-none">
+
+                            <img
+                                id="identifyObversePreview"
+                                alt="Obverse preview"
+                                class="img-fluid rounded border"
+                                style="
+                                    max-height: 320px;
+                                    object-fit: contain;
+                                ">
+
+                            <div
+                                id="identifyObverseFileName"
+                                class="small text-muted mt-2">
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <div class="col-md-6">
+
+                    <div class="border rounded p-3 h-100">
+
+                        <label
+                            for="identifyReverse"
+                            class="form-label fw-semibold">
+
+                            Reverse / Back
+
+                        </label>
+
+                        <input
+                            type="file"
+                            name="identify_reverse"
+                            id="identifyReverse"
+                            class="form-control"
+                            accept="image/*">
+
+
+                        <div
+                            id="identifyReversePreviewArea"
+                            class="text-center mt-3 d-none">
+
+                            <img
+                                id="identifyReversePreview"
+                                alt="Reverse preview"
+                                class="img-fluid rounded border"
+                                style="
+                                    max-height: 320px;
+                                    object-fit: contain;
+                                ">
+
+                            <div
+                                id="identifyReverseFileName"
+                                class="small text-muted mt-2">
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <div class="card mb-4">
+
+        <div class="card-body">
+
+            <div class="d-flex justify-content-between align-items-start gap-3">
+
+                <div>
+
+                    <h4 class="card-title">
+                        Local OCR
+                    </h4>
+
+                    <p class="text-muted mb-0">
+                        OCR is only a helper for possible lettering and dates.
+                        Your photos stay on this page for visual comparison; Numista catalogue
+                        searching is based on the clues you enter.
+                    </p>
+
+                </div>
+
+                <button
+                    type="button"
+                    id="readTextButton"
+                    class="btn btn-outline-primary"
+                    disabled>
+
+                    Read Text From Photos
+
+                </button>
+
+            </div>
+
+
+            <div
+                id="ocrStatus"
+                class="alert alert-secondary mt-3 mb-0">
+
+                Choose at least one photo to enable OCR.
+
+            </div>
+
+
+            <div
+                id="ocrResults"
+                class="mt-3 d-none">
+
+                <div class="row g-3">
+
+                    <div class="col-md-6">
+
+                        <label
+                            for="obverseOcrText"
+                            class="form-label fw-semibold">
+
+                            Obverse OCR
+
+                        </label>
+
+                        <textarea
+                            id="obverseOcrText"
+                            class="form-control"
+                            rows="5"
+                            readonly></textarea>
+
+                    </div>
+
+
+                    <div class="col-md-6">
+
+                        <label
+                            for="reverseOcrText"
+                            class="form-label fw-semibold">
+
+                            Reverse OCR
+
+                        </label>
+
+                        <textarea
+                            id="reverseOcrText"
+                            class="form-control"
+                            rows="5"
+                            readonly></textarea>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <div class="card mb-4">
+
+        <div class="card-body">
+
+            <h4 class="card-title">
+                Identification Clues
+            </h4>
+
+            <p class="text-muted">
+                You do not need to know everything.
+                Fill in whatever you can confidently read.
+            </p>
+
+
+            <div class="row">
+
+                <div class="col-md-4 mb-3">
+
+                    <label
+                        for="identifyYear"
+                        class="form-label">
+
+                        Year
+
+                    </label>
+
+                    <input
+                        type="number"
+                        name="year"
+                        id="identifyYear"
+                        class="form-control"
+                        value="{{ clues.year }}"
+                        placeholder="Example: 1910">
+
+                </div>
+
+
+                <div class="col-md-4 mb-3">
+
+                    <label
+                        for="identifyCountry"
+                        class="form-label">
+
+                        Country / Issuer
+
+                    </label>
+
+                    <input
+                        type="text"
+                        name="country"
+                        id="identifyCountry"
+                        class="form-control"
+                        value="{{ clues.country }}"
+                        placeholder="Example: Germany">
+
+                </div>
+
+
+                <div class="col-md-4 mb-3">
+
+                    <label
+                        for="identifyDenomination"
+                        class="form-label">
+
+                        Denomination
+
+                    </label>
+
+                    <input
+                        type="text"
+                        name="denomination"
+                        id="identifyDenomination"
+                        class="form-control"
+                        value="{{ clues.denomination }}"
+                        placeholder="Example: 1 Mark">
+
+                </div>
+
+            </div>
+
+
+            <div class="row">
+
+                <div class="col-md-4 mb-3">
+
+                    <label
+                        for="identifyMintMark"
+                        class="form-label">
+
+                        Mint Mark
+
+                    </label>
+
+                    <input
+                        type="text"
+                        name="mint_mark"
+                        id="identifyMintMark"
+                        class="form-control"
+                        value="{{ clues.mint_mark }}"
+                        placeholder="Example: F">
+
+                </div>
+
+
+                <div class="col-md-8 mb-3">
+
+                    <label
+                        for="identifyVisibleText"
+                        class="form-label">
+
+                        Visible Text
+
+                    </label>
+
+                    <input
+                        type="text"
+                        name="visible_text"
+                        id="identifyVisibleText"
+                        class="form-control"
+                        value="{{ clues.visible_text }}"
+                        placeholder="Example: DEUTSCHES REICH">
+
+                </div>
+
+            </div>
+
+
+            <button
+                type="submit"
+                class="btn btn-primary">
+
+                Find Possible Matches
+
+            </button>
+
+        </div>
+
+    </div>
+
+</form>
+
+
+{% if error %}
+
+<div class="alert alert-danger mb-4">
+    {{ error }}
+</div>
+
+{% endif %}
+
+
+{% if results %}
+
+<div class="card mb-4">
+
+    <div class="card-body">
+
+        <div
+            class="d-flex justify-content-between
+                   align-items-center mb-3">
+
+            <h4 class="card-title mb-0">
+                Possible Matches
+            </h4>
+
+            <span class="text-muted">
+                {{ results|length }} shown
+            </span>
+
+        </div>
+
+
+        <p class="text-muted">
+            These are Numista catalogue candidates, not automatic identifications.
+            Open a candidate to compare its reference images and mint information.
+        </p>
+
+
+        <div class="row g-3">
+
+            {% for coin in results %}
+
+            <div class="col-lg-6">
+
+                <div class="border rounded p-3 h-100">
+
+                    <div
+                        class="d-flex justify-content-between
+                               gap-3">
+
+                        <div>
+
+                            <h5 class="mb-1">
+                                {{ coin.title }}
+                            </h5>
+
+                            <div class="text-muted mb-1">
+                                {{ coin.issuer }}
+                            </div>
+
+                            <div class="small text-muted mb-2">
+                                N#{{ coin.id }} · Data from Numista
+                            </div>
+
+                            <div class="small">
+
+                                {% if coin.min_year
+                                      and coin.max_year %}
+
+                                    {{ coin.min_year }}
+                                    –
+                                    {{ coin.max_year }}
+
+                                {% elif coin.min_year %}
+
+                                    {{ coin.min_year }}
+
+                                {% else %}
+
+                                    Date range unknown
+
+                                {% endif %}
+
+                            </div>
+
+                        </div>
+
+
+                        <div class="text-end">
+
+                            <span
+                                class="badge text-bg-secondary mb-2">
+
+                                Match score
+                                {{ coin.score }}
+
+                            </span>
+
+                        </div>
+
+                    </div>
+
+
+                    <button
+                        type="button"
+                        class="btn btn-outline-primary
+                               btn-sm mt-3 candidate-button"
+                        data-type-id="{{ coin.id }}">
+                        View Reference
+
+                    </button>
+
+
+                    <div
+                        class="candidate-details mt-3"
+                        id="candidate-{{ coin.id }}">
+                    </div>
+
+                </div>
+
+            </div>
+
+            {% endfor %}
+
+        </div>
+
+    </div>
+
+</div>
+
+{% elif request.method == "POST" and not error %}
+
+<div class="alert alert-warning mb-4">
+    No Numista candidates were returned.
+    Try fewer or broader clues.
+</div>
+
+{% endif %}
+
+
+<script>
+
+const identifyObverse =
+    document.getElementById(
+        "identifyObverse"
+    );
+
+const identifyReverse =
+    document.getElementById(
+        "identifyReverse"
+    );
+
+const readTextButton =
+    document.getElementById(
+        "readTextButton"
+    );
+
+const ocrStatus =
+    document.getElementById(
+        "ocrStatus"
+    );
+
+const ocrResults =
+    document.getElementById(
+        "ocrResults"
+    );
+
+const obverseOcrText =
+    document.getElementById(
+        "obverseOcrText"
+    );
+
+const reverseOcrText =
+    document.getElementById(
+        "reverseOcrText"
+    );
+
+
+function updateOcrButton() {
+
+    const hasPhoto =
+        identifyObverse.files.length > 0
+        ||
+        identifyReverse.files.length > 0;
+
+    readTextButton.disabled =
+        !hasPhoto;
+
+    if (hasPhoto) {
+
+        ocrStatus.className =
+            "alert alert-info mt-3 mb-0";
+
+        ocrStatus.textContent =
+            "Photo ready. Click Read Text From Photos.";
+
+    }
+
+    else {
+
+        ocrStatus.className =
+            "alert alert-secondary mt-3 mb-0";
+
+        ocrStatus.textContent =
+            "Choose at least one photo to enable OCR.";
+
+        ocrResults.classList.add(
+            "d-none"
+        );
+
+    }
+
+}
+
+
+function connectPreview(
+    input,
+    previewAreaId,
+    previewImageId,
+    fileNameId
+) {
+
+    const previewArea =
+        document.getElementById(
+            previewAreaId
+        );
+
+    const previewImage =
+        document.getElementById(
+            previewImageId
+        );
+
+    const fileName =
+        document.getElementById(
+            fileNameId
+        );
+
+
+    input.addEventListener(
+        "change",
+        function() {
+
+            const file =
+                input.files[0];
+
+
+            if (!file) {
+
+                previewImage.removeAttribute(
+                    "src"
+                );
+
+                fileName.textContent =
+                    "";
+
+                previewArea.classList.add(
+                    "d-none"
+                );
+
+                updateOcrButton();
+
+                return;
+
+            }
+
+
+            if (
+                !file.type.startsWith(
+                    "image/"
+                )
+            ) {
+
+                input.value =
+                    "";
+
+                previewImage.removeAttribute(
+                    "src"
+                );
+
+                fileName.textContent =
+                    "";
+
+                previewArea.classList.add(
+                    "d-none"
+                );
+
+                alert(
+                    "Please choose an image file."
+                );
+
+                return;
+
+            }
+
+
+            const reader =
+                new FileReader();
+
+
+            reader.addEventListener(
+                "load",
+                function() {
+
+                    previewImage.src =
+                        reader.result;
+
+                    fileName.textContent =
+                        file.name;
+
+                    previewArea.classList.remove(
+                        "d-none"
+                    );
+
+                    updateOcrButton();
+
+                }
+            );
+
+
+            reader.readAsDataURL(
+                file
+            );
+
+        }
+    );
+
+}
+
+
+connectPreview(
+    identifyObverse,
+    "identifyObversePreviewArea",
+    "identifyObversePreview",
+    "identifyObverseFileName"
+);
+
+
+connectPreview(
+    identifyReverse,
+    "identifyReversePreviewArea",
+    "identifyReversePreview",
+    "identifyReverseFileName"
+);
+
+
+readTextButton.addEventListener(
+    "click",
+    async function() {
+
+        const formData =
+            new FormData();
+
+        if (
+            identifyObverse.files.length > 0
+        ) {
+
+            formData.append(
+                "obverse",
+                identifyObverse.files[0]
+            );
+
+        }
+
+        if (
+            identifyReverse.files.length > 0
+        ) {
+
+            formData.append(
+                "reverse",
+                identifyReverse.files[0]
+            );
+
+        }
+
+
+        readTextButton.disabled = true;
+
+        ocrStatus.className =
+            "alert alert-info mt-3 mb-0";
+
+        ocrStatus.textContent =
+            "Finding likely text areas, then reading them locally...";
+
+
+        try {
+
+            const response =
+                await fetch(
+                    "/api/identify/ocr",
+                    {
+                        method: "POST",
+                        body: formData
+                    }
+                );
+
+            const data =
+                await response.json();
+
+
+            if (!response.ok) {
+
+                throw new Error(
+                    data.details
+                    ||
+                    data.error
+                    ||
+                    "OCR failed."
+                );
+
+            }
+
+
+            obverseOcrText.value =
+                data.obverse_text
+                ||
+                "No readable text detected.";
+
+            reverseOcrText.value =
+                data.reverse_text
+                ||
+                "No readable text detected.";
+
+            ocrResults.classList.remove(
+                "d-none"
+            );
+
+
+            const visibleText =
+                document.getElementById(
+                    "identifyVisibleText"
+                );
+
+            if (
+                data.combined_text
+                &&
+                !visibleText.value.trim()
+            ) {
+
+                visibleText.value =
+                    data.combined_text
+                        .replaceAll(
+                            "\n",
+                            " "
+                        )
+                        .replace(
+                            /\s+/g,
+                            " "
+                        )
+                        .trim();
+
+            }
+
+
+            const yearInput =
+                document.getElementById(
+                    "identifyYear"
+                );
+
+            if (
+                data.suggested_year
+                &&
+                !yearInput.value.trim()
+            ) {
+
+                yearInput.value =
+                    data.suggested_year;
+
+            }
+
+
+            if (data.combined_text) {
+
+                ocrStatus.className =
+                    "alert alert-success mt-3 mb-0";
+
+                ocrStatus.textContent =
+                    "OCR finished. Review the detected text below. "
+                    + "Any detected year is only a suggestion, so correct it if needed before searching Numista.";
+
+            }
+
+            else {
+
+                ocrStatus.className =
+                    "alert alert-warning mt-3 mb-0";
+
+                ocrStatus.textContent =
+                    "OCR finished, but no reliable text survived the noise filter. "
+                    + "Try a clearer, closer, straight-on photo with less glare.";
+
+            }
+
+        }
+
+        catch (error) {
+
+            ocrStatus.className =
+                "alert alert-danger mt-3 mb-0";
+
+            ocrStatus.textContent =
+                error.message;
+
+        }
+
+        finally {
+
+            updateOcrButton();
+
+        }
+
+    }
+);
+
+
+for (
+    const button
+    of document.querySelectorAll(
+        ".candidate-button"
+    )
+) {
+
+    button.addEventListener(
+        "click",
+        async function() {
+
+            const typeId =
+                button.dataset.typeId;
+
+            const box =
+                document.getElementById(
+                    `candidate-${typeId}`
+                );
+
+
+            button.disabled = true;
+
+            box.innerHTML =
+                '<div class="text-muted">'
+                + 'Loading Numista reference...'
+                + '</div>';
+
+
+            try {
+
+                const response =
+                    await fetch(
+                        `/api/numista/type/${typeId}`
+                    );
+
+                const data =
+                    await response.json();
+
+
+                if (!response.ok) {
+
+                    throw new Error(
+                        data.error
+                        ||
+                        "Could not load reference."
+                    );
+
+                }
+
+
+                let images = "";
+
+
+                if (
+                    data.obverse_thumbnail
+                    ||
+                    data.reverse_thumbnail
+                ) {
+
+                    images +=
+                        '<div class="row g-2 mb-3">';
+
+
+                    if (data.obverse_thumbnail) {
+
+                        images +=
+                            '<div class="col-6">'
+                            + '<div class="small '
+                            + 'text-muted mb-1">'
+                            + 'Obverse'
+                            + '</div>'
+                            + '<img src="'
+                            + data.obverse_thumbnail
+                            + '" class="img-fluid '
+                            + 'rounded border" '
+                            + 'style="max-height:180px;'
+                            + 'object-fit:contain;">'
+                            + '</div>';
+
+                    }
+
+
+                    if (data.reverse_thumbnail) {
+
+                        images +=
+                            '<div class="col-6">'
+                            + '<div class="small '
+                            + 'text-muted mb-1">'
+                            + 'Reverse'
+                            + '</div>'
+                            + '<img src="'
+                            + data.reverse_thumbnail
+                            + '" class="img-fluid '
+                            + 'rounded border" '
+                            + 'style="max-height:180px;'
+                            + 'object-fit:contain;">'
+                            + '</div>';
+
+                    }
+
+
+                    images += '</div>';
+
+                }
+
+
+                const mintNames =
+                    (data.mints || [])
+                    .map(
+                        mint => mint.name
+                    )
+                    .filter(Boolean)
+                    .join(", ");
+
+
+                box.innerHTML =
+                    images
+                    + '<div><strong>'
+                    + escapeHtml(
+                        data.title || ""
+                    )
+                    + '</strong></div>'
+                    + '<div class="small mt-1">'
+                    + '<strong>Issuer:</strong> '
+                    + escapeHtml(
+                        data.issuer || "Unknown"
+                    )
+                    + '</div>'
+                    + '<div class="small">'
+                    + '<strong>Denomination:</strong> '
+                    + escapeHtml(
+                        data.denomination
+                        || "Unknown"
+                    )
+                    + '</div>'
+                    + '<div class="small">'
+                    + '<strong>Composition:</strong> '
+                    + escapeHtml(
+                        data.composition
+                        || "Unknown"
+                    )
+                    + '</div>'
+                    + '<div class="small">'
+                    + '<strong>Mints:</strong> '
+                    + escapeHtml(
+                        mintNames
+                        || "Not listed"
+                    )
+                    + '</div>'
+                    + '<a class="btn btn-success '
+                    + 'btn-sm mt-3" href="/add?'
+                    + 'numista_type_id='
+                    + encodeURIComponent(
+                        data.id
+                    )
+                    + '&year='
+                    + encodeURIComponent(
+                        document.getElementById(
+                            "identifyYear"
+                        ).value
+                    )
+                    + '">'
+                    + 'Continue With This Coin'
+                    + '</a>';
+
+
+                button.textContent =
+                    "Reference Loaded";
+
+            }
+
+            catch (error) {
+
+                box.innerHTML =
+                    '<div class="alert '
+                    + 'alert-danger mb-0">'
+                    + escapeHtml(
+                        error.message
+                    )
+                    + '</div>';
+
+                button.disabled = false;
+
+            }
+
+        }
+    );
+
+}
+
+
+function escapeHtml(value) {
+
+    return String(value)
+        .replaceAll(
+            "&",
+            "&amp;"
+        )
+        .replaceAll(
+            "<",
+            "&lt;"
+        )
+        .replaceAll(
+            ">",
+            "&gt;"
+        )
+        .replaceAll(
+            '"',
+            "&quot;"
+        )
+        .replaceAll(
+            "'",
+            "&#039;"
+        );
+
+}
+
+</script>
+
+{% endblock %}

@@ -1,0 +1,1377 @@
+{% extends "base.html" %}
+{% block title %}World War I · Interactive Coin Atlas{% endblock %}
+{% block content %}
+
+{% macro stock_image(coin) -%}
+{%- if coin -%}
+{%- if coin.obverse_image -%}{{ coin.obverse_image }}
+{%- elif coin.reverse_image -%}{{ coin.reverse_image }}
+{%- elif coin.personal_obverse_image -%}{{ url_for('static', filename='uploads/coins/' ~ coin.personal_obverse_image) }}
+{%- elif coin.personal_reverse_image -%}{{ url_for('static', filename='uploads/coins/' ~ coin.personal_reverse_image) }}
+{%- endif -%}
+{%- endif -%}
+{%- endmacro %}
+
+<style>
+body{
+    background:#080806!important;
+    overflow-x:hidden;
+}
+
+/* Break out of Bootstrap/container width and use nearly the entire viewport. */
+.ww1-map-shell{
+    position:relative;
+    width:calc(100vw - 12px);
+    max-width:none;
+    margin:14px 0 38px calc(50% - 50vw + 6px);
+}
+
+.ww1-map-stage{
+    position:relative;
+    width:100%;
+    aspect-ratio:1710 / 919;
+    background:#d7c79f url("{{ url_for('static', filename='ww1_map/ww1_atlas.png') }}")
+        center/100% 100% no-repeat;
+    box-shadow:0 24px 60px rgba(0,0,0,.55);
+    border:1px solid rgba(196,156,84,.35);
+    overflow:hidden;
+}
+
+.ww1-summary{
+    position:absolute;
+    z-index:30;
+    top:1.3%;
+    right:1.2%;
+    padding:8px 12px;
+    background:rgba(20,16,10,.91);
+    border:1px solid #b68a43;
+    color:#f0d99c;
+    font:700 clamp(10px,.82vw,15px) Georgia,serif;
+    letter-spacing:.04em;
+    box-shadow:0 4px 18px rgba(0,0,0,.32);
+}
+
+/* Map labels themselves are the click targets. No floating gold dots. */
+.map-country-hit,
+.card-country-hit{
+    position:absolute;
+    z-index:18;
+    padding:0;
+    margin:0;
+    border:1px solid transparent;
+    background:transparent;
+    cursor:pointer;
+    border-radius:2px;
+    transition:background .14s ease,border-color .14s ease,box-shadow .14s ease;
+}
+
+.map-country-hit:hover,
+.map-country-hit:focus{
+    outline:none;
+    background:rgba(231,190,94,.13);
+    border-color:#f2d28b;
+    box-shadow:0 0 0 1px rgba(17,11,4,.42),0 0 10px rgba(242,210,139,.50);
+}
+
+.card-country-hit{
+    border-radius:1px;
+}
+.card-country-hit:hover,
+.card-country-hit:focus{
+    outline:none;
+    background:rgba(240,205,120,.11);
+    border-color:rgba(115,72,24,.82);
+    box-shadow:inset 0 0 0 2px rgba(247,224,166,.38),0 0 14px rgba(67,42,14,.26);
+}
+
+
+.card-country-hit::before{
+    content:attr(data-count) " / 5";
+    position:absolute;
+    top:5px;
+    right:5px;
+    z-index:2;
+    min-width:34px;
+    padding:3px 5px;
+    border:1px solid rgba(100,68,27,.72);
+    border-radius:2px;
+    background:rgba(31,23,13,.88);
+    color:#f1d99d;
+    font:700 clamp(8px,.58vw,11px) Georgia,serif;
+    line-height:1;
+    text-align:center;
+    letter-spacing:.02em;
+    box-shadow:0 1px 4px rgba(0,0,0,.28);
+    pointer-events:none;
+}
+
+.map-country-hit::after,
+.card-country-hit::after{
+    content:attr(data-country);
+    position:absolute;
+    left:50%;
+    bottom:calc(100% + 5px);
+    transform:translateX(-50%);
+    opacity:0;
+    pointer-events:none;
+    white-space:nowrap;
+    padding:4px 7px;
+    background:#17120b;
+    border:1px solid #ad8241;
+    color:#f4dfab;
+    font:700 10px Georgia,serif;
+    transition:opacity .12s ease;
+    z-index:40;
+}
+.map-country-hit:hover::after,
+.map-country-hit:focus::after,
+.card-country-hit:hover::after,
+.card-country-hit:focus::after{
+    opacity:1;
+}
+
+/* Drawer */
+.ww1-drawer-backdrop{
+    position:fixed;inset:0;z-index:1038;
+    background:rgba(0,0,0,.46);
+    opacity:0;visibility:hidden;
+    transition:.22s ease;
+}
+.ww1-drawer-backdrop.open{opacity:1;visibility:visible}
+
+.ww1-drawer{
+    position:fixed;z-index:1039;top:0;right:0;
+    width:min(560px,95vw);height:100vh;
+    transform:translateX(102%);
+    transition:transform .28s ease;
+    background:linear-gradient(rgba(225,207,164,.985),rgba(214,191,143,.985));
+    color:#21170c;
+    border-left:3px double #80602e;
+    box-shadow:-20px 0 50px rgba(0,0,0,.55);
+    overflow-y:auto;
+}
+.ww1-drawer.open{transform:translateX(0)}
+
+.drawer-top{
+    position:sticky;top:0;z-index:2;
+    padding:21px 22px 16px;
+    background:rgba(222,202,157,.98);
+    border-bottom:3px double #8b6a35;
+}
+.drawer-kicker{
+    font:700 11px Georgia,serif;
+    letter-spacing:.18em;text-transform:uppercase;color:#745524;
+}
+.drawer-title{
+    font:700 clamp(28px,3vw,43px) Georgia,serif;
+    line-height:1;margin:4px 42px 5px 0;color:#1c140a;
+}
+.drawer-meta{font:700 13px Georgia,serif;color:#694c22}
+.drawer-close{
+    position:absolute;right:15px;top:15px;
+    width:36px;height:36px;
+    border:1px solid #7b5a2d;
+    background:#21170d;color:#f0dca7;
+    font-size:24px;line-height:30px;cursor:pointer;
+}
+.drawer-body{padding:18px 20px 32px}
+.country-panel{display:none}
+.country-panel.active{display:block}
+.year-slots{display:grid;grid-template-columns:1fr;gap:12px}
+
+.year-slot{
+    display:grid;
+    grid-template-columns:64px 92px 1fr;
+    align-items:center;
+    gap:12px;
+    min-height:104px;
+    padding:9px 10px;
+    border:1px solid #977541;
+    outline:1px solid rgba(255,255,255,.35);
+    background:rgba(247,232,194,.54);
+    box-shadow:inset 0 0 18px rgba(91,63,25,.08);
+}
+.year-number{
+    text-align:center;
+    font:700 20px Georgia,serif;
+    color:#35230f;
+    border-right:1px solid rgba(114,82,39,.45);
+    padding-right:8px;
+}
+.slot-coin{
+    width:82px;height:82px;border-radius:50%;
+    overflow:hidden;display:grid;place-items:center;
+    background:#1b1711;border:3px double #8b6b37;
+    box-shadow:inset 0 0 14px #000,0 2px 6px rgba(0,0,0,.25);
+}
+.slot-coin img{
+    width:100%;height:100%;object-fit:contain;
+    display:block;border-radius:50%;
+}
+.slot-empty{
+    width:82px;height:82px;border-radius:50%;
+    display:grid;place-items:center;
+    border:3px double #80663b;
+    background:radial-gradient(circle,#4a4436 0,#26231d 55%,#171510 100%);
+    color:#bda873;
+    font:700 10px Georgia,serif;
+    text-transform:uppercase;
+    letter-spacing:.09em;
+    text-align:center;
+}
+.slot-copy strong{
+    display:block;
+    font:700 16px Georgia,serif;
+    color:#25180b;margin-bottom:3px;
+}
+.slot-copy span{font:12px Georgia,serif;color:#6c4f25}
+.slot-link{color:inherit;text-decoration:none}
+.slot-link:hover .year-slot{background:rgba(255,242,209,.78)}
+.drawer-footer{
+    margin-top:18px;padding-top:13px;
+    border-top:3px double #8a6734;
+    font:italic 13px Georgia,serif;
+    color:#64491f;text-align:center;
+}
+
+@media(max-width:800px){
+    .ww1-map-shell{
+        width:1180px;
+        margin-left:calc(50% - 50vw);
+        overflow:visible;
+    }
+    .ww1-map-stage{width:1180px}
+    .ww1-summary{
+        position:absolute;
+        top:1.3%;
+        right:1.2%;
+    }
+}
+
+.map-country-hit[data-country="Africa"]::before{
+    content:attr(data-count) " / 5";
+    position:absolute;
+    left:calc(100% + 4px);
+    top:50%;
+    transform:translateY(-50%);
+    padding:3px 5px;
+    background:rgba(31,23,13,.88);
+    border:1px solid #a77c3c;
+    color:#f1d99d;
+    font:700 9px Georgia,serif;
+    white-space:nowrap;
+    pointer-events:none;
+}
+
+
+/* WW1 MCCRAE COUNTER POLISH */
+.card-country-hit::before{
+    content:attr(data-count) " / 5" !important;
+    position:absolute !important;
+    top:5px !important;
+    right:5px !important;
+    z-index:3 !important;
+    min-width:31px !important;
+    padding:3px 5px !important;
+    border:1px solid rgba(91,61,25,.72) !important;
+    border-radius:1px !important;
+    background:rgba(222,201,154,.93) !important;
+    color:#2d1d0d !important;
+    font:700 clamp(8px,.56vw,10px) Georgia,"Times New Roman",serif !important;
+    line-height:1 !important;
+    text-align:center !important;
+    letter-spacing:.01em !important;
+    box-shadow:0 1px 3px rgba(0,0,0,.22), inset 0 0 5px rgba(89,58,24,.10) !important;
+    pointer-events:none !important;
+}
+.map-country-hit[data-country="Africa"]::before{
+    content:attr(data-count) " / 5" !important;
+    position:absolute !important;
+    left:calc(100% + 4px) !important;
+    top:50% !important;
+    transform:translateY(-50%) !important;
+    min-width:31px !important;
+    padding:3px 5px !important;
+    border:1px solid rgba(91,61,25,.72) !important;
+    border-radius:1px !important;
+    background:rgba(222,201,154,.93) !important;
+    color:#2d1d0d !important;
+    font:700 9px Georgia,"Times New Roman",serif !important;
+    line-height:1 !important;
+    text-align:center !important;
+    white-space:nowrap !important;
+    box-shadow:0 1px 3px rgba(0,0,0,.22) !important;
+    pointer-events:none !important;
+}
+
+
+/* WW1 CLEAN COUNTER POLISH V2 */
+.card-country-hit::before{
+    content:attr(data-count) " / 5" !important;
+    position:absolute !important;
+    top:4px !important;
+    right:4px !important;
+    z-index:3 !important;
+    min-width:30px !important;
+    padding:3px 5px !important;
+    border:1px solid rgba(91,61,25,.62) !important;
+    border-radius:2px !important;
+    background:rgba(225,205,163,.94) !important;
+    color:#2d1d0d !important;
+    font:700 clamp(8px,.54vw,10px) Georgia,"Times New Roman",serif !important;
+    line-height:1 !important;
+    text-align:center !important;
+    box-shadow:0 1px 3px rgba(0,0,0,.20) !important;
+    pointer-events:none !important;
+}
+.map-country-hit[data-country="Africa"]::before{
+    content:attr(data-count) " / 5" !important;
+    position:absolute !important;
+    left:calc(100% + 4px) !important;
+    top:50% !important;
+    transform:translateY(-50%) !important;
+    min-width:30px !important;
+    padding:3px 5px !important;
+    border:1px solid rgba(91,61,25,.62) !important;
+    border-radius:2px !important;
+    background:rgba(225,205,163,.94) !important;
+    color:#2d1d0d !important;
+    font:700 9px Georgia,"Times New Roman",serif !important;
+    line-height:1 !important;
+    text-align:center !important;
+    white-space:nowrap !important;
+    box-shadow:0 1px 3px rgba(0,0,0,.20) !important;
+    pointer-events:none !important;
+}
+
+
+/* WW1 FINAL PRECISE ALIGNMENT + COUNTERS V3 */
+.card-country-hit::before{
+    content:attr(data-count) " / 5" !important;
+    position:absolute !important;
+    top:4px !important;
+    right:4px !important;
+    z-index:30 !important;
+    min-width:36px !important;
+    box-sizing:border-box !important;
+    padding:3px 6px 2px !important;
+    border:1px solid #76552c !important;
+    border-radius:2px !important;
+    background:#ead8aa !important;
+    color:#17120b !important;
+    font-family:"Segoe UI",Arial,sans-serif !important;
+    font-size:clamp(10px,.67vw,13px) !important;
+    font-weight:800 !important;
+    line-height:1.05 !important;
+    letter-spacing:0 !important;
+    text-align:center !important;
+    text-shadow:none !important;
+    box-shadow:0 1px 2px rgba(0,0,0,.24) !important;
+    pointer-events:none !important;
+}
+
+.map-country-hit[data-country="Africa"]::before{
+    content:attr(data-count) " / 5" !important;
+    position:absolute !important;
+    left:calc(100% + 5px) !important;
+    top:50% !important;
+    transform:translateY(-50%) !important;
+    z-index:30 !important;
+    min-width:36px !important;
+    box-sizing:border-box !important;
+    padding:3px 6px 2px !important;
+    border:1px solid #76552c !important;
+    border-radius:2px !important;
+    background:#ead8aa !important;
+    color:#17120b !important;
+    font-family:"Segoe UI",Arial,sans-serif !important;
+    font-size:clamp(10px,.67vw,13px) !important;
+    font-weight:800 !important;
+    line-height:1.05 !important;
+    letter-spacing:0 !important;
+    text-align:center !important;
+    text-shadow:none !important;
+    white-space:nowrap !important;
+    box-shadow:0 1px 2px rgba(0,0,0,.24) !important;
+    pointer-events:none !important;
+}
+
+/* Keep hover boundaries tight and easy to inspect without giant glow. */
+.map-country-hit:hover,
+.map-country-hit:focus,
+.card-country-hit:hover,
+.card-country-hit:focus{
+    border-color:#f0d08a !important;
+    box-shadow:inset 0 0 0 1px rgba(255,237,181,.65),0 0 5px rgba(0,0,0,.30) !important;
+}
+
+
+/* WW1 PIXEL CALIBRATED ALIGNMENT V4 */
+.card-country-hit::before{
+    content:attr(data-count) " / 5" !important;
+    position:absolute !important;
+    top:3px !important;
+    right:3px !important;
+    z-index:50 !important;
+    min-width:38px !important;
+    box-sizing:border-box !important;
+    padding:3px 6px !important;
+    border:1px solid #6e4b22 !important;
+    border-radius:2px !important;
+    background:#f0dfb1 !important;
+    color:#111 !important;
+    font-family:Arial,"Segoe UI",sans-serif !important;
+    font-size:12px !important;
+    font-weight:800 !important;
+    line-height:1 !important;
+    letter-spacing:0 !important;
+    text-align:center !important;
+    text-shadow:none !important;
+    box-shadow:0 1px 2px rgba(0,0,0,.2) !important;
+    pointer-events:none !important;
+}
+
+.map-country-hit[data-country="Africa"]::before{
+    content:attr(data-count) " / 5" !important;
+    position:absolute !important;
+    top:3px !important;
+    right:3px !important;
+    left:auto !important;
+    transform:none !important;
+    z-index:50 !important;
+    min-width:38px !important;
+    box-sizing:border-box !important;
+    padding:3px 6px !important;
+    border:1px solid #6e4b22 !important;
+    border-radius:2px !important;
+    background:#f0dfb1 !important;
+    color:#111 !important;
+    font-family:Arial,"Segoe UI",sans-serif !important;
+    font-size:12px !important;
+    font-weight:800 !important;
+    line-height:1 !important;
+    text-align:center !important;
+    text-shadow:none !important;
+    box-shadow:0 1px 2px rgba(0,0,0,.2) !important;
+    pointer-events:none !important;
+}
+
+.map-country-hit,
+.card-country-hit{
+    box-sizing:border-box !important;
+}
+
+.map-country-hit:hover,
+.map-country-hit:focus,
+.card-country-hit:hover,
+.card-country-hit:focus{
+    border:1px solid #f0d18b !important;
+    box-shadow:inset 0 0 0 1px rgba(0,0,0,.45) !important;
+    background:rgba(240,209,139,.08) !important;
+}
+
+
+/* WW1 COUNTRY COIN INDEX */
+.ww1-country-index{
+    width:min(1680px,calc(100vw - 24px));
+    margin:28px auto 54px;
+    color:#24180b;
+}
+
+.ww1-index-head{
+    padding:18px 22px 16px;
+    border:3px double #80602f;
+    background:linear-gradient(rgba(232,215,174,.95),rgba(216,193,145,.95));
+    box-shadow:0 10px 28px rgba(0,0,0,.28);
+    text-align:center;
+}
+
+.ww1-index-kicker{
+    font:700 11px Georgia,serif;
+    letter-spacing:.22em;
+    text-transform:uppercase;
+    color:#76552a;
+}
+
+.ww1-index-title{
+    margin:4px 0 4px;
+    font:700 clamp(28px,3vw,46px) Georgia,serif;
+    color:#1b1208;
+}
+
+.ww1-index-sub{
+    margin:0;
+    font:italic 14px Georgia,serif;
+    color:#65471f;
+}
+
+.ww1-country-grid{
+    display:grid;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:14px;
+    margin-top:14px;
+}
+
+.ww1-country-card{
+    border:2px solid #846333;
+    outline:1px solid rgba(245,226,180,.42);
+    background:linear-gradient(rgba(235,218,177,.96),rgba(218,194,145,.96));
+    box-shadow:0 7px 18px rgba(0,0,0,.22);
+    overflow:hidden;
+}
+
+.ww1-country-card-head{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    padding:10px 12px;
+    border-bottom:3px double #8b6835;
+    background:rgba(88,59,25,.08);
+}
+
+.ww1-country-open{
+    border:0;
+    background:transparent;
+    padding:0;
+    margin:0;
+    cursor:pointer;
+    text-align:left;
+    color:#201508;
+    font:700 21px Georgia,serif;
+}
+
+.ww1-country-open:hover{
+    text-decoration:underline;
+}
+
+.ww1-country-progress{
+    flex:0 0 auto;
+    min-width:55px;
+    padding:5px 8px;
+    border:1px solid #76552b;
+    background:#f0dfb2;
+    color:#15110b;
+    font:800 12px Arial,"Segoe UI",sans-serif;
+    text-align:center;
+    box-shadow:0 1px 2px rgba(0,0,0,.18);
+}
+
+.ww1-country-years{
+    display:grid;
+    grid-template-columns:repeat(5,minmax(0,1fr));
+}
+
+.ww1-year-mini{
+    min-width:0;
+    padding:9px 7px 10px;
+    border-right:1px solid rgba(110,77,34,.38);
+    text-align:center;
+}
+
+.ww1-year-mini:last-child{
+    border-right:0;
+}
+
+.ww1-year-label{
+    margin-bottom:6px;
+    font:700 12px Georgia,serif;
+    color:#4c3418;
+}
+
+.ww1-mini-coin,
+.ww1-mini-empty{
+    width:58px;
+    height:58px;
+    margin:0 auto 6px;
+    border-radius:50%;
+}
+
+.ww1-mini-coin{
+    display:block;
+    overflow:hidden;
+    border:2px solid #7e6033;
+    background:#181510;
+    box-shadow:inset 0 0 8px rgba(0,0,0,.8),0 2px 4px rgba(0,0,0,.22);
+}
+
+.ww1-mini-coin img{
+    width:100%;
+    height:100%;
+    object-fit:contain;
+    border-radius:50%;
+    display:block;
+}
+
+.ww1-mini-empty{
+    display:grid;
+    place-items:center;
+    box-sizing:border-box;
+    border:2px double #8a6a38;
+    background:radial-gradient(circle,#4c4638 0,#29251d 58%,#171510 100%);
+    color:#c9b37d;
+    font:700 8px Arial,sans-serif;
+    letter-spacing:.05em;
+    text-transform:uppercase;
+}
+
+.ww1-mini-name{
+    min-height:28px;
+    overflow:hidden;
+    font:700 10px Georgia,serif;
+    line-height:1.15;
+    color:#281b0d;
+}
+
+.ww1-mini-name.empty{
+    color:#80643a;
+    font-weight:400;
+    font-style:italic;
+}
+
+.ww1-mini-link{
+    color:inherit;
+    text-decoration:none;
+}
+
+.ww1-mini-link:hover .ww1-mini-name{
+    text-decoration:underline;
+}
+
+@media(max-width:1000px){
+    .ww1-country-grid{
+        grid-template-columns:1fr;
+    }
+}
+
+@media(max-width:620px){
+    .ww1-country-index{
+        width:calc(100vw - 12px);
+    }
+    .ww1-country-years{
+        grid-template-columns:repeat(5,100px);
+        overflow-x:auto;
+    }
+}
+
+
+/* WW1 CONTINENT COMPACT INDEX V2 */
+.ww1-continent-index{
+    width:min(1720px,calc(100vw - 22px)) !important;
+    margin:26px auto 56px !important;
+}
+
+.ww1-continent-section{
+    margin-top:18px;
+}
+
+.ww1-continent-heading{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:16px;
+    padding:9px 14px;
+    border:2px solid #76562c;
+    border-bottom:3px double #76562c;
+    background:linear-gradient(90deg,#20170e 0,#3b2a17 55%,#20170e 100%);
+    color:#ecd49b;
+    box-shadow:0 5px 15px rgba(0,0,0,.25);
+}
+
+.ww1-continent-heading h3{
+    margin:0;
+    font:700 24px Georgia,serif;
+    letter-spacing:.03em;
+}
+
+.ww1-continent-heading span{
+    font:800 12px Arial,"Segoe UI",sans-serif;
+    color:#f2dfaa;
+}
+
+.ww1-continent-country-grid{
+    display:grid;
+    grid-template-columns:repeat(3,minmax(0,1fr));
+    gap:10px;
+    margin-top:10px;
+}
+
+.ww1-country-card-compact{
+    min-width:0;
+    border:1px solid #846333 !important;
+    outline:none !important;
+    box-shadow:0 4px 10px rgba(0,0,0,.20) !important;
+}
+
+.ww1-country-card-compact .ww1-country-card-head{
+    padding:6px 9px !important;
+    border-bottom:1px solid #8b6835 !important;
+}
+
+.ww1-country-card-compact .ww1-country-open{
+    font:700 17px Georgia,serif !important;
+    line-height:1.05 !important;
+}
+
+.ww1-country-card-compact .ww1-country-progress{
+    min-width:44px !important;
+    padding:4px 6px !important;
+    font:800 11px Arial,"Segoe UI",sans-serif !important;
+}
+
+.ww1-country-card-compact .ww1-country-years{
+    grid-template-columns:repeat(5,minmax(0,1fr)) !important;
+}
+
+.ww1-country-card-compact .ww1-year-mini{
+    padding:6px 3px 7px !important;
+}
+
+.ww1-country-card-compact .ww1-year-label{
+    margin-bottom:4px !important;
+    font:700 10px Arial,"Segoe UI",sans-serif !important;
+}
+
+/* Bigger coin images while the overall card stays shorter. */
+.ww1-country-card-compact .ww1-mini-coin,
+.ww1-country-card-compact .ww1-mini-empty{
+    width:76px !important;
+    height:76px !important;
+    margin:0 auto 3px !important;
+}
+
+.ww1-country-card-compact .ww1-mini-coin{
+    border-width:2px !important;
+}
+
+.ww1-country-card-compact .ww1-mini-name{
+    min-height:0 !important;
+    max-height:22px !important;
+    margin:0 2px !important;
+    font:700 9px Georgia,serif !important;
+    line-height:1.1 !important;
+    text-overflow:ellipsis !important;
+}
+
+.ww1-country-card-compact .ww1-mini-empty{
+    font:700 9px Arial,"Segoe UI",sans-serif !important;
+}
+
+/* Empty slots do not need the extra "No coin yet" line anymore. */
+.ww1-country-card-compact .ww1-mini-name.empty{
+    display:none !important;
+}
+
+@media(max-width:1400px){
+    .ww1-continent-country-grid{
+        grid-template-columns:repeat(2,minmax(0,1fr));
+    }
+}
+
+@media(max-width:850px){
+    .ww1-continent-country-grid{
+        grid-template-columns:1fr;
+    }
+}
+
+@media(max-width:560px){
+    .ww1-country-card-compact .ww1-country-years{
+        grid-template-columns:repeat(5,96px) !important;
+        overflow-x:auto;
+    }
+
+    .ww1-country-card-compact .ww1-mini-coin,
+    .ww1-country-card-compact .ww1-mini-empty{
+        width:68px !important;
+        height:68px !important;
+    }
+}
+
+
+/* WW1 CENTER + FLAGS PATCH */
+.ww1-country-index.ww1-continent-index{
+    box-sizing:border-box !important;
+    width:min(1680px, calc(100vw - 48px)) !important;
+    max-width:1680px !important;
+    margin:30px auto 60px auto !important;
+    padding:0 !important;
+    display:block !important;
+    position:relative !important;
+    left:auto !important;
+    right:auto !important;
+}
+
+.ww1-country-index.ww1-continent-index > *{
+    box-sizing:border-box !important;
+}
+
+.ww1-continent-section{
+    width:100% !important;
+    margin:18px auto 0 auto !important;
+}
+
+.ww1-continent-country-grid{
+    width:100% !important;
+    margin:10px auto 0 auto !important;
+    display:grid !important;
+    grid-template-columns:repeat(3, minmax(0, 1fr)) !important;
+    gap:10px !important;
+    align-items:start !important;
+    justify-content:center !important;
+}
+
+.ww1-country-card-compact{
+    width:100% !important;
+    margin:0 !important;
+}
+
+.ww1-country-card-compact .ww1-country-card-head{
+    display:flex !important;
+    align-items:center !important;
+    justify-content:space-between !important;
+    gap:10px !important;
+}
+
+.ww1-country-open.ww1-country-flagged{
+    display:inline-flex !important;
+    align-items:center !important;
+    gap:8px !important;
+    text-align:left !important;
+    line-height:1.05 !important;
+}
+
+.ww1-country-open.ww1-country-flagged::before{
+    display:inline-block !important;
+    font-size:21px !important;
+    line-height:1 !important;
+}
+
+/* Europe */
+.ww1-country-open[data-country="United Kingdom"]::before{content:"🇬🇧";}
+.ww1-country-open[data-country="France"]::before{content:"🇫🇷";}
+.ww1-country-open[data-country="Belgium"]::before{content:"🇧🇪";}
+.ww1-country-open[data-country="Portugal"]::before{content:"🇵🇹";}
+.ww1-country-open[data-country="Germany"]::before{content:"🇩🇪";}
+.ww1-country-open[data-country="Austria-Hungary"]::before{content:"🇦🇹";}
+.ww1-country-open[data-country="Serbia"]::before{content:"🇷🇸";}
+.ww1-country-open[data-country="Montenegro"]::before{content:"🇲🇪";}
+.ww1-country-open[data-country="Italy"]::before{content:"🇮🇹";}
+.ww1-country-open[data-country="Romania"]::before{content:"🇷🇴";}
+.ww1-country-open[data-country="Bulgaria"]::before{content:"🇧🇬";}
+.ww1-country-open[data-country="Greece"]::before{content:"🇬🇷";}
+.ww1-country-open[data-country="Russia"]::before{content:"🇷🇺";}
+
+/* Asia */
+.ww1-country-open[data-country="Ottoman Empire"]::before{content:"🇹🇷";}
+.ww1-country-open[data-country="China"]::before{content:"🇨🇳";}
+.ww1-country-open[data-country="Japan"]::before{content:"🇯🇵";}
+.ww1-country-open[data-country="Siam"]::before{content:"🇹🇭";}
+
+/* Africa / region */
+.ww1-country-open[data-country="Africa"]::before{content:"🌍";}
+
+/* North America */
+.ww1-country-open[data-country="Canada"]::before{content:"🇨🇦";}
+.ww1-country-open[data-country="United States"]::before{content:"🇺🇸";}
+.ww1-country-open[data-country="Mexico"]::before{content:"🇲🇽";}
+.ww1-country-open[data-country="Cuba"]::before{content:"🇨🇺";}
+.ww1-country-open[data-country="Panama"]::before{content:"🇵🇦";}
+
+/* South America */
+.ww1-country-open[data-country="Brazil"]::before{content:"🇧🇷";}
+.ww1-country-open[data-country="Chile"]::before{content:"🇨🇱";}
+.ww1-country-open[data-country="Argentina"]::before{content:"🇦🇷";}
+
+/* Oceania */
+.ww1-country-open[data-country="Australia"]::before{content:"🇦🇺";}
+.ww1-country-open[data-country="New Zealand"]::before{content:"🇳🇿";}
+
+@media (max-width: 1400px){
+    .ww1-country-index.ww1-continent-index{
+        width:min(1320px, calc(100vw - 32px)) !important;
+    }
+    .ww1-continent-country-grid{
+        grid-template-columns:repeat(2, minmax(0, 1fr)) !important;
+    }
+}
+
+@media (max-width: 900px){
+    .ww1-country-index.ww1-continent-index{
+        width:calc(100vw - 20px) !important;
+    }
+    .ww1-continent-country-grid{
+        grid-template-columns:1fr !important;
+    }
+}
+
+
+/* WW1 TRUE CENTER + VISIBLE FLAGS V3 */
+.ww1-country-index.ww1-continent-index{
+    box-sizing:border-box !important;
+    width:calc(100vw - 40px) !important;
+    max-width:none !important;
+    margin-top:30px !important;
+    margin-bottom:60px !important;
+    margin-left:calc(50% - 50vw + 20px) !important;
+    margin-right:0 !important;
+    padding:0 !important;
+    position:relative !important;
+    left:auto !important;
+    right:auto !important;
+    transform:none !important;
+}
+
+.ww1-index-head,
+.ww1-continent-section{
+    width:100% !important;
+    box-sizing:border-box !important;
+}
+
+.ww1-continent-country-grid{
+    width:100% !important;
+    margin:10px 0 0 0 !important;
+    grid-template-columns:repeat(3,minmax(0,1fr)) !important;
+    justify-content:stretch !important;
+}
+
+/* Disable the old emoji/country-code flag attempt. */
+.ww1-country-open::before,
+.ww1-country-open.ww1-country-flagged::before{
+    content:none !important;
+    display:none !important;
+}
+
+.ww1-country-open{
+    display:flex !important;
+    align-items:center !important;
+    gap:8px !important;
+}
+
+.ww1-country-text{
+    display:inline-block !important;
+    min-width:0 !important;
+}
+
+.ww1-css-flag{
+    position:relative !important;
+    display:inline-block !important;
+    width:34px !important;
+    height:21px !important;
+    min-width:34px !important;
+    flex:0 0 34px !important;
+    border:1px solid rgba(45,29,12,.60) !important;
+    box-shadow:0 1px 2px rgba(0,0,0,.18) !important;
+    overflow:hidden !important;
+    box-sizing:border-box !important;
+    background:#ddd;
+}
+
+/* Europe */
+.ww1-country-open[data-country="United Kingdom"] .ww1-css-flag{
+    background:
+      linear-gradient(90deg,transparent 42%,#fff 42% 58%,transparent 58%),
+      linear-gradient(transparent 35%,#fff 35% 65%,transparent 65%),
+      linear-gradient(90deg,transparent 46%,#c8102e 46% 54%,transparent 54%),
+      linear-gradient(transparent 42%,#c8102e 42% 58%,transparent 58%),
+      #012169 !important;
+}
+.ww1-country-open[data-country="France"] .ww1-css-flag{background:linear-gradient(90deg,#0055a4 0 33.33%,#fff 33.33% 66.66%,#ef4135 66.66%) !important;}
+.ww1-country-open[data-country="Belgium"] .ww1-css-flag{background:linear-gradient(90deg,#111 0 33.33%,#ffd90c 33.33% 66.66%,#ef3340 66.66%) !important;}
+.ww1-country-open[data-country="Portugal"] .ww1-css-flag{background:linear-gradient(90deg,#046a38 0 40%,#da291c 40%) !important;}
+.ww1-country-open[data-country="Germany"] .ww1-css-flag{background:linear-gradient(#111 0 33.33%,#fff 33.33% 66.66%,#c8102e 66.66%) !important;}
+.ww1-country-open[data-country="Austria-Hungary"] .ww1-css-flag{background:linear-gradient(#ed2939 0 33.33%,#fff 33.33% 66.66%,#477050 66.66%) !important;}
+.ww1-country-open[data-country="Serbia"] .ww1-css-flag{background:linear-gradient(#c6363c 0 33.33%,#0c4076 33.33% 66.66%,#fff 66.66%) !important;}
+.ww1-country-open[data-country="Montenegro"] .ww1-css-flag{background:#c40308 !important;box-shadow:inset 0 0 0 2px #d4af37,0 1px 2px rgba(0,0,0,.18) !important;}
+.ww1-country-open[data-country="Italy"] .ww1-css-flag{background:linear-gradient(90deg,#009246 0 33.33%,#fff 33.33% 66.66%,#ce2b37 66.66%) !important;}
+.ww1-country-open[data-country="Romania"] .ww1-css-flag{background:linear-gradient(90deg,#002b7f 0 33.33%,#fcd116 33.33% 66.66%,#ce1126 66.66%) !important;}
+.ww1-country-open[data-country="Bulgaria"] .ww1-css-flag{background:linear-gradient(#fff 0 33.33%,#00966e 33.33% 66.66%,#d62612 66.66%) !important;}
+.ww1-country-open[data-country="Greece"] .ww1-css-flag{background:repeating-linear-gradient(#0d5eaf 0 3px,#fff 3px 6px) !important;}
+.ww1-country-open[data-country="Russia"] .ww1-css-flag{background:linear-gradient(#fff 0 33.33%,#0039a6 33.33% 66.66%,#d52b1e 66.66%) !important;}
+
+/* Asia */
+.ww1-country-open[data-country="Ottoman Empire"] .ww1-css-flag{background:#c8102e !important;}
+.ww1-country-open[data-country="Ottoman Empire"] .ww1-css-flag::before{content:"☾";position:absolute;color:#fff;font:700 18px/18px Georgia;left:9px;top:0;}
+.ww1-country-open[data-country="China"] .ww1-css-flag{background:linear-gradient(90deg,#d8172f 0 20%,#f6d84a 20% 40%,#26547c 40% 60%,#fff 60% 80%,#3c8d40 80%) !important;}
+.ww1-country-open[data-country="Japan"] .ww1-css-flag{background:#fff !important;}
+.ww1-country-open[data-country="Japan"] .ww1-css-flag::before{content:"";position:absolute;width:11px;height:11px;border-radius:50%;background:#bc002d;left:11px;top:4px;}
+.ww1-country-open[data-country="Siam"] .ww1-css-flag{background:linear-gradient(#a51931 0 20%,#fff 20% 35%,#2d2a4a 35% 65%,#fff 65% 80%,#a51931 80%) !important;}
+
+/* Africa */
+.ww1-country-open[data-country="Africa"] .ww1-css-flag{background:#d7bf83 !important;}
+.ww1-country-open[data-country="Africa"] .ww1-css-flag::before{content:"AF";position:absolute;inset:0;display:grid;place-items:center;color:#506038;font:800 10px Arial;}
+
+/* North America */
+.ww1-country-open[data-country="Canada"] .ww1-css-flag{background:linear-gradient(90deg,#d80621 0 22%,#fff 22% 78%,#d80621 78%) !important;}
+.ww1-country-open[data-country="Canada"] .ww1-css-flag::before{content:"◆";position:absolute;left:13px;top:1px;color:#d80621;font-size:16px;}
+.ww1-country-open[data-country="United States"] .ww1-css-flag{background:repeating-linear-gradient(#b22234 0 3px,#fff 3px 6px) !important;}
+.ww1-country-open[data-country="United States"] .ww1-css-flag::before{content:"";position:absolute;width:15px;height:11px;background:#3c3b6e;left:0;top:0;}
+.ww1-country-open[data-country="Mexico"] .ww1-css-flag{background:linear-gradient(90deg,#006847 0 33.33%,#fff 33.33% 66.66%,#ce1126 66.66%) !important;}
+.ww1-country-open[data-country="Cuba"] .ww1-css-flag{background:repeating-linear-gradient(#002a8f 0 4px,#fff 4px 8px) !important;}
+.ww1-country-open[data-country="Cuba"] .ww1-css-flag::before{content:"";position:absolute;left:0;top:0;border-top:10px solid transparent;border-bottom:10px solid transparent;border-left:14px solid #cf142b;}
+.ww1-country-open[data-country="Panama"] .ww1-css-flag{background:linear-gradient(90deg,#fff 0 50%,#d21034 50%) !important;}
+
+/* South America */
+.ww1-country-open[data-country="Brazil"] .ww1-css-flag{background:#009c3b !important;}
+.ww1-country-open[data-country="Brazil"] .ww1-css-flag::before{content:"◆";position:absolute;color:#ffdf00;font-size:18px;left:9px;top:0;}
+.ww1-country-open[data-country="Chile"] .ww1-css-flag{background:linear-gradient(#fff 0 50%,#d52b1e 50%) !important;}
+.ww1-country-open[data-country="Chile"] .ww1-css-flag::before{content:"";position:absolute;width:12px;height:10px;background:#0039a6;left:0;top:0;}
+.ww1-country-open[data-country="Argentina"] .ww1-css-flag{background:linear-gradient(#74acdf 0 33.33%,#fff 33.33% 66.66%,#74acdf 66.66%) !important;}
+
+/* Oceania */
+.ww1-country-open[data-country="Australia"] .ww1-css-flag,
+.ww1-country-open[data-country="New Zealand"] .ww1-css-flag{background:#012169 !important;}
+.ww1-country-open[data-country="Australia"] .ww1-css-flag::before,
+.ww1-country-open[data-country="New Zealand"] .ww1-css-flag::before{content:"✦";position:absolute;color:#fff;font-size:14px;right:5px;top:2px;}
+
+@media(max-width:1400px){
+    .ww1-continent-country-grid{
+        grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+    }
+}
+@media(max-width:900px){
+    .ww1-country-index.ww1-continent-index{
+        width:calc(100vw - 16px) !important;
+        margin-left:calc(50% - 50vw + 8px) !important;
+    }
+    .ww1-continent-country-grid{
+        grid-template-columns:1fr !important;
+    }
+}
+
+</style>
+
+{% set lookup = {} %}
+{% for item in matches %}
+    {% set _ = lookup.update({item.requirement.label: item}) %}
+{% endfor %}
+
+{#
+  Map hitboxes are positioned directly over the labels printed in the artwork.
+  left, top, width, height are percentages of the actual 1664 x 945 image.
+#}
+{% set map_hits = [
+    ("Canada",30.351,24.266,6.082,3.264),
+    ("United States",30.175,30.250,7.251,3.264),
+    ("Mexico",29.181,36.126,4.444,3.156),
+    ("Cuba",34.503,40.152,4.211,3.264),
+    ("Panama",32.515,44.178,5.789,3.373),
+    ("Brazil",37.310,53.863,5.439,3.591),
+    ("Chile",34.327,62.350,3.626,3.156),
+    ("Argentina",37.661,60.827,5.965,3.373),
+
+    ("United Kingdom",40.585,24.157,7.018,3.264),
+    ("France",43.392,27.639,4.211,3.047),
+    ("Portugal",43.158,31.012,4.678,3.156),
+    ("Germany",48.012,24.266,5.439,3.482),
+    ("Belgium",49.064,27.095,5.146,3.156),
+    ("Austria-Hungary",49.298,29.706,7.719,3.482),
+    ("Serbia",48.772,32.318,4.386,3.156),
+    ("Montenegro",48.070,34.603,6.316,3.264),
+    ("Italy",49.708,36.888,4.211,3.047),
+    ("Romania",52.749,32.209,5.556,3.264),
+    ("Bulgaria",54.094,34.712,5.497,3.264),
+    ("Greece",53.801,36.888,4.561,3.156),
+    ("Ottoman Empire",54.327,39.173,7.193,3.373),
+
+    ("Russia",58.772,26.115,5.439,3.373),
+    ("China",65.088,34.712,4.912,3.373),
+    ("Japan",71.754,33.950,4.912,3.373),
+    ("Siam",66.667,45.267,3.801,3.373),
+    ("Africa",49.123,47.334,5.906,3.373),
+    ("Australia",68.889,60.174,6.667,3.264),
+    ("New Zealand",74.854,67.247,6.901,3.264)
+] %}
+
+{# Clickable side collection cards. #}
+{% set card_hits = [
+    ("United Kingdom",0.351,23.286,8.538,14.146),
+    ("France",8.947,23.286,8.129,14.146),
+    ("Belgium",17.135,23.286,8.538,14.146),
+
+    ("Russia",0.351,37.541,8.538,14.037),
+    ("Italy",8.947,37.541,8.129,14.037),
+    ("Serbia",17.135,37.541,8.538,14.037),
+
+    ("Montenegro",0.351,51.687,8.538,15.343),
+    ("Romania",8.947,51.687,8.129,15.343),
+    ("Portugal",17.135,51.687,8.538,15.343),
+
+    ("Greece",0.351,67.138,8.538,13.819),
+    ("United States",8.947,67.138,8.129,13.819),
+    ("Japan",17.135,67.138,8.538,13.819),
+
+    ("China",0.351,81.066,8.538,13.493),
+    ("Siam",8.947,81.066,8.129,13.493),
+    ("Cuba",17.135,81.066,8.538,13.493),
+
+    ("Germany",79.181,23.286,10.000,19.151),
+    ("Austria-Hungary",89.240,23.286,10.585,19.151),
+    ("Ottoman Empire",79.181,42.546,10.000,18.934),
+    ("Bulgaria",89.240,42.546,10.585,18.934)
+] %}
+
+{% set drawer_countries = [
+    "Canada","United States","Mexico","Cuba","Panama","Brazil","Africa","Chile","Argentina",
+    "United Kingdom","France","Belgium","Portugal","Germany","Austria-Hungary",
+    "Serbia","Montenegro","Italy","Romania","Bulgaria","Greece","Ottoman Empire",
+    "Russia","China","Japan","Siam","Australia","New Zealand"
+] %}
+
+<div class="ww1-map-shell">
+    <div class="ww1-map-stage" id="ww1MapStage">
+        <div class="ww1-summary">{{ completed }} / {{ total }} YEAR SLOTS COLLECTED</div>
+
+        {% for country,left,top,width,height in map_hits %}
+        {% set map_ns = namespace(done=0) %}
+        {% for year in range(1914,1919) %}
+            {% set map_item = lookup.get(country ~ " · " ~ year) %}
+            {% if map_item and map_item.coin %}
+                {% set map_ns.done = map_ns.done + 1 %}
+            {% endif %}
+        {% endfor %}
+        <button class="map-country-hit"
+                type="button"
+                style="left:{{ left }}%;top:{{ top }}%;width:{{ width }}%;height:{{ height }}%;"
+                data-country="{{ country }}"
+                data-count="{{ map_ns.done }}"
+                aria-label="Open {{ country }} 1914 to 1918 coins"></button>
+        {% endfor %}
+
+        {% for country,left,top,width,height in card_hits %}
+        {% set card_ns = namespace(done=0) %}
+        {% for year in range(1914,1919) %}
+            {% set card_item = lookup.get(country ~ " · " ~ year) %}
+            {% if card_item and card_item.coin %}
+                {% set card_ns.done = card_ns.done + 1 %}
+            {% endif %}
+        {% endfor %}
+        <button class="card-country-hit"
+                type="button"
+                style="left:{{ left }}%;top:{{ top }}%;width:{{ width }}%;height:{{ height }}%;"
+                data-country="{{ country }}"
+                data-count="{{ card_ns.done }}"
+                aria-label="Open {{ country }} 1914 to 1918 coins"></button>
+        {% endfor %}
+    </div>
+</div>
+
+
+<!-- WW1 COUNTRY COIN INDEX -->
+<section class="ww1-country-index ww1-continent-index">
+    <div class="ww1-index-head">
+        <div class="ww1-index-kicker">World War I · 1914–1918</div>
+        <h2 class="ww1-index-title">Coin Collection by Continent</h2>
+        <p class="ww1-index-sub">
+            Browse each country and its five yearly slots from 1914 through 1918.
+        </p>
+    </div>
+
+    {% set continent_groups = [
+        ("Europe", [
+            "United Kingdom","France","Belgium","Portugal","Germany",
+            "Austria-Hungary","Serbia","Montenegro","Italy","Romania",
+            "Bulgaria","Greece","Russia"
+        ]),
+        ("Asia", [
+            "Ottoman Empire","China","Japan","Siam"
+        ]),
+        ("Africa", [
+            "Africa"
+        ]),
+        ("North America", [
+            "Canada","United States","Mexico","Cuba","Panama"
+        ]),
+        ("South America", [
+            "Brazil","Chile","Argentina"
+        ]),
+        ("Oceania", [
+            "Australia","New Zealand"
+        ])
+    ] %}
+
+    {% for continent, countries in continent_groups %}
+        <section class="ww1-continent-section">
+            <div class="ww1-continent-heading">
+                <h3>{{ continent }}</h3>
+
+                {% set continent_ns = namespace(done=0, total=0) %}
+                {% for country in countries %}
+                    {% for year in range(1914,1919) %}
+                        {% set item = lookup.get(country ~ " · " ~ year) %}
+                        {% set continent_ns.total = continent_ns.total + 1 %}
+                        {% if item and item.coin %}
+                            {% set continent_ns.done = continent_ns.done + 1 %}
+                        {% endif %}
+                    {% endfor %}
+                {% endfor %}
+
+                <span>{{ continent_ns.done }} / {{ continent_ns.total }} collected</span>
+            </div>
+
+            <div class="ww1-continent-country-grid">
+                {% for country in countries %}
+                    {% set country_ns = namespace(done=0) %}
+                    {% for year in range(1914,1919) %}
+                        {% set item = lookup.get(country ~ " · " ~ year) %}
+                        {% if item and item.coin %}
+                            {% set country_ns.done = country_ns.done + 1 %}
+                        {% endif %}
+                    {% endfor %}
+
+                    <article class="ww1-country-card ww1-country-card-compact">
+                        <div class="ww1-country-card-head">
+                            <button type="button"
+                                    class="ww1-country-open ww1-country-flagged"
+                                    data-country="{{ country }}">
+                                <span class="ww1-css-flag" aria-hidden="true"></span>
+                                <span class="ww1-country-text">{{ country }}</span>
+                            </button>
+                            <div class="ww1-country-progress">{{ country_ns.done }} / 5</div>
+                        </div>
+
+                        <div class="ww1-country-years">
+                            {% for year in range(1914,1919) %}
+                                {% set item = lookup.get(country ~ " · " ~ year) %}
+                                <div class="ww1-year-mini">
+                                    <div class="ww1-year-label">{{ year }}</div>
+
+                                    {% if item and item.coin %}
+                                        {% set img = stock_image(item.coin)|trim %}
+                                        <a class="ww1-mini-link"
+                                           href="{{ url_for('coin_detail', coin_id=item.coin.id) }}"
+                                           title="{{ item.coin.name }}">
+                                            {% if img %}
+                                                <span class="ww1-mini-coin">
+                                                    <img src="{{ img }}" alt="{{ item.coin.name }}">
+                                                </span>
+                                            {% else %}
+                                                <span class="ww1-mini-empty">Owned</span>
+                                            {% endif %}
+                                            <div class="ww1-mini-name">{{ item.coin.name }}</div>
+                                        </a>
+                                    {% else %}
+                                        <div class="ww1-mini-empty">Open</div>
+                                    {% endif %}
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </article>
+                {% endfor %}
+            </div>
+        </section>
+    {% endfor %}
+</section>
+
+<div class="ww1-drawer-backdrop" id="ww1Backdrop"></div>
+
+<aside class="ww1-drawer" id="ww1Drawer" aria-hidden="true">
+    <div class="drawer-top">
+        <div class="drawer-kicker">World War I Coin Atlas · 1914–1918</div>
+        <h2 class="drawer-title" id="drawerTitle">Country</h2>
+        <div class="drawer-meta" id="drawerMeta"></div>
+        <button class="drawer-close" id="drawerClose" type="button" aria-label="Close">×</button>
+    </div>
+
+    <div class="drawer-body">
+        {% for country in drawer_countries %}
+            {% set ns = namespace(done=0) %}
+            {% for year in range(1914,1919) %}
+                {% set item = lookup.get(country ~ " · " ~ year) %}
+                {% if item and item.coin %}
+                    {% set ns.done = ns.done + 1 %}
+                {% endif %}
+            {% endfor %}
+
+            <section class="country-panel" data-panel="{{ country }}" data-count="{{ ns.done }}">
+                <div class="year-slots">
+                    {% for year in range(1914,1919) %}
+                        {% set item = lookup.get(country ~ " · " ~ year) %}
+
+                        {% if item and item.coin %}
+                            {% set img = stock_image(item.coin)|trim %}
+                            <a class="slot-link" href="{{ url_for('coin_detail', coin_id=item.coin.id) }}">
+                                <div class="year-slot">
+                                    <div class="year-number">{{ year }}</div>
+
+                                    {% if img %}
+                                    <div class="slot-coin">
+                                        <img src="{{ img }}" alt="{{ item.coin.name }}">
+                                    </div>
+                                    {% else %}
+                                    <div class="slot-empty">Owned</div>
+                                    {% endif %}
+
+                                    <div class="slot-copy">
+                                        <strong>{{ item.coin.name }}</strong>
+                                        <span>Collected · Open coin details</span>
+                                    </div>
+                                </div>
+                            </a>
+                        {% else %}
+                            <div class="year-slot">
+                                <div class="year-number">{{ year }}</div>
+                                <div class="slot-empty">Empty<br>slot</div>
+                                <div class="slot-copy">
+                                    <strong>{{ country }} · {{ year }}</strong>
+                                    <span>No matching coin in the collection yet</span>
+                                </div>
+                            </div>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+
+                <div class="drawer-footer">{{ ns.done }} of 5 years collected</div>
+            </section>
+        {% endfor %}
+    </div>
+</aside>
+
+<script>
+(function(){
+    const drawer = document.getElementById('ww1Drawer');
+    const backdrop = document.getElementById('ww1Backdrop');
+    const closeBtn = document.getElementById('drawerClose');
+    const title = document.getElementById('drawerTitle');
+    const meta = document.getElementById('drawerMeta');
+    const panels = Array.from(document.querySelectorAll('.country-panel'));
+
+    function openCountry(country){
+        let active = null;
+
+        panels.forEach(panel => {
+            const on = panel.dataset.panel === country;
+            panel.classList.toggle('active', on);
+            if(on) active = panel;
+        });
+
+        if(!active) return;
+
+        title.textContent = country;
+        meta.textContent = active.dataset.count + ' / 5 years collected';
+        drawer.classList.add('open');
+        backdrop.classList.add('open');
+        drawer.setAttribute('aria-hidden','false');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeDrawer(){
+        drawer.classList.remove('open');
+        backdrop.classList.remove('open');
+        drawer.setAttribute('aria-hidden','true');
+        document.body.style.overflow = '';
+    }
+
+    document.querySelectorAll('.map-country-hit,.card-country-hit,.ww1-country-open').forEach(btn => {
+        btn.addEventListener('click', () => openCountry(btn.dataset.country));
+    });
+
+    closeBtn.addEventListener('click', closeDrawer);
+    backdrop.addEventListener('click', closeDrawer);
+
+    document.addEventListener('keydown', e => {
+        if(e.key === 'Escape') closeDrawer();
+    });
+})();
+</script>
+
+{% endblock %}

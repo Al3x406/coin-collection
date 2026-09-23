@@ -1,0 +1,724 @@
+{% extends "base.html" %}
+{% block title %}Home · My Coin Collection{% endblock %}
+
+{% block content %}
+
+<style>
+.private-value-mask{cursor:default!important}
+.private-value-joke{font-size:clamp(.95rem,1.4vw,1.15rem)!important;line-height:1.25}
+.private-value-sub{margin-top:6px;color:#a9926c;font-size:.64rem;letter-spacing:.08em;text-transform:uppercase}
+</style>
+
+
+<style>
+.direct-home-value-link{
+    display:block;
+    color:inherit !important;
+    text-decoration:none !important;
+    cursor:pointer;
+}
+.direct-home-value-link:hover{
+    color:inherit !important;
+    text-decoration:none !important;
+    border-color:#b98945 !important;
+    box-shadow:0 0 0 1px rgba(202,157,74,.15);
+}
+</style>
+
+
+<style>
+/* HOME VALUE DOM FIX */
+.home-value-breakdown-fixed{
+    display:flex;
+    justify-content:center;
+    gap:12px;
+    flex-wrap:wrap;
+    margin-top:7px;
+    color:#9d907d;
+    font-size:.67rem;
+    line-height:1.25;
+}
+.home-value-breakdown-fixed span{white-space:nowrap}
+.home-value-breakdown-fixed b{
+    margin-left:4px;
+    color:#d5a959;
+    font-weight:800;
+}
+</style>
+
+{% if is_owner %}
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const label = Array.from(document.querySelectorAll("body *")).find(function (el) {
+        return (
+            el.children.length === 0 &&
+            (el.textContent || "").trim().toLowerCase() === "estimated collection value"
+        );
+    });
+
+    if (!label) return;
+
+    let card = label.parentElement;
+
+    while (card && card !== document.body) {
+        const txt = (card.textContent || "");
+        if (/\$[\d,]+(?:\.\d{2})?/.test(txt)) {
+            break;
+        }
+        card = card.parentElement;
+    }
+
+    if (!card || card === document.body) return;
+    if (card.querySelector(".home-value-breakdown-fixed")) return;
+
+    const breakdown = document.createElement("div");
+    breakdown.className = "home-value-breakdown-fixed";
+    breakdown.innerHTML =
+        '<span>Coins <b>${{ "{:,.2f}".format(coin_estimated_value) }}</b></span>' +
+        '<span>Cabinet <b>${{ "{:,.2f}".format(artifact_estimated_value) }}</b></span>';
+
+    card.appendChild(breakdown);
+});
+</script>
+{% endif %}
+
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+
+<style>
+body{
+    background:
+        linear-gradient(rgba(5,6,6,.50),rgba(5,6,6,.72)),
+        url("{{ url_for('static', filename='coin_dashboard_background.png') }}")
+        center top / cover fixed no-repeat;
+    color:#eee7dc;
+}
+.container{max-width:1380px}
+.home-dashboard{
+    --gold:#e2b85f;
+    --gold2:#b78332;
+    --panel:rgba(8,10,10,.94);
+    --border:rgba(225,177,82,.34);
+    padding:26px 0 54px;
+}
+
+/* HERO */
+.home-hero{
+    position:relative;
+    overflow:hidden;
+    min-height:300px;
+    margin-bottom:18px;
+    border:1px solid #7d5928;
+    border-radius:18px;
+    background:
+        linear-gradient(90deg,rgba(7,8,8,.88),rgba(7,8,8,.52) 52%,rgba(7,8,8,.77)),
+        url("{{ url_for('static', filename='gallery_art/home_hero.png') }}") center/cover no-repeat;
+    box-shadow:0 18px 36px rgba(0,0,0,.26),inset 0 0 65px rgba(0,0,0,.3);
+}
+.home-hero-content{
+    position:relative;
+    z-index:2;
+    min-height:300px;
+    display:grid;
+    grid-template-columns:minmax(0,1fr) 260px;
+    align-items:center;
+    gap:24px;
+    padding:34px 38px;
+}
+.hero-kicker{
+    color:#d9aa50;
+    text-transform:uppercase;
+    letter-spacing:.2em;
+    font-size:.7rem;
+    font-weight:900;
+}
+.hero-title{
+    margin:7px 0 9px;
+    color:#f2cd7b;
+    font-family:Georgia,serif;
+    font-size:clamp(2.8rem,5vw,4.8rem);
+    line-height:.98;
+}
+.hero-copy{
+    color:#c2b6a2;
+    max-width:720px;
+    font-size:1rem;
+    line-height:1.6;
+}
+.hero-stats{
+    display:flex;
+    gap:9px;
+    flex-wrap:wrap;
+    margin-top:18px;
+}
+.hero-pill{
+    padding:8px 11px;
+    border:1px solid #664b24;
+    border-radius:999px;
+    background:rgba(8,9,9,.75);
+    color:#d4aa60;
+    font-size:.75rem;
+}
+.hero-value{
+    padding:20px;
+    border:1px solid #815d2a;
+    border-radius:13px;
+    background:rgba(7,8,8,.87);
+    text-align:center;
+}
+.hero-value-label{
+    color:#8f806c;
+    text-transform:uppercase;
+    letter-spacing:.15em;
+    font-size:.58rem;
+}
+.hero-value-number{
+    margin-top:6px;
+    color:#f3cf7d;
+    font-family:Georgia,serif;
+    font-size:2rem;
+}
+
+/* SET PREVIEWS */
+.section-head{
+    display:flex;
+    align-items:end;
+    justify-content:space-between;
+    gap:16px;
+    margin:24px 0 12px;
+}
+.section-head h2{
+    margin:0;
+    color:#f0cb7c;
+    font-family:Georgia,serif;
+    font-size:1.45rem;
+}
+.section-head p{
+    margin:3px 0 0;
+    color:#8f897f;
+    font-size:.84rem;
+}
+.goal-grid{
+    display:grid;
+    grid-template-columns:repeat(3,minmax(0,1fr));
+    gap:14px;
+}
+.goal-card{
+    display:block;
+    overflow:hidden;
+    min-height:190px;
+    border:1px solid #493820;
+    border-radius:14px;
+    background:#0b0d0d;
+    color:inherit;
+    text-decoration:none;
+}
+.goal-card:hover{color:inherit;border-color:#9a6e31;transform:translateY(-2px)}
+.goal-art{
+    height:92px;
+    border-bottom:1px solid #382b1b;
+    background-position:center;
+    background-size:cover;
+}
+.goal-ww2 .goal-art{
+    background:
+        linear-gradient(90deg,rgba(7,8,8,.34),rgba(7,8,8,.20)),
+        url("{{ url_for('static', filename='ww2_final/major_allied_banner.png') }}") center/cover no-repeat;
+}
+.goal-timeline .goal-art{
+    background:
+        linear-gradient(90deg,rgba(7,8,8,.18),rgba(7,8,8,.15)),
+        url("{{ url_for('static', filename='gallery_art/timeline_cover.png') }}") center/cover no-repeat;
+}
+.goal-world .goal-art{
+    background:
+        linear-gradient(90deg,rgba(7,8,8,.12),rgba(7,8,8,.18)),
+        url("{{ url_for('static', filename='gallery_art/world_cover.png') }}") center/cover no-repeat;
+}
+.goal-body{padding:14px 15px 15px}
+.goal-title{
+    color:#e9c170;
+    font-family:Georgia,serif;
+    font-size:1.08rem;
+    font-weight:700;
+}
+.goal-progress-top{
+    display:flex;
+    justify-content:space-between;
+    gap:10px;
+    margin:10px 0 6px;
+    color:#c89d50;
+    font-size:.73rem;
+    font-weight:800;
+}
+.progress-track{
+    height:7px;
+    overflow:hidden;
+    border:1px solid #59431f;
+    border-radius:999px;
+    background:#1b1813;
+}
+.progress-track span{
+    display:block;
+    height:100%;
+    background:linear-gradient(90deg,#ac7524,#e4bc67);
+}
+
+/* MAP */
+.panel{
+    border:1px solid var(--border);
+    border-radius:15px;
+    background:linear-gradient(145deg,rgba(8,10,10,.96),rgba(11,13,13,.93));
+    box-shadow:0 14px 34px rgba(0,0,0,.22);
+}
+.panel-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:14px;
+    padding:16px 18px 0;
+}
+.panel-title{
+    margin:0;
+    color:#fff7e9;
+    font-family:Georgia,serif;
+    font-size:1.28rem;
+}
+.gold-button{
+    color:#e8bb61;
+    border:1px solid #a8782d;
+    background:transparent;
+}
+.gold-button:hover{color:#111;background:#e0b45d;border-color:#e0b45d}
+.map-panel{margin-top:16px}
+.map-wrap{
+    position:relative;
+    margin:14px 16px 16px;
+    overflow:hidden;
+    border:1px solid rgba(225,177,82,.18);
+    border-radius:11px;
+    background:#071015;
+}
+#dashboard-map{height:420px;width:100%}
+.map-overlay{
+    position:absolute;
+    left:16px;
+    bottom:16px;
+    z-index:500;
+    padding:11px 13px;
+    border:1px solid rgba(225,177,82,.22);
+    border-radius:10px;
+    background:rgba(7,9,9,.84);
+    backdrop-filter:blur(5px);
+}
+.map-count{
+    color:#fff;
+    font-family:Georgia,serif;
+    font-size:2.3rem;
+}
+.map-copy{color:#c6beb1;font-size:.8rem}
+
+/* FEATURE + HIGHLIGHTS */
+.lower-grid{
+    display:grid;
+    grid-template-columns:1.25fr .75fr;
+    gap:16px;
+    margin-top:16px;
+}
+.featured-body{
+    display:grid;
+    grid-template-columns:240px 1fr;
+    gap:22px;
+    align-items:center;
+    padding:18px;
+}
+.featured-image-wrap{
+    height:240px;
+    display:grid;
+    place-items:center;
+    overflow:hidden;
+    border:1px solid rgba(225,177,82,.25);
+    border-radius:10px;
+    background:#171717;
+}
+.featured-image{width:100%;height:100%;object-fit:contain}
+.featured-name{
+    color:#fff8ed;
+    font-family:Georgia,serif;
+    font-size:1.7rem;
+    line-height:1.15;
+}
+.featured-meta{margin:8px 0 14px;color:#cfc5b6}
+.featured-detail{margin-bottom:7px;color:#ddd5c9}
+.featured-detail strong{color:#e8bd68}
+
+.highlights{
+    display:grid;
+    gap:10px;
+    padding:16px;
+}
+.highlight{
+    padding:14px;
+    border:1px solid #3c3021;
+    border-radius:10px;
+    background:#0b0d0c;
+}
+.highlight-label{
+    color:#877c6d;
+    text-transform:uppercase;
+    letter-spacing:.13em;
+    font-size:.58rem;
+}
+.highlight-main{
+    margin-top:4px;
+    color:#e7bd6d;
+    font-family:Georgia,serif;
+    font-size:1.05rem;
+}
+.highlight-sub{
+    margin-top:3px;
+    color:#9f978b;
+    font-size:.75rem;
+}
+
+/* RECENT */
+.recent-panel{margin-top:16px;padding-bottom:16px}
+.recent-strip{
+    display:grid;
+    grid-template-columns:repeat(6,minmax(0,1fr));
+    gap:10px;
+    padding:16px 18px 0;
+}
+.recent-card{
+    display:block;
+    min-width:0;
+    padding:9px;
+    border:1px solid rgba(225,177,82,.24);
+    border-radius:10px;
+    background:#080a0a;
+    color:inherit;
+    text-decoration:none;
+}
+.recent-card:hover{color:inherit;border-color:#9e7436;transform:translateY(-2px)}
+.recent-image-wrap{
+    height:122px;
+    display:grid;
+    place-items:center;
+    overflow:hidden;
+    border-radius:7px;
+    background:#171717;
+    margin-bottom:8px;
+}
+.recent-image{width:100%;height:100%;object-fit:contain}
+.recent-name{
+    color:#fff;
+    font-weight:700;
+    font-size:.82rem;
+    line-height:1.2;
+    min-height:2.35em;
+    overflow:hidden;
+}
+.recent-meta{
+    margin-top:4px;
+    color:#a89f91;
+    font-size:.69rem;
+}
+.coin-placeholder{font-size:2.7rem}
+
+.leaflet-control-attribution{background:rgba(5,7,8,.78)!important;color:#b8b0a4!important;font-size:9px!important}
+.leaflet-control-attribution a{color:#e6b85f!important}
+.leaflet-control-zoom a{background:rgba(7,9,10,.92)!important;color:#e6b85f!important;border-color:rgba(230,184,95,.25)!important}
+.leaflet-popup-content-wrapper,.leaflet-popup-tip{background:#101213;color:#f4eee4}
+.leaflet-popup-content-wrapper{border:1px solid rgba(230,184,95,.32)}
+.map-popup-title{color:#f0c56a;font-weight:700;margin-bottom:2px}
+
+@media(max-width:1050px){
+    .goal-grid{grid-template-columns:1fr}
+    .lower-grid{grid-template-columns:1fr}
+    .recent-strip{grid-template-columns:repeat(3,1fr)}
+}
+@media(max-width:760px){
+    .home-hero-content{grid-template-columns:1fr;padding:26px 22px}
+    .featured-body{grid-template-columns:1fr}
+    .recent-strip{grid-template-columns:repeat(2,1fr)}
+    #dashboard-map{height:330px}
+}
+</style>
+
+<div class="home-dashboard">
+
+{% set ww2 = home_sets.get("ww2") %}
+{% set timeline = home_sets.get("timeline") %}
+{% set world = home_sets.get("world") %}
+
+<section class="home-hero">
+    <div class="home-hero-content">
+        <div>
+            <div class="hero-kicker">Your collection at a glance</div>
+            <h1 class="hero-title">My Coin Collection</h1>
+            <div class="hero-copy">
+                A growing archive of coins, places, eras, and stories from across the world.
+            </div>
+            <div class="hero-stats">
+                <span class="hero-pill">{{ total_coins }} total coins</span>
+                <span class="hero-pill">{{ unique_types }} unique types</span>
+                <span class="hero-pill">{{ countries_count }} countries / issuers</span>
+                <span class="hero-pill">{{ mints_count }} mints represented</span>
+            </div>
+        </div>
+
+        <!-- PRIVATE COLLECTION VALUE - HOME -->
+{% if is_owner %}
+<a class="hero-value direct-home-value-link"
+   href="{{ url_for('collection_value') }}"
+   title="Open Collection Value">
+    <div class="hero-value-label">Estimated collection value</div>
+    <div class="hero-value-number">${{ "{:,.2f}".format(estimated_value) }}</div>
+</a>
+{% else %}
+<div class="hero-value private-value-mask" title="For Al's Eyes Only">
+    <div class="hero-value-label">Estimated collection value</div>
+    <div class="hero-value-number private-value-joke">A whole bunch of money</div>
+    <div class="private-value-sub">For Al's Eyes Only</div>
+</div>
+{% endif %}
+    </div>
+</section>
+
+<div class="section-head">
+    <div>
+        <h2>Collection Goals</h2>
+        <p>Live progress from your three major collecting challenges.</p>
+    </div>
+    <a href="{{ url_for('sets') }}" class="btn btn-sm gold-button">View Gallery →</a>
+</div>
+
+<div class="goal-grid">
+    {% if ww2 %}
+    <a class="goal-card goal-ww2" href="{{ url_for('set_detail', set_id=ww2.set.id) }}">
+        <div class="goal-art"></div>
+        <div class="goal-body">
+            <div class="goal-title">World War II · 1939–1945</div>
+            <div class="goal-progress-top">
+                <span>{{ ww2.completed }} / {{ ww2.total }}</span>
+                <span>{{ ww2.percent }}%</span>
+            </div>
+            <div class="progress-track"><span style="width:{{ ww2.percent }}%"></span></div>
+        </div>
+    </a>
+    {% endif %}
+
+    {% if timeline %}
+    <a class="goal-card goal-timeline" href="{{ url_for('set_detail', set_id=timeline.set.id) }}">
+        <div class="goal-art"></div>
+        <div class="goal-body">
+            <div class="goal-title">A Coin From Every Year</div>
+            <div class="goal-progress-top">
+                <span>{{ timeline.completed }} / {{ timeline.total }}</span>
+                <span>{{ timeline.percent }}%</span>
+            </div>
+            <div class="progress-track"><span style="width:{{ timeline.percent }}%"></span></div>
+        </div>
+    </a>
+    {% endif %}
+
+    {% if world %}
+    <a class="goal-card goal-world" href="{{ url_for('set_detail', set_id=world.set.id) }}">
+        <div class="goal-art"></div>
+        <div class="goal-body">
+            <div class="goal-title">Around the World</div>
+            <div class="goal-progress-top">
+                <span>{{ world.completed }} / {{ world.total }}</span>
+                <span>{{ world.percent }}%</span>
+            </div>
+            <div class="progress-track"><span style="width:{{ world.percent }}%"></span></div>
+        </div>
+    </a>
+    {% endif %}
+</div>
+
+<section class="panel map-panel">
+    <div class="panel-header">
+        <h2 class="panel-title">Your Collection Map</h2>
+        <a href="{{ url_for('globe') }}" class="btn btn-sm gold-button">Explore the Globe →</a>
+    </div>
+    <div class="map-wrap">
+        <div id="dashboard-map"></div>
+        <div class="map-overlay">
+            <div><span class="map-count">{{ countries_count }}</span><span class="map-copy"> countries / issuers represented</span></div>
+            <div class="map-copy">{{ collection_mint_points|length }} mapped collection mints</div>
+        </div>
+    </div>
+</section>
+
+<div class="lower-grid">
+    <section class="panel">
+        <div class="panel-header">
+            <h2 class="panel-title">Featured Coin</h2>
+            {% if featured_coin %}
+            <a href="{{ url_for('coin_detail', coin_id=featured_coin.id) }}" class="btn btn-sm gold-button">View Coin →</a>
+            {% endif %}
+        </div>
+
+        {% if featured_coin %}
+        <div class="featured-body">
+            <div class="featured-image-wrap">
+                {% if featured_coin.obverse_image %}
+                    <img class="featured-image" src="{{ featured_coin.obverse_image }}" alt="{{ featured_coin.name }}">
+                {% elif featured_coin.reverse_image %}
+                    <img class="featured-image" src="{{ featured_coin.reverse_image }}" alt="{{ featured_coin.name }}">
+                {% elif featured_coin.personal_obverse_image %}
+                    <img class="featured-image" src="{{ url_for('static', filename='uploads/coins/' ~ featured_coin.personal_obverse_image) }}" alt="{{ featured_coin.name }}">
+                {% elif featured_coin.personal_reverse_image %}
+                    <img class="featured-image" src="{{ url_for('static', filename='uploads/coins/' ~ featured_coin.personal_reverse_image) }}" alt="{{ featured_coin.name }}">
+                {% else %}
+                    <div class="coin-placeholder">🪙</div>
+                {% endif %}
+            </div>
+            <div>
+                <div class="featured-name">{{ featured_coin.name }}</div>
+                <div class="featured-meta">
+                    {% if featured_coin.year is not none %}{{ featured_coin.year }}{% endif %}
+                    {% if featured_coin.year is not none and featured_coin.country %} · {% endif %}
+                    {{ featured_coin.country or '' }}
+                </div>
+                {% if featured_coin.denomination %}<div class="featured-detail"><strong>Denomination:</strong> {{ featured_coin.denomination }}</div>{% endif %}
+                {% if featured_coin.mint_record %}<div class="featured-detail"><strong>Mint:</strong> {{ featured_coin.mint_record.name }}</div>{% elif featured_coin.mint %}<div class="featured-detail"><strong>Mint:</strong> {{ featured_coin.mint }}</div>{% endif %}
+                {% if featured_coin.mintage %}<div class="featured-detail"><strong>Mintage:</strong> {{ "{:,}".format(featured_coin.mintage) }}</div>{% endif %}
+            </div>
+        </div>
+        {% endif %}
+    </section>
+
+    <section class="panel">
+        <div class="panel-header"><h2 class="panel-title">Collection Highlights</h2></div>
+        <div class="highlights">
+            <div class="highlight">
+                <div class="highlight-label">Oldest coin</div>
+                <div class="highlight-main">
+                    {% if oldest_coin %}{{ oldest_coin.year }} · {{ oldest_coin.name }}{% else %}—{% endif %}
+                </div>
+                <div class="highlight-sub">{{ oldest_coin.country if oldest_coin else '' }}</div>
+            </div>
+            <div class="highlight">
+                <div class="highlight-label">Newest coin</div>
+                <div class="highlight-main">
+                    {% if newest_coin %}{{ newest_coin.year }} · {{ newest_coin.name }}{% else %}—{% endif %}
+                </div>
+                <div class="highlight-sub">{{ newest_coin.country if newest_coin else '' }}</div>
+            </div>
+            <div class="highlight">
+                <div class="highlight-label">Highest estimated value</div>
+                <div class="highlight-main">
+                    {% if most_valuable_coin %}{{ most_valuable_coin.name }}{% else %}—{% endif %}
+                </div>
+                <div class="highlight-sub">
+                    {% if most_valuable_coin and most_valuable_coin.estimated_value is not none %}
+                        ${{ "{:,.2f}".format(most_valuable_coin.estimated_value) }}
+                    {% endif %}
+                </div>
+            </div>
+            <div class="highlight">
+                <div class="highlight-label">Mapped mints</div>
+                <div class="highlight-main">{{ collection_mint_points|length }}</div>
+                <div class="highlight-sub">Visible on your collection map</div>
+            </div>
+        </div>
+    </section>
+</div>
+
+<section class="panel recent-panel">
+    <div class="panel-header">
+        <h2 class="panel-title">Recently Added</h2>
+        <a href="{{ url_for('coins') }}" class="btn btn-sm gold-button">View Collection →</a>
+    </div>
+
+    <div class="recent-strip">
+        {% for coin in recent_coins %}
+        <a href="{{ url_for('coin_detail', coin_id=coin.id) }}" class="recent-card">
+            <div class="recent-image-wrap">
+                {% if coin.obverse_image %}
+                    <img class="recent-image" src="{{ coin.obverse_image }}" alt="{{ coin.name }}">
+                {% elif coin.reverse_image %}
+                    <img class="recent-image" src="{{ coin.reverse_image }}" alt="{{ coin.name }}">
+                {% elif coin.personal_obverse_image %}
+                    <img class="recent-image" src="{{ url_for('static', filename='uploads/coins/' ~ coin.personal_obverse_image) }}" alt="{{ coin.name }}">
+                {% elif coin.personal_reverse_image %}
+                    <img class="recent-image" src="{{ url_for('static', filename='uploads/coins/' ~ coin.personal_reverse_image) }}" alt="{{ coin.name }}">
+                {% else %}
+                    <div class="coin-placeholder">🪙</div>
+                {% endif %}
+            </div>
+            <div class="recent-name">{{ coin.name }}</div>
+            <div class="recent-meta">
+                {% if coin.year is not none %}{{ coin.year }}{% endif %}
+                {% if coin.year is not none and coin.country %} · {% endif %}
+                {{ coin.country or '' }}
+            </div>
+        </a>
+        {% endfor %}
+    </div>
+</section>
+
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+const collectionMintPoints = {{ collection_mint_points | tojson }};
+
+function initializeCollectionMap(){
+    const host = document.getElementById("dashboard-map");
+    if(!host || typeof L === "undefined" || host._leaflet_id) return;
+
+    const map = L.map(host,{
+        zoomControl:true,
+        attributionControl:true,
+        worldCopyJump:true,
+        preferCanvas:true
+    });
+
+    L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png",{
+        maxZoom:19,
+        attribution:"&copy; OpenStreetMap contributors"
+    }).addTo(map);
+
+    const bounds=[];
+
+    for(const mint of collectionMintPoints){
+        const lat=Number(mint.lat);
+        const lng=Number(mint.lng);
+        if(!Number.isFinite(lat)||!Number.isFinite(lng)) continue;
+
+        const marker=L.circleMarker([lat,lng],{
+            radius:6,
+            color:"#ffe0a0",
+            weight:1.5,
+            fillColor:"#e6b85f",
+            fillOpacity:.95
+        }).addTo(map);
+
+        marker.bindPopup(
+            '<div class="map-popup-title">' + (mint.name || 'Unknown mint') + '</div>' +
+            (mint.country ? '<div>' + mint.country + '</div>' : '')
+        );
+
+        bounds.push([lat,lng]);
+    }
+
+    function fit(){
+        map.invalidateSize(true);
+        if(bounds.length===1) map.setView(bounds[0],4);
+        else if(bounds.length>1) map.fitBounds(bounds,{padding:[32,32],maxZoom:4});
+        else map.setView([20,0],1);
+    }
+
+    requestAnimationFrame(()=>requestAnimationFrame(fit));
+    setTimeout(fit,250);
+    setTimeout(fit,700);
+    window.addEventListener("resize",()=>map.invalidateSize(true));
+}
+
+window.addEventListener("load",()=>setTimeout(initializeCollectionMap,100));
+</script>
+
+{% endblock %}

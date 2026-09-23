@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}Preset Sets - My Coin Collection{% endblock %}
+{% block content %}
+<style>
+body{background:#07090a!important;color:#eee8dc}
+.ps{max-width:1180px;margin:0 auto;padding:34px 18px 60px}
+.back{color:#dcae55;text-decoration:none;font-weight:800}
+.ps h1{font-family:Georgia,serif;color:#fff;font-size:2.6rem;margin:12px 0 7px}
+.intro{color:#9f998f;max-width:760px;margin-bottom:25px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:18px}
+.card{background:#0d0f10;border:1px solid #302a20;border-radius:16px;padding:21px;color:#eee8dc}
+.category{display:inline-block;color:#dcae55;border:1px solid #5c4826;border-radius:999px;padding:4px 9px;font-size:.74rem;text-transform:uppercase;letter-spacing:.09em}
+.card h2{font-family:Georgia,serif;color:#fff;font-size:1.45rem;margin:13px 0 7px}
+.card p{color:#9f998f;line-height:1.45;min-height:64px}.slots{color:#dcae55;font-weight:800;margin:13px 0}
+.start{border:1px solid #dcae55;background:#dcae55;color:#16120b;border-radius:8px;padding:9px 13px;font-weight:800;cursor:pointer}
+.owner-note{color:#777;font-size:.86rem}
+</style>
+
+<div class="ps">
+  <a class="back" href="{{ url_for('sets') }}">← All Sets</a>
+  <h1>Preset Sets</h1>
+  <div class="intro">These are collector-style starter formats. Starting one creates a slot for each target. Coins you already own fill automatically; missing pieces appear as dim coin shadows.</div>
+
+  <div class="grid">
+    {% for preset in presets %}
+    <div class="card">
+      <span class="category">{{ preset.category }}</span>
+      <h2>{{ preset.name }}</h2>
+      <p>{{ preset.description }}</p>
+      <div class="slots">{{ preset.slot_count }} slots</div>
+
+      {% if is_owner %}
+      <form method="post" action="{{ url_for('start_preset_set', slug=preset.slug) }}">
+        <button class="start" type="submit">Start This Set</button>
+      </form>
+      {% else %}
+      <div class="owner-note">Owner Mode is required to start a preset.</div>
+      {% endif %}
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

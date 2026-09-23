@@ -1,0 +1,528 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Artifact Photo{% endblock %}
+
+{% block content %}
+<style>
+  .artifact-editor-wrap{
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  .artifact-editor-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    gap:1rem;
+    margin-bottom:1.5rem;
+  }
+
+  .artifact-editor-kicker{
+    font-size:.78rem;
+    letter-spacing:.14em;
+    text-transform:uppercase;
+    color:#c79a32;
+    font-weight:700;
+  }
+
+  .artifact-editor-title{
+    font-size:2.4rem;
+    line-height:1.05;
+    margin:.15rem 0 .35rem;
+    color:#f0c66c;
+    font-weight:700;
+  }
+
+  .artifact-editor-subtitle{
+    color:#b9a78a;
+  }
+
+  .artifact-editor-layout{
+    display:grid;
+    grid-template-columns: minmax(0, 760px) 320px;
+    gap:1rem;
+    align-items:start;
+  }
+
+  .artifact-editor-card,
+  .artifact-editor-controls{
+    background:#0d0d0f;
+    border:1px solid rgba(208,151,39,.35);
+    border-radius:18px;
+    box-shadow:0 12px 34px rgba(0,0,0,.35);
+  }
+
+  .artifact-editor-card{
+    padding:1rem;
+  }
+
+  .editor-stage{
+    width:100%;
+    aspect-ratio:1/1;
+    position:relative;
+    overflow:hidden;
+    border-radius:14px;
+    background:#000;
+    border:1px solid rgba(208,151,39,.25);
+    user-select:none;
+    touch-action:none;
+  }
+
+  .editor-stage img{
+    position:absolute;
+    transform-origin:top left;
+    pointer-events:none;
+  }
+
+  .crop-box{
+    position:absolute;
+    border:3px solid rgba(244,196,74,.95);
+    box-shadow:0 0 0 9999px rgba(0,0,0,.62);
+    cursor:move;
+  }
+
+  .crop-box.circle{
+    border-radius:50%;
+  }
+
+  .crop-box.square{
+    border-radius:0;
+  }
+
+  .handle{
+    position:absolute;
+    width:16px;
+    height:16px;
+    background:#f0c66c;
+    border:2px solid #111;
+    border-radius:50%;
+    box-shadow:0 0 0 2px rgba(0,0,0,.18);
+  }
+
+  .handle.nw{ left:-8px; top:-8px; cursor:nwse-resize; }
+  .handle.ne{ right:-8px; top:-8px; cursor:nesw-resize; }
+  .handle.sw{ left:-8px; bottom:-8px; cursor:nesw-resize; }
+  .handle.se{ right:-8px; bottom:-8px; cursor:nwse-resize; }
+
+  .handle.n{ top:-8px; left:50%; transform:translateX(-50%); cursor:ns-resize; }
+  .handle.s{ bottom:-8px; left:50%; transform:translateX(-50%); cursor:ns-resize; }
+  .handle.w{ left:-8px; top:50%; transform:translateY(-50%); cursor:ew-resize; }
+  .handle.e{ right:-8px; top:50%; transform:translateY(-50%); cursor:ew-resize; }
+
+  .artifact-editor-controls{
+    padding:1rem;
+  }
+
+  .control-label{
+    display:block;
+    font-size:.78rem;
+    font-weight:700;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    color:#f0c66c;
+    margin-bottom:.45rem;
+  }
+
+  .guide-switch{
+    display:flex;
+    gap:.6rem;
+    margin-bottom:1rem;
+  }
+
+  .guide-btn{
+    flex:1;
+    border:1px solid rgba(208,151,39,.45);
+    background:transparent;
+    color:#f0c66c;
+    border-radius:10px;
+    padding:.7rem .9rem;
+    font-weight:700;
+    cursor:pointer;
+  }
+
+  .guide-btn.active{
+    background:#d9ab4f;
+    color:#16120b;
+  }
+
+  .mini-note{
+    color:#b9a78a;
+    font-size:.9rem;
+    line-height:1.45;
+    margin-bottom:1rem;
+  }
+
+  .editor-actions{
+    display:grid;
+    gap:.75rem;
+    margin-top:1rem;
+  }
+
+  .btn-gold{
+    display:inline-flex;
+    justify-content:center;
+    align-items:center;
+    text-decoration:none;
+    border:none;
+    border-radius:10px;
+    padding:.9rem 1rem;
+    font-weight:700;
+    cursor:pointer;
+  }
+
+  .btn-gold.primary{
+    background:#d9ab4f;
+    color:#16120b;
+  }
+
+  .btn-gold.secondary{
+    background:transparent;
+    color:#f0c66c;
+    border:1px solid rgba(208,151,39,.45);
+  }
+
+  .editor-footer-meta{
+    margin-top:1rem;
+    color:#8f8069;
+    font-size:.88rem;
+  }
+
+  @media (max-width: 1000px){
+    .artifact-editor-layout{
+      grid-template-columns:1fr;
+    }
+  }
+</style>
+
+<div class="artifact-editor-wrap">
+  <div class="artifact-editor-header">
+    <div>
+      <div class="artifact-editor-kicker">Owner Photo Tools</div>
+      <h1 class="artifact-editor-title">Edit Artifact Photo</h1>
+      <div class="artifact-editor-subtitle">
+        {{ artifact.name }}
+        {% if artifact.year_text %} · {{ artifact.year_text }}{% endif %}
+      </div>
+    </div>
+
+    <a class="btn-gold secondary" href="{{ url_for('artifact_detail', artifact_id=artifact.id) }}">
+      Cancel
+    </a>
+  </div>
+
+  <form method="post" class="artifact-editor-layout" id="artifactEditorForm">
+    <div class="artifact-editor-card">
+      <div class="editor-stage" id="editorStage">
+        <img id="editorImage" src="{{ image_url }}" alt="Artifact photo">
+
+        <div class="crop-box square" id="cropBox">
+          <div class="handle nw" data-handle="nw"></div>
+          <div class="handle ne" data-handle="ne"></div>
+          <div class="handle sw" data-handle="sw"></div>
+          <div class="handle se" data-handle="se"></div>
+          <div class="handle n" data-handle="n"></div>
+          <div class="handle s" data-handle="s"></div>
+          <div class="handle w" data-handle="w"></div>
+          <div class="handle e" data-handle="e"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="artifact-editor-controls">
+      <label class="control-label">Guide Shape</label>
+      <div class="guide-switch">
+        <button type="button" class="guide-btn active" id="squareBtn">Square</button>
+        <button type="button" class="guide-btn" id="circleBtn">Circle</button>
+      </div>
+
+      <div class="mini-note">
+        Drag the crop box. Grab the <strong>sides</strong> or the <strong>corners</strong>
+        to resize it. Square gives a normal square crop. Circle gives a circular crop
+        with a black background around it.
+      </div>
+
+      <div class="editor-actions">
+        <button type="button" class="btn-gold secondary" id="resetBtn">Reset</button>
+        <button type="submit" class="btn-gold primary">Save Photo</button>
+      </div>
+
+      <div class="editor-footer-meta">
+        Source file: {{ source_filename }}
+      </div>
+    </div>
+
+    <input type="hidden" name="crop_x" id="crop_x">
+    <input type="hidden" name="crop_y" id="crop_y">
+    <input type="hidden" name="crop_size" id="crop_size">
+    <input type="hidden" name="guide_shape" id="guide_shape" value="square">
+  </form>
+</div>
+
+<script>
+(function(){
+  const stage = document.getElementById("editorStage");
+  const img = document.getElementById("editorImage");
+  const cropBox = document.getElementById("cropBox");
+
+  const cropXInput = document.getElementById("crop_x");
+  const cropYInput = document.getElementById("crop_y");
+  const cropSizeInput = document.getElementById("crop_size");
+  const guideShapeInput = document.getElementById("guide_shape");
+
+  const squareBtn = document.getElementById("squareBtn");
+  const circleBtn = document.getElementById("circleBtn");
+  const resetBtn = document.getElementById("resetBtn");
+
+  const state = {
+    naturalW: 0,
+    naturalH: 0,
+    renderX: 0,
+    renderY: 0,
+    renderW: 0,
+    renderH: 0,
+    cropX: 0,
+    cropY: 0,
+    cropSize: 100,
+    dragging: false,
+    resizing: false,
+    handle: null,
+    pointerStartX: 0,
+    pointerStartY: 0,
+    startCropX: 0,
+    startCropY: 0,
+    startCropSize: 0,
+    guideShape: "square"
+  };
+
+  function fitImage() {
+    const stageRect = stage.getBoundingClientRect();
+    const stageW = stageRect.width;
+    const stageH = stageRect.height;
+
+    const naturalW = img.naturalWidth;
+    const naturalH = img.naturalHeight;
+
+    state.naturalW = naturalW;
+    state.naturalH = naturalH;
+
+    const scale = Math.min(stageW / naturalW, stageH / naturalH);
+    state.renderW = naturalW * scale;
+    state.renderH = naturalH * scale;
+    state.renderX = (stageW - state.renderW) / 2;
+    state.renderY = (stageH - state.renderH) / 2;
+
+    img.style.left = state.renderX + "px";
+    img.style.top = state.renderY + "px";
+    img.style.width = state.renderW + "px";
+    img.style.height = state.renderH + "px";
+  }
+
+  function resetCrop() {
+    const size = Math.min(state.renderW, state.renderH) * 0.82;
+    state.cropSize = size;
+    state.cropX = state.renderX + (state.renderW - size) / 2;
+    state.cropY = state.renderY + (state.renderH - size) / 2;
+    draw();
+  }
+
+  function clampCrop() {
+    const minSize = 60;
+    const maxSize = Math.min(state.renderW, state.renderH);
+
+    if (state.cropSize < minSize) state.cropSize = minSize;
+    if (state.cropSize > maxSize) state.cropSize = maxSize;
+
+    if (state.cropX < state.renderX) state.cropX = state.renderX;
+    if (state.cropY < state.renderY) state.cropY = state.renderY;
+
+    const maxX = state.renderX + state.renderW - state.cropSize;
+    const maxY = state.renderY + state.renderH - state.cropSize;
+
+    if (state.cropX > maxX) state.cropX = maxX;
+    if (state.cropY > maxY) state.cropY = maxY;
+  }
+
+  function draw() {
+    clampCrop();
+
+    cropBox.style.left = state.cropX + "px";
+    cropBox.style.top = state.cropY + "px";
+    cropBox.style.width = state.cropSize + "px";
+    cropBox.style.height = state.cropSize + "px";
+
+    cropBox.classList.toggle("circle", state.guideShape === "circle");
+    cropBox.classList.toggle("square", state.guideShape === "square");
+
+    squareBtn.classList.toggle("active", state.guideShape === "square");
+    circleBtn.classList.toggle("active", state.guideShape === "circle");
+    guideShapeInput.value = state.guideShape;
+
+    const scaleX = state.naturalW / state.renderW;
+    const scaleY = state.naturalH / state.renderH;
+
+    const realX = (state.cropX - state.renderX) * scaleX;
+    const realY = (state.cropY - state.renderY) * scaleY;
+    const realSize = state.cropSize * scaleX;
+
+    cropXInput.value = Math.round(realX);
+    cropYInput.value = Math.round(realY);
+    cropSizeInput.value = Math.round(realSize);
+  }
+
+  function pointerPos(evt) {
+    const rect = stage.getBoundingClientRect();
+    return {
+      x: evt.clientX - rect.left,
+      y: evt.clientY - rect.top
+    };
+  }
+
+  function startMove(evt) {
+    evt.preventDefault();
+    const pos = pointerPos(evt);
+
+    state.dragging = true;
+    state.resizing = false;
+    state.handle = null;
+    state.pointerStartX = pos.x;
+    state.pointerStartY = pos.y;
+    state.startCropX = state.cropX;
+    state.startCropY = state.cropY;
+    state.startCropSize = state.cropSize;
+  }
+
+  function startResize(evt, handle) {
+    evt.preventDefault();
+    evt.stopPropagation();
+
+    const pos = pointerPos(evt);
+
+    state.dragging = false;
+    state.resizing = true;
+    state.handle = handle;
+    state.pointerStartX = pos.x;
+    state.pointerStartY = pos.y;
+    state.startCropX = state.cropX;
+    state.startCropY = state.cropY;
+    state.startCropSize = state.cropSize;
+  }
+
+  function doMove(evt) {
+    const pos = pointerPos(evt);
+    const dx = pos.x - state.pointerStartX;
+    const dy = pos.y - state.pointerStartY;
+
+    if (state.dragging) {
+      state.cropX = state.startCropX + dx;
+      state.cropY = state.startCropY + dy;
+      draw();
+      return;
+    }
+
+    if (!state.resizing) return;
+
+    const left = state.startCropX;
+    const top = state.startCropY;
+    const right = state.startCropX + state.startCropSize;
+    const bottom = state.startCropY + state.startCropSize;
+
+    let newLeft = left;
+    let newTop = top;
+    let newSize = state.startCropSize;
+
+    if (state.handle === "se") {
+      newSize = Math.max(pos.x - left, pos.y - top);
+      state.cropX = left;
+      state.cropY = top;
+      state.cropSize = newSize;
+    } else if (state.handle === "nw") {
+      newSize = Math.max(right - pos.x, bottom - pos.y);
+      state.cropX = right - newSize;
+      state.cropY = bottom - newSize;
+      state.cropSize = newSize;
+    } else if (state.handle === "ne") {
+      newSize = Math.max(pos.x - left, bottom - pos.y);
+      state.cropX = left;
+      state.cropY = bottom - newSize;
+      state.cropSize = newSize;
+    } else if (state.handle === "sw") {
+      newSize = Math.max(right - pos.x, pos.y - top);
+      state.cropX = right - newSize;
+      state.cropY = top;
+      state.cropSize = newSize;
+    } else if (state.handle === "e") {
+      newSize = pos.x - left;
+      state.cropX = left;
+      state.cropY = top;
+      state.cropSize = newSize;
+    } else if (state.handle === "w") {
+      newSize = right - pos.x;
+      state.cropX = right - newSize;
+      state.cropY = top;
+      state.cropSize = newSize;
+    } else if (state.handle === "s") {
+      newSize = pos.y - top;
+      state.cropX = left;
+      state.cropY = top;
+      state.cropSize = newSize;
+    } else if (state.handle === "n") {
+      newSize = bottom - pos.y;
+      state.cropX = left;
+      state.cropY = bottom - newSize;
+      state.cropSize = newSize;
+    }
+
+    draw();
+  }
+
+  function stopAction() {
+    state.dragging = false;
+    state.resizing = false;
+    state.handle = null;
+  }
+
+  cropBox.addEventListener("pointerdown", startMove);
+
+  cropBox.querySelectorAll(".handle").forEach(handle => {
+    handle.addEventListener("pointerdown", function(evt){
+      startResize(evt, this.dataset.handle);
+    });
+  });
+
+  window.addEventListener("pointermove", function(evt){
+    if (state.dragging || state.resizing) {
+      doMove(evt);
+    }
+  });
+
+  window.addEventListener("pointerup", stopAction);
+
+  squareBtn.addEventListener("click", function(){
+    state.guideShape = "square";
+    draw();
+  });
+
+  circleBtn.addEventListener("click", function(){
+    state.guideShape = "circle";
+    draw();
+  });
+
+  resetBtn.addEventListener("click", resetCrop);
+
+  img.addEventListener("load", function(){
+    fitImage();
+    resetCrop();
+  });
+
+  window.addEventListener("resize", function(){
+    fitImage();
+    resetCrop();
+  });
+
+  if (img.complete) {
+    fitImage();
+    resetCrop();
+  }
+})();
+</script>
+{% endblock %}

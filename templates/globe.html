@@ -1,0 +1,488 @@
+{% extends "base.html" %}
+{% block title %}Collection Geography{% endblock %}
+{% block content %}
+<style>
+:root{--g:#e6b85f;--bg:#070a0c;--p:#0d1215;--t:#f3eee5;--m:#aaa397;--b:rgba(230,184,95,.30)}
+.geo{color:var(--t);padding-bottom:28px}.geo-head{display:flex;justify-content:space-between;align-items:end;gap:15px;margin-bottom:15px}.geo-head h1{color:var(--g);margin:0}.geo-head p{color:var(--m);margin:4px 0 0}.switch{display:flex;background:#090d0f;border:1px solid var(--b);border-radius:12px;padding:4px}.switch button{border:0;border-radius:8px;padding:9px 15px;background:transparent;color:var(--m);font-weight:700}.switch button.active{background:var(--g);color:#17120a}.modebar{display:flex;gap:6px;flex-wrap:wrap;background:var(--p);border:1px solid var(--b);border-radius:14px;padding:7px;margin-bottom:10px}.modebar button{border:1px solid #51462f;border-radius:9px;padding:8px 12px;background:#090d0f;color:var(--m);font-weight:700}.modebar button.active{background:var(--g);color:#17120a}.yearbox{display:none;align-items:center;gap:10px;background:var(--p);border:1px solid var(--b);border-radius:14px;padding:10px 13px;margin-bottom:10px}.yearbox.show{display:flex}.yearbox input{flex:1;accent-color:var(--g)}.yearread{min-width:85px;color:var(--g);font-weight:700;text-align:right}.tools{display:grid;grid-template-columns:1fr auto;gap:12px;background:var(--p);border:1px solid var(--b);border-radius:14px;padding:13px;margin-bottom:14px}.search-wrap{position:relative}#countrySearch{background:#080c0e;border:1px solid #51462f;color:var(--t)}.results{display:none;position:absolute;z-index:99;top:calc(100% + 5px);left:0;right:0;max-height:280px;overflow:auto;background:#0d1215;border:1px solid var(--b);border-radius:9px}.result{padding:10px;cursor:pointer;border-bottom:1px solid #252a2d}.result:hover{color:var(--g);background:#171d20}.layer{display:flex;align-items:center;gap:8px;color:var(--m)}.layer input{accent-color:var(--g);width:18px;height:18px}.layout{display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:14px}.visual,#panel{background:var(--p);border:1px solid var(--b);border-radius:14px;overflow:hidden}.visual{position:relative;height:690px}#globe,#map{width:100%;height:100%;background:#030506}#map{display:none;position:relative}#map svg{width:100%;height:100%;display:block;touch-action:none}.country{fill:#151b1f;stroke:#495157;stroke-width:.55;vector-effect:non-scaling-stroke}.country-base{fill:#0e1417;stroke:#263137;stroke-width:.4;vector-effect:non-scaling-stroke;pointer-events:none}.country.owned{fill:#8e6a2e;stroke:#c59a4a;cursor:pointer}.country.owned:hover,.country.selected{fill:var(--g);stroke:#ffe09a;stroke-width:1.2}.badge{position:absolute;z-index:8;top:12px;left:12px;background:#080b0ddd;border:1px solid var(--b);border-radius:8px;padding:7px 10px;color:var(--m);font-size:.82rem}.tip{position:absolute;bottom:10px;left:10px;background:#080b0ddd;border-radius:7px;padding:6px 9px;color:#92928d;font-size:.76rem}.tooltip{display:none;position:absolute;z-index:10;pointer-events:none;background:#080b0df2;border:1px solid var(--b);border-radius:8px;padding:7px 9px;font-size:.84rem}#panel{height:690px;overflow:auto;padding:18px}#panel h3{color:var(--g)}.muted{color:var(--m)}.stats{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:13px 0}.stat{background:#090d0f;border:1px solid #4a3d2766;border-radius:8px;padding:9px}.stat strong{display:block;color:var(--g)}.stat span{font-size:.76rem;color:var(--m)}.history{background:#17140e;border-left:3px solid var(--g);padding:9px;margin:12px 0;color:#d5c9b5;font-size:.83rem}.coin{border-top:1px solid #ffffff18;padding-top:11px;margin-top:11px}.coin>a{color:var(--g);font-weight:700;text-decoration:none}.meta{color:var(--m);font-size:.82rem;margin:3px 0 7px}.pics{display:grid;grid-template-columns:1fr 1fr;gap:6px}.pics.one{grid-template-columns:1fr}.pics img{width:100%;aspect-ratio:1;object-fit:contain;background:#050708;border-radius:7px;border:1px solid #e6b85f22}.mint{fill:#76b7d8;stroke:#d9f3ff;stroke-width:.4;vector-effect:non-scaling-stroke}.mint.mine{fill:#ffb84d}
+@media(max-width:900px){.geo-head{flex-direction:column;align-items:stretch}.switch button{flex:1}.tools,.layout{grid-template-columns:1fr}.visual{height:500px}#panel{height:auto;max-height:700px}}
+</style>
+<div class="geo">
+ <div class="geo-head"><div><h1>Collection Geography</h1><p>Explore your collection by country and historical issuer.</p></div><div class="switch"><button id="globeBtn" class="active">🌐 Globe</button><button id="mapBtn">🗺️ Flat Map</button></div></div>
+ <div class="modebar"><button id="collectionMode" class="active">My Collection</button><button id="historyMode">Historical Countries</button><button id="mintsMode">Historical Mints</button></div><div id="yearBox" class="yearbox"><span class="muted">Year</span><input id="historyYear" type="range" min="-500" max="2026" value="1930" step="1"><span id="historyYearLabel" class="yearread">1930 AD</span><span id="snapshotLabel" class="yearread">Map snapshot: 1930 AD</span></div>
+ <div class="tools"><div class="search-wrap"><input id="countrySearch" class="form-control" placeholder="Search country or historical issuer..." autocomplete="off"><div id="results" class="results"></div></div><label class="layer"><input id="mints" type="checkbox"> Historical Mints</label></div>
+ <div class="layout"><div class="visual"><div id="badge" class="badge"></div><div id="globe"></div><div id="map"><svg id="mapSvg"></svg><div id="tooltip" class="tooltip"></div><div class="tip">Drag to move · scroll/pinch to zoom · click a gold country</div></div></div><aside id="panel"><h3>Your Collection</h3><p class="muted">Gold countries are represented in your collection. Click one to see all of your coins from that issuer.</p></aside></div>
+</div>
+<script src="https://unpkg.com/globe.gl"></script><script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+<script>
+const countries={{ country_data|tojson }}, mintData={{ mint_data|tojson }};
+const historicalEntities=countries.map(c=>c.historical_entity).filter(Boolean).filter((e,i,a)=>a.findIndex(x=>x.id===e.id)===i);
+const GEO="https://raw.githubusercontent.com/holtzy/D3-graph-gallery/master/DATA/world.geojson";
+const HIST_INDEX="/static/historical_maps/index.json";
+const ANCIENT_INDEX="/static/ancient_maps/index.json";
+
+let historicalMapIndex={version:1,maps:[]};
+let ancientMapIndex={version:1,maps:[]};
+let historicalGeo=null;
+let historicalSnapshot=null;
+let boundaryLayer="modern";
+const $=id=>document.getElementById(id), panel=$("panel"), globeEl=$("globe"), mapEl=$("map"), svg=d3.select("#mapSvg"), tooltip=$("tooltip");
+let geo=null,selected=null,view=localStorage.getItem("coinGeoView")||"globe",mode="collection";
+const norm=s=>String(s||"").trim().toLowerCase().replaceAll("&","and");
+const esc=s=>String(s??"").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;");
+const byMap=new Map(); countries.forEach(c=>(c.map_names||[]).forEach(n=>{let k=norm(n);if(!byMap.has(k))byMap.set(k,[]);byMap.get(k).push(c)}));
+$("badge").textContent=countries.length+" issuers represented";
+const issuers=f=>byMap.get(norm(f?.properties?.name))||[];
+function year(y){return y==null?"Unknown":y<0?Math.abs(y)+" BC":y===0?"1 BC / AD 1":y+" AD"}
+function usableSnapshots(index){
+  const maps=Array.isArray(index?.maps)?index.maps:[];
+  return maps
+    .filter(m=>m&&m.file&&m.start_year!=null)
+    .map(m=>({...m,_year:Number(m.start_year)}))
+    .filter(m=>Number.isFinite(m._year))
+    .sort((a,b)=>a._year-b._year);
+}
+
+function latestSnapshotAtOrBefore(index,y){
+  const usable=usableSnapshots(index);
+  if(!usable.length)return null;
+
+  let chosen=null;
+  for(const m of usable){
+    if(Number(y)>=m._year)chosen=m;
+    else break;
+  }
+  return chosen;
+}
+
+function matchingHistoricalSnapshot(y){
+  // Ancient years use the separate Cliopatria layer.
+  // 1600 and later continue using the existing OHM snapshot system.
+  if(Number(y)<1600){
+    const snap=latestSnapshotAtOrBefore(ancientMapIndex,y);
+    return snap?{...snap,_layer:"ancient"}:null;
+  }
+
+  const snap=latestSnapshotAtOrBefore(historicalMapIndex,y);
+  return snap?{...snap,_layer:"historical"}:null;
+}
+
+async function loadHistoricalIndex(){
+  try{
+    const [historicResponse,ancientResponse]=await Promise.all([
+      fetch(HIST_INDEX,{cache:"no-store"}),
+      fetch(ANCIENT_INDEX,{cache:"no-store"})
+    ]);
+
+    if(historicResponse.ok){
+      const j=await historicResponse.json();
+      historicalMapIndex=j&&Array.isArray(j.maps)?j:{version:1,maps:[]};
+    }else{
+      historicalMapIndex={version:1,maps:[]};
+    }
+
+    if(ancientResponse.ok){
+      const j=await ancientResponse.json();
+      ancientMapIndex=j&&Array.isArray(j.maps)?j:{version:1,maps:[]};
+    }else{
+      ancientMapIndex={version:1,maps:[]};
+    }
+  }catch(e){
+    historicalMapIndex={version:1,maps:[]};
+    ancientMapIndex={version:1,maps:[]};
+  }
+}
+async function loadHistoricalSnapshot(){
+  if(mode!=="history")return false;
+
+  const y=Number($("historyYear").value);
+  const snap=matchingHistoricalSnapshot(y);
+
+  if(!snap){
+    historicalGeo=null;
+    historicalSnapshot=null;
+    boundaryLayer="modern";
+    return false;
+  }
+
+  if(
+    historicalSnapshot &&
+    String(historicalSnapshot.file)===String(snap.file) &&
+    historicalGeo
+  ){
+    boundaryLayer=snap._layer||"historical";
+    return true;
+  }
+
+  try{
+    let url;
+
+    if(String(snap.file).startsWith("/")){
+      url=snap.file;
+    }else if(snap._layer==="ancient"){
+      url="/static/ancient_maps/geojson/"+snap.file;
+    }else{
+      url="/static/historical_maps/geojson/"+snap.file;
+    }
+
+    const r=await fetch(url,{cache:"no-store"});
+    if(!r.ok)throw Error("snapshot");
+
+    historicalGeo=await r.json();
+    historicalSnapshot=snap;
+    boundaryLayer=snap._layer||"historical";
+    return true;
+  }catch(e){
+    historicalGeo=null;
+    historicalSnapshot=null;
+    boundaryLayer="modern";
+    return false;
+  }
+}
+function currentGeo(){return mode==="history"&&historicalGeo?historicalGeo:geo}
+function historicalSnapshotText(){
+  if(!historicalSnapshot)return "Modern reference fallback";
+
+  const selectedYear=Number($("historyYear").value);
+  const snapYear=historicalSnapshot.start_year!=null
+    ?Number(historicalSnapshot.start_year)
+    :null;
+
+  const source=boundaryLayer==="ancient"
+    ?"Ancient layer · Cliopatria"
+    :"Historical layer · OpenHistoricalMap";
+
+  if(snapYear!=null){
+    if(selectedYear===snapYear){
+      return source+" · boundaries: "+year(snapYear);
+    }
+    return source+" · using "+year(snapYear)+" boundaries for "+year(selectedYear);
+  }
+
+  return source+" · boundary snapshot";
+}
+function updateSnapshotLabel(){
+  const el=$("snapshotLabel");
+  if(!el)return;
+  const selectedYear=Number($("historyYear").value);
+  if(historicalSnapshot&&historicalSnapshot.start_year!=null){
+    const snapYear=Number(historicalSnapshot.start_year);
+    const layerName=boundaryLayer==="ancient"?"Ancient":"Historical";
+    el.textContent="Map snapshot: "+year(snapYear)+" · "+layerName;
+    el.title=snapYear===selectedYear
+      ?layerName+" boundary snapshot matches the selected year."
+      :"Selected "+year(selectedYear)+" · using the latest installed "+layerName.toLowerCase()+" snapshot at or before that year.";
+  }else{
+    el.textContent="Map snapshot: fallback";
+    el.title="No installed historical snapshot exists for this year.";
+  }
+}
+
+function activeHistorical(){let y=Number($("historyYear").value);return historicalEntities.filter(e=>(e.start_year==null||y>=e.start_year)&&(e.end_year==null||y<=e.end_year))}
+function historicalFeatureName(f){
+  return String(
+    f?.properties?.historical_entity ||
+    f?.properties?.name ||
+    ""
+  ).trim()
+}
+
+function entityMatchesName(entity,name){
+  if(!entity)return false;
+  const n=norm(name);
+  if(!n)return false;
+
+  return (
+    norm(entity.name)===n ||
+    (entity.aliases||[]).some(x=>norm(x)===n) ||
+    (entity.map_names||[]).some(x=>norm(x)===n)
+  );
+}
+
+function historicalFor(f){
+  const name=historicalFeatureName(f);
+  return activeHistorical().filter(e=>entityMatchesName(e,name));
+}
+
+function historicalCollectionIssuers(f){
+  const featureName=historicalFeatureName(f);
+  const n=norm(featureName);
+
+  return countries.filter(c=>{
+    // Exact issuer-name match remains the strongest/simple case.
+    if(norm(c.name)===n)return true;
+
+    // The server may provide extra historical-map labels that were found
+    // in this collection's installed GeoJSON snapshots.
+    if((c.map_names||[]).some(x=>norm(x)===n))return true;
+
+    // If this coin issuer is linked to a HistoricalEntity, match the
+    // historical polygon against the entity's canonical name or aliases.
+    const entity=c.historical_entity;
+    if(entity&&entityMatchesName(entity,featureName))return true;
+
+    return false;
+  });
+}
+function historicalLabel(f){
+  let name=historicalFeatureName(f)||"Historical country";
+  let owned=historicalCollectionIssuers(f);
+  let entities=historicalFor(f);
+  let lines=[`<b>${esc(name)}</b>`];
+  if(owned.length){
+    let q=owned.reduce((s,x)=>s+(x.coin_count||0),0);
+    lines.push(`${q} coin${q===1?"":"s"} in collection`);
+  }
+  if(entities.length && !entities.some(e=>norm(e.name)===norm(name))){
+    lines.push(entities.map(e=>esc(e.name)).join("<br>"));
+  }
+  return lines.join("<br>");
+}
+function historicalCap(f){
+  if(historicalGeo){
+    return historicalCollectionIssuers(f).length?"rgba(142,106,46,.95)":"rgba(28,35,39,.96)";
+  }
+  return historicalFor(f).length?"rgba(142,106,46,.92)":"rgba(29,37,42,.90)";
+}
+function historicalStroke(f){
+  if(historicalGeo){
+    return historicalCollectionIssuers(f).length?"rgba(255,220,145,.90)":"rgba(125,139,146,.58)";
+  }
+  return historicalFor(f).length?"rgba(244,203,119,.72)":"rgba(105,118,125,.42)";
+}
+function historicalDateTextFromFeature(f){
+  let p=f?.properties||{}, a=p.start_date||"", b=p.end_date||"";
+  if(a&&b)return `${esc(a)} – ${esc(b)}`;
+  if(a)return `From ${esc(a)}`;
+  if(b)return `Through ${esc(b)}`;
+  return historicalSnapshot?historicalSnapshotText():"Date range unavailable";
+}
+function historicalCoinPanel(f,c){
+  let name=historicalFeatureName(f)||c.name;
+  let yrs=c.earliest_year==null?"Unknown":year(c.earliest_year)+(c.latest_year!==c.earliest_year?" – "+year(c.latest_year):"");
+  let h=`<h3>${esc(name)}</h3><div class="stats"><div class="stat"><strong>${c.coin_count}</strong><span>Coins</span></div><div class="stat"><strong>${c.record_count}</strong><span>Records</span></div><div class="stat"><strong>${esc(yrs)}</strong><span>Coin years</span></div><div class="stat"><strong>$${Number(c.estimated_value||0).toFixed(2)}</strong><span>Estimated value</span></div></div>`;
+  h+=`<div class="history"><b>Historical boundary active.</b> This polygon comes from the installed ${esc(historicalSnapshot?.name||"historical")} snapshot. Boundary record: ${historicalDateTextFromFeature(f)}.</div>`;
+  c.coins.forEach(x=>{
+    let o=image(x.personal_obverse_image,x.obverse_image),r=image(x.personal_reverse_image,x.reverse_image),im=[o,r].filter(Boolean);
+    let m=[x.year!=null?year(x.year):"",x.denomination||"",x.quantity>1?"Qty "+x.quantity:""].filter(Boolean).join(" · ");
+    h+=`<div class="coin"><a href="/coin/${x.id}">${esc(x.name)}</a><div class="meta">${esc(m)}</div>`+(im.length?`<div class="pics ${im.length===1?'one':''}">${im.map(u=>`<img src="${esc(u)}">`).join("")}</div>`:"")+`</div>`;
+  });
+  panel.innerHTML=h;
+}
+function showHistorical(e,f=null){
+  let dates=(e.start_year==null?"?":year(e.start_year))+" – "+(e.end_year==null?"?":year(e.end_year));
+  let boundaryNote=historicalGeo
+    ?`<div class="history"><b>Historical boundary active.</b> The shape shown is from the installed ${esc(historicalSnapshot?.name||"historical")} GeoJSON snapshot${f?`. Boundary record: ${historicalDateTextFromFeature(f)}`:""}.</div>`
+    :`<div class="history">No local historical boundary snapshot covers this year, so highlighted areas are modern geographic references only.</div>`;
+  panel.innerHTML=`<h3>${esc(e.name)}</h3><div class="stats"><div class="stat"><strong>${esc(e.entity_type||"Historical entity")}</strong><span>Type</span></div><div class="stat"><strong>${esc(dates)}</strong><span>Dates</span></div></div>${boundaryNote}${e.notes?`<p class="muted">${esc(e.notes)}</p>`:""}`;
+}
+function showGenericHistoricalFeature(f){
+  let p=f?.properties||{}, name=historicalFeatureName(f)||"Historical country";
+  panel.innerHTML=`<h3>${esc(name)}</h3><div class="stats"><div class="stat"><strong>${esc(historicalDateTextFromFeature(f))}</strong><span>Boundary record</span></div><div class="stat"><strong>${esc(p.ohm_relation_id||"—")}</strong><span>${boundaryLayer==="ancient"?"Source record":"OHM relation"}</span></div></div><div class="history"><b>Historical boundary active.</b> This country is present in the installed ${esc(historicalSnapshot?.name||"historical")} snapshot, but it is not currently linked to a historical-entity record in your coin database.</div>`;
+}
+function chooseHistorical(f){
+  let owned=historicalCollectionIssuers(f);
+  if(owned.length===1)return historicalCoinPanel(f,owned[0]);
+  if(owned.length>1){
+    panel.innerHTML='<h3>Choose Issuer</h3>'+owned.map(x=>`<button class="btn btn-outline-warning w-100 mb-2 hpickissuer" data-n="${esc(x.name)}">${esc(x.name)} · ${x.coin_count} coins</button>`).join("");
+    panel.querySelectorAll(".hpickissuer").forEach(b=>b.onclick=()=>historicalCoinPanel(f,countries.find(x=>x.name===b.dataset.n)));
+    return;
+  }
+  let a=historicalFor(f);
+  if(a.length===1)return showHistorical(a[0],f);
+  if(!a.length)return showGenericHistoricalFeature(f);
+  panel.innerHTML='<h3>Historical Entities</h3>'+a.map(e=>`<button class="btn btn-outline-warning w-100 mb-2 hpick" data-id="${e.id}">${esc(e.name)}</button>`).join("");
+  panel.querySelectorAll(".hpick").forEach(b=>b.onclick=()=>showHistorical(a.find(e=>String(e.id)===b.dataset.id),f));
+}
+
+function image(file,fallback){return file?"/static/uploads/coins/"+encodeURIComponent(file):(fallback||"")}
+function label(f){let a=issuers(f);if(!a.length)return `<b>${esc(f.properties.name)}</b>`;let n=a.map(x=>x.name).join(", "),q=a.reduce((s,x)=>s+x.coin_count,0);return `<b>${esc(n)}</b><br>${q} coin${q===1?"":"s"} in collection`}
+function choose(f){let a=issuers(f);if(a.length===1)return select(a[0]);if(!a.length)return;panel.innerHTML='<h3>Choose Issuer</h3><p class="muted">Several issuers in your collection are associated with this area.</p>'+a.map(x=>`<button class="btn btn-outline-warning w-100 mb-2 pick" data-n="${esc(x.name)}">${esc(x.name)} · ${x.coin_count} coins</button>`).join("");panel.querySelectorAll('.pick').forEach(b=>b.onclick=()=>select(countries.find(x=>x.name===b.dataset.n)))}
+function select(c){selected=c;show(c);style();if(view==="globe"&&geo){let f=geo.features.find(f=>(c.map_names||[]).some(n=>norm(n)===norm(f.properties.name)));if(f){let p=d3.geoCentroid(f);world.pointOfView({lat:p[1],lng:p[0],altitude:1.65},900)}}}
+function show(c){let yrs=c.earliest_year==null?"Unknown":year(c.earliest_year)+(c.latest_year!==c.earliest_year?" – "+year(c.latest_year):"");let h=`<h3>${esc(c.name)}</h3><div class="stats"><div class="stat"><strong>${c.coin_count}</strong><span>Coins</span></div><div class="stat"><strong>${c.record_count}</strong><span>Records</span></div><div class="stat"><strong>${esc(yrs)}</strong><span>Years</span></div><div class="stat"><strong>$${Number(c.estimated_value||0).toFixed(2)}</strong><span>Estimated value</span></div></div>`;if(!(c.map_names.length===1&&norm(c.map_names[0])===norm(c.name)))h+=`<div class="history"><b>Historical issuer:</b> ${esc(c.name)}. The modern map uses ${esc(c.map_names.join(", "))} only as a geographic reference; your coin remains historically labeled.</div>`;c.coins.forEach(x=>{let o=image(x.personal_obverse_image,x.obverse_image),r=image(x.personal_reverse_image,x.reverse_image),im=[o,r].filter(Boolean),m=[x.year!=null?year(x.year):"",x.denomination||"",x.quantity>1?"Qty "+x.quantity:""].filter(Boolean).join(" · ");h+=`<div class="coin"><a href="/coin/${x.id}">${esc(x.name)}</a><div class="meta">${esc(m)}</div>`+(im.length?`<div class="pics ${im.length===1?'one':''}">${im.map(u=>`<img src="${esc(u)}">`).join("")}</div>`:"")+`</div>`});panel.innerHTML=h}
+function cap(f){if(mode==="history")return historicalCap(f);let a=issuers(f),on=selected&&a.some(x=>x.name===selected.name);return on?"rgba(230,184,95,.96)":a.length?"rgba(142,106,46,.92)":"rgba(29,37,42,.90)"}
+function stroke(f){if(mode==="history")return historicalStroke(f);return issuers(f).length?"rgba(244,203,119,.72)":"rgba(105,118,125,.42)"}
+function altitude(f){if(mode==="history")return historicalCollectionIssuers(f).length?.012:.004;return issuers(f).length?.012:.004}
+const world=Globe()(globeEl).backgroundColor("#030506").showAtmosphere(true).atmosphereColor("#5f7380").atmosphereAltitude(.12).polygonsData([]).polygonAltitude(altitude).polygonCapColor(cap).polygonSideColor(()=>"rgba(0,0,0,.18)").polygonStrokeColor(stroke).polygonLabel(f=>mode==="history"?historicalLabel(f):label(f)).onPolygonClick(f=>mode==="history"?chooseHistorical(f):choose(f)).pointsData([]).pointLat("lat").pointLng("lng").pointRadius(m=>m.coin_count?.22:.11).pointAltitude(m=>m.coin_count?.045:.018).pointColor(m=>m.coin_count?"#ffb84d":"#76b7d8").pointLabel(m=>`<b>${esc(m.name)}</b>${m.country?'<br>'+esc(m.country):''}`);
+function resize(){world.width(globeEl.clientWidth).height(globeEl.clientHeight)} resize();addEventListener("resize",()=>{resize();if(view==="map")draw()});
+function mintList(){return (mode==="mints"||$("mints").checked)?mintData.filter(m=>m.lat!=null&&m.lng!=null):[]}
+function style(){if(geo)world.polygonAltitude(altitude).polygonCapColor(cap).polygonStrokeColor(stroke);svg.selectAll('.country').classed('selected',f=>selected&&issuers(f).some(x=>x.name===selected.name))}
+function draw(){let activeGeo=currentGeo();if(!activeGeo)return;let n=$("mapSvg"),w=Math.max(300,n.clientWidth),h=Math.max(300,n.clientHeight);svg.attr("viewBox",`0 0 ${w} ${h}`).selectAll("*").remove();let proj=d3.geoNaturalEarth1().fitExtent([[18,18],[w-18,h-18]],activeGeo),path=d3.geoPath(proj),root=svg.append("g");
+
+if(mode==="history"&&historicalGeo&&geo){
+  root.append("g").attr("class","modern-reference-underlay")
+    .selectAll("path")
+    .data(geo.features)
+    .join("path")
+    .attr("class","country-base")
+    .attr("d",path);
+}
+
+root.append("g").attr("class","historical-layer")
+  .selectAll("path")
+  .data(activeGeo.features)
+  .join("path")
+  .attr("class",f=>"country"+((mode==="history"?historicalCollectionIssuers(f).length:issuers(f).length)?" owned":"")+(mode!=="history"&&selected&&issuers(f).some(x=>x.name===selected.name)?" selected":""))
+  .attr("d",path)
+  .on("mousemove",(e,f)=>{tooltip.innerHTML=mode==="history"?historicalLabel(f):label(f);tooltip.style.display="block";tooltip.style.left=(e.offsetX+14)+"px";tooltip.style.top=(e.offsetY+14)+"px"})
+  .on("mouseleave",()=>tooltip.style.display="none")
+  .on("click",(e,f)=>{e.stopPropagation();mode==="history"?chooseHistorical(f):choose(f)});
+
+if($("mints").checked)root.selectAll("circle").data(mintList()).join("circle").attr("class",m=>"mint"+(m.coin_count?" mine":"")).attr("cx",m=>proj([m.lng,m.lat])?.[0]??-100).attr("cy",m=>proj([m.lng,m.lat])?.[1]??-100).attr("r",m=>m.coin_count?2.2:1.1).append("title").text(m=>m.name);svg.call(d3.zoom().scaleExtent([1,8]).on("zoom",e=>root.attr("transform",e.transform)))}
+async function setMode(m){
+  mode=m;selected=null;
+  if(m!=="history"){
+    const sl=$("snapshotLabel");
+    if(sl)sl.textContent="Map snapshot: —";
+  }
+  ["collection","history","mints"].forEach(x=>$(x+"Mode").classList.toggle("active",x===m));
+  $("yearBox").classList.toggle("show",m==="history");
+  $("mints").checked=m==="mints";$("mints").disabled=m==="mints";
+
+  // Ancient/medieval Cliopatria snapshots are light enough for Globe.gl.
+  // The later OHM snapshots are much heavier, so 1600+ remains Flat Map only.
+  const selectedHistoryYear=Number($("historyYear").value);
+  const allowHistoricalGlobe=(
+    m==="history" &&
+    selectedHistoryYear<1600
+  );
+
+  $("globeBtn").disabled=(
+    m==="history" &&
+    !allowHistoricalGlobe
+  );
+
+  $("globeBtn").title=(
+    m==="history" &&
+    !allowHistoricalGlobe
+  )
+    ?"1600+ historical boundaries use the optimized Flat Map for performance."
+    :"";
+
+  if(m==="collection"){
+    if(geo)world.polygonsData(geo.features);
+    panel.innerHTML='<h3>Your Collection</h3><p class="muted">Gold countries are represented in your collection. Click one to see all of your coins from that issuer.</p>';
+  }
+
+  if(m==="history"){
+    panel.innerHTML='<h3>Historical Countries</h3><p class="muted">Loading historical boundary snapshot…</p>';
+    await loadHistoricalSnapshot();
+    updateSnapshotLabel();
+
+    // Ancient/medieval snapshots can render on the globe.
+    // Once the selected year reaches the heavier OHM era, switch safely
+    // back to the flat map.
+    if(boundaryLayer==="historical" && view==="globe"){
+      setView("map");
+    }
+    {
+      const selectedYear=Number($("historyYear").value);
+      const snapYear=historicalSnapshot&&historicalSnapshot.start_year!=null
+        ?Number(historicalSnapshot.start_year)
+        :null;
+      const layerTitle=boundaryLayer==="ancient"?"Ancient · Cliopatria":"Historical · OHM";
+      const snapshotLine=snapYear!=null
+        ?`<div class="stats"><div class="stat"><strong>${esc(year(selectedYear))}</strong><span>Selected year</span></div><div class="stat"><strong>${esc(year(snapYear))}</strong><span>Map snapshot</span></div><div class="stat"><strong>${esc(layerTitle)}</strong><span>Boundary layer</span></div></div>`
+        :`<div class="stats"><div class="stat"><strong>${esc(year(selectedYear))}</strong><span>Selected year</span></div><div class="stat"><strong>Fallback</strong><span>Map snapshot</span></div><div class="stat"><strong>Modern reference</strong><span>Boundary layer</span></div></div>`;
+
+      const layerHelp=historicalSnapshot
+        ?(
+          boundaryLayer==="ancient"
+            ?'<b>Ancient/medieval boundary snapshot active.</b> Years before 1600 use your local Cliopatria snapshots. You can view these borders on either the 3D Globe or Flat Map. Gold areas are collection issuers when their names or aliases match this dataset. Dim land underneath on the Flat Map is only a geographic reference.'
+            :'<b>Historical boundary snapshot active.</b> Years from 1600 onward use your local OpenHistoricalMap snapshots. These heavier boundaries stay on the Flat Map for performance. Gold countries are issuers represented in your collection. Dim land underneath is only a geographic reference where historical coverage is missing.'
+        )
+        :'No local boundary snapshot covers this year, so the modern geographic reference map is being used as a fallback.';
+
+      panel.innerHTML='<h3>Historical Countries</h3>'+snapshotLine+'<p class="muted">'+esc(historicalSnapshotText())+'.</p><div class="history">'+layerHelp+'</div>';
+    }
+  }
+
+  if(m==="mints"){
+    if(geo)world.polygonsData(geo.features);
+    panel.innerHTML='<h3>Historical Mints</h3><p class="muted">Historical mint locations are shown as points. Collection mints are highlighted.</p>';
+  }
+
+  // Use the lighter Cliopatria polygons on the 3D globe for years before
+  // 1600. Keep the heavier OHM historical polygons off Globe.gl.
+  if(
+    m==="history" &&
+    boundaryLayer==="ancient" &&
+    historicalGeo
+  ){
+    world
+      .polygonsData(historicalGeo.features)
+      .polygonLabel(historicalLabel)
+      .onPolygonClick(chooseHistorical);
+  }else{
+    if(geo)world.polygonsData(geo.features);
+    world
+      .polygonLabel(label)
+      .onPolygonClick(choose);
+  }
+
+  world.pointsData(mintList());
+  style();
+
+  if(view==="map")draw();
+
+  $("badge").textContent=m==="history"?(activeHistorical().length+" historical entities active · "+historicalSnapshotText()):m==="mints"?mintList().length+" historical mints":countries.length+" issuers represented";
+}
+$("collectionMode").onclick=()=>setMode("collection");$("historyMode").onclick=()=>setMode("history");$("mintsMode").onclick=()=>setMode("mints");$("historyYear").oninput=e=>{
+  $("historyYearLabel").textContent=year(Number(e.target.value));
+  if(mode==="history")setMode("history");
+};
+function setView(v){
+  // Historical globe is allowed only for the lighter pre-1600
+  // Cliopatria snapshots.
+  if(
+    mode==="history" &&
+    v==="globe" &&
+    Number($("historyYear").value)>=1600
+  ){
+    v="map";
+  }
+
+  view=v;localStorage.setItem("coinGeoView",v);
+  let g=v==="globe";
+  globeEl.style.display=g?"block":"none";
+  mapEl.style.display=g?"none":"block";
+  $("globeBtn").classList.toggle("active",g);
+  $("mapBtn").classList.toggle("active",!g);
+  setTimeout(g?resize:draw,0);
+}
+$("globeBtn").onclick=()=>setView("globe");$("mapBtn").onclick=()=>setView("map");$("mints").onchange=()=>{world.pointsData(mintList());if(view==="map")draw()};
+$("countrySearch").oninput=e=>{
+  let q=norm(e.target.value),box=$("results");
+  box.innerHTML="";
+  if(!q){box.style.display="none";return}
+
+  let a=countries.filter(c=>{
+    const entity=c.historical_entity||{};
+    const terms=[
+      c.name,
+      ...(c.map_names||[]),
+      entity.name||"",
+      ...(entity.aliases||[]),
+      ...(entity.map_names||[])
+    ];
+    return norm(terms.join(" ")).includes(q);
+  }).slice(0,25);
+
+  a.forEach(c=>{
+    let d=document.createElement("div");
+    d.className="result";
+    const entityName=c.historical_entity?.name;
+    d.textContent=entityName&&norm(entityName)!==norm(c.name)
+      ?`${c.name} (${entityName}) — ${c.coin_count} coin${c.coin_count===1?'':'s'}`
+      :`${c.name} — ${c.coin_count} coin${c.coin_count===1?'':'s'}`;
+    d.onclick=()=>{
+      e.target.value=c.name;
+      box.style.display="none";
+      select(c);
+    };
+    box.appendChild(d)
+  });
+  box.style.display=a.length?"block":"none"
+};document.addEventListener("click",e=>{if(!e.target.closest('.search-wrap'))$("results").style.display="none"});
+loadHistoricalIndex().then(()=>setMode("collection"));setView(view);fetch(GEO).then(r=>{if(!r.ok)throw Error();return r.json()}).then(j=>{geo=j;world.polygonsData(j.features);style();setView(view)}).catch(()=>panel.innerHTML='<h3>Map could not load</h3><p class="muted">The collection loaded, but the world boundary file could not be downloaded. Check the internet connection and refresh.</p>');
+</script>
+{% endblock %}

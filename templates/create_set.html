@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+
+{% block title %}Create Set · My Coin Collection{% endblock %}
+
+{% block content %}
+<style>
+.sf{max-width:760px;margin:32px auto 60px;padding:0 18px;color:#eee7dc}
+.sf-card{background:#0d0f10;border:1px solid rgba(217,168,79,.35);border-radius:16px;padding:25px}
+.sf h1{font-family:Georgia,serif;color:#fff;margin-top:0}.sf p{color:#aaa49a}
+.sf label{display:block;color:#e5d8c1;font-weight:700;margin:18px 0 7px}
+.sf input,.sf textarea{width:100%;box-sizing:border-box;background:#090b0c;border:1px solid #514936;border-radius:9px;color:#fff;padding:12px}
+.sf textarea{min-height:120px;resize:vertical}
+.sf-actions{display:flex;gap:10px;margin-top:22px;flex-wrap:wrap}
+.sf-btn{border:1px solid #d9a84f;border-radius:9px;padding:10px 16px;text-decoration:none;font-weight:800;cursor:pointer}
+.sf-primary{background:#d9a84f;color:#15120c}.sf-secondary{background:transparent;color:#d9a84f}
+.sf-error{background:#351616;color:#ffd2d2;border-radius:8px;padding:10px;margin:12px 0}
+</style>
+<div class="sf">
+    <div class="sf-card">
+        <h1>Create a Set</h1>
+        <p>Name the group first. On the next screen you can choose any coins you want to add.</p>
+        {% if error %}<div class="sf-error">{{ error }}</div>{% endif %}
+        <form method="post">
+            <label for="name">Set name</label>
+            <input id="name" name="name" maxlength="120" required autofocus placeholder="Example: World War II">
+
+            <label for="description">Description <span style="color:#777">(optional)</span></label>
+            <textarea id="description" name="description" maxlength="500" placeholder="What makes this set interesting?"></textarea>
+
+            <div class="sf-actions">
+                <button class="sf-btn sf-primary" type="submit">Create & Choose Coins</button>
+                <a class="sf-btn sf-secondary" href="{{ url_for('sets') }}">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

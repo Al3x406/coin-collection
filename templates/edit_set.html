@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+
+{% block title %}Edit {{ coin_set.name }} · Sets{% endblock %}
+
+{% block content %}
+<style>
+.se{max-width:1180px;margin:28px auto 60px;padding:0 18px;color:#eee8dd}
+.se h1{font-family:Georgia,serif;color:#fff}.se-panel{background:#0d0f10;border:1px solid rgba(217,168,79,.32);border-radius:15px;padding:22px;margin-bottom:18px}
+.se label.main{display:block;color:#e5d8c1;font-weight:800;margin:15px 0 7px}
+.se input[type=text],.se textarea,.se-search{width:100%;box-sizing:border-box;background:#090b0c;border:1px solid #514936;border-radius:8px;padding:11px;color:#fff}
+.se textarea{min-height:95px;resize:vertical}
+.se-coins{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:10px;max-height:560px;overflow-y:auto;padding-right:4px}
+.se-coin{display:flex;align-items:center;gap:11px;border:1px solid #302c25;background:#090b0c;border-radius:10px;padding:10px;cursor:pointer}
+.se-coin:hover{border-color:#8e713d}.se-coin input{width:18px;height:18px;accent-color:#d9a84f;flex:0 0 auto}
+.se-thumb{width:54px;height:54px;border-radius:50%;object-fit:cover;background:#161718}
+.se-name{color:#fff;font-weight:700}.se-meta{color:#888;font-size:.88rem}
+.se-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:20px}
+.se-btn{border:1px solid #d9a84f;border-radius:8px;padding:10px 16px;font-weight:800;text-decoration:none;cursor:pointer}.primary{background:#d9a84f;color:#15120c}.secondary{background:transparent;color:#d9a84f}
+.se-error{background:#351616;color:#ffd2d2;padding:10px;border-radius:8px;margin-bottom:12px}
+</style>
+
+<div class="se">
+    <h1>Edit Set</h1>
+    {% if error %}<div class="se-error">{{ error }}</div>{% endif %}
+    <form method="post">
+        <div class="se-panel">
+            <label class="main" for="name">Set name</label>
+            <input type="text" id="name" name="name" maxlength="120" required value="{{ coin_set.name }}">
+
+            <label class="main" for="description">Description</label>
+            <textarea id="description" name="description" maxlength="500">{{ coin_set.description or "" }}</textarea>
+        </div>
+
+        <div class="se-panel">
+            <label class="main" for="coinSearch">Coins in this set</label>
+            <input class="se-search" id="coinSearch" type="search" placeholder="Search coins by name, country, year..." oninput="filterCoins()">
+            <p style="color:#888">Check every coin you want included. The same coin can be checked in multiple different sets.</p>
+
+            <div class="se-coins" id="coinList">
+                {% for coin in all_coins %}
+                <label class="se-coin" data-search="{{ (coin.name ~ ' ' ~ (coin.country or '') ~ ' ' ~ (coin.year|string if coin.year is not none else ''))|lower }}">
+                    <input type="checkbox" name="coin_ids" value="{{ coin.id }}" {% if coin.id in selected_ids %}checked{% endif %}>
+                    {% if coin.personal_obverse_image %}
+                        <img class="se-thumb" src="{{ url_for('static', filename='uploads/coins/' ~ coin.personal_obverse_image) }}" alt="">
+                    {% elif coin.obverse_image %}
+                        <img class="se-thumb" src="{{ coin.obverse_image }}" alt="">
+                    {% else %}
+                        <div class="se-thumb" style="display:grid;place-items:center;color:#d9a84f">◉</div>
+                    {% endif %}
+                    <span>
+                        <span class="se-name">{{ coin.name }}</span><br>
+                        <span class="se-meta">
+                            {% if coin.year is not none %}{{ coin.year }}{% endif %}
+                            {% if coin.country %} · {{ coin.country }}{% endif %}
+                        </span>
+                    </span>
+                </label>
+                {% endfor %}
+            </div>
+
+            <div class="se-actions">
+                <button class="se-btn primary" type="submit">Save Set</button>
+                <a class="se-btn secondary" href="{{ url_for('set_detail', set_id=coin_set.id) }}">Cancel</a>
+            </div>
+        </div>
+    </form>
+</div>
+
+<script>
+function filterCoins(){
+    const q=document.getElementById("coinSearch").value.toLowerCase().trim();
+    document.querySelectorAll("#coinList .se-coin").forEach(el=>{
+        el.style.display=el.dataset.search.includes(q)?"flex":"none";
+    });
+}
+</script>
+{% endblock %}

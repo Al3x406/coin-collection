@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% block title %}Add Artifact{% endblock %}
+{% block content %}
+
+<style>
+body{background:#080706!important;color:#eee2cf}
+.artifact-form{max-width:940px;margin:28px auto 60px;padding:26px;border:1px solid #70522c;border-radius:16px;background:#0d0d0c}
+.artifact-form h1{margin-top:0;color:#eccb8b;font-family:Georgia,serif}
+.artifact-form label{display:block;margin:14px 0 6px;color:#caa668;font-weight:800}
+.artifact-form input,.artifact-form select,.artifact-form textarea{width:100%;box-sizing:border-box;padding:10px 11px;border:1px solid #4f3e27;border-radius:8px;background:#111210;color:#eee2cf}
+.artifact-form input[type="file"]{padding:14px;border-style:dashed}
+.artifact-form textarea{min-height:110px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.actions{display:flex;gap:10px;margin-top:20px}
+.save{border:1px solid #b98b45;border-radius:8px;background:#d9b36d;color:#1b1309;padding:10px 15px;font-weight:900}
+.cancel{border:1px solid #51412a;border-radius:8px;color:#c7ae84;padding:10px 15px;text-decoration:none}
+.error{padding:10px;border:1px solid #803c35;background:#2b1210;color:#f0b8ae;border-radius:8px}
+.help{margin-top:5px;color:#877d70;font-size:.75rem}
+.existing-photos{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-top:10px}
+.existing-photo{position:relative;overflow:hidden;border:1px solid #4b3821;border-radius:9px;background:#090807}
+.existing-photo img{width:100%;height:145px;display:block;object-fit:contain;background:#080706}
+.existing-photo footer{display:flex;align-items:center;justify-content:space-between;gap:6px;padding:7px}
+.cover-badge{color:#d9b36d;font-size:.65rem;font-weight:900;text-transform:uppercase}
+.photo-delete{border:1px solid #783b31;border-radius:6px;background:#2b1512;color:#e7aaa0;padding:5px 7px;font-size:.68rem}
+@media(max-width:700px){.two{grid-template-columns:1fr}.existing-photos{grid-template-columns:repeat(2,1fr)}}
+</style>
+
+<form class="artifact-form" method="post" enctype="multipart/form-data">
+<h1>Add Artifact</h1>
+{% if error %}<div class="error">{{ error }}</div>{% endif %}
+
+<label>Name</label>
+<input name="name" required>
+
+<div class="two">
+<div>
+<label>Category</label>
+<select name="category" required>
+{% for c in categories %}<option value="{{ c }}">{{ c }}</option>{% endfor %}
+</select>
+</div>
+<div>
+<label>Historical Year / Date</label>
+<input name="year_text" placeholder="1890, c. 1920, 1914–1918...">
+<div class="help">Kept as text so approximate and historical dates still work.</div>
+</div>
+</div>
+
+<div class="two">
+<div><label>Country / Origin</label><input name="country"></div>
+<div><label>Condition</label><input name="condition"></div>
+</div>
+
+<div class="two">
+<div><label>Estimated Value</label><input name="estimated_value" type="number" step="0.01"></div>
+<div><label>Purchase Price</label><input name="purchase_price" type="number" step="0.01"></div>
+</div>
+
+<div class="two">
+<div>
+<label>Date Acquired</label>
+<input name="date_acquired" type="date">
+<div class="help">Click the field to choose the date from a calendar.</div>
+</div>
+<div><label>Where You Got It</label><input name="source"></div>
+</div>
+
+<label>Description / History</label>
+<textarea name="description"></textarea>
+
+<label>Notes</label>
+<textarea name="notes"></textarea>
+
+<label>Photos</label>
+<input name="images" type="file" accept="image/*" multiple>
+<div class="help">Select several photos at once. The first uploaded photo becomes the Cabinet cover image.</div>
+
+<div class="actions">
+<button class="save" type="submit">Save Artifact</button>
+<a class="cancel" href="{{ url_for('artifacts') }}">Cancel</a>
+</div>
+</form>
+{% endblock %}

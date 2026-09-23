@@ -1,0 +1,1704 @@
+{% extends "base.html" %}
+{% block title %}The Human Story · History Through Coins{% endblock %}
+
+{% macro coin_block(moment) %}
+    {% set c = moment.coin %}
+    <div class="coin-side">
+        {% if c %}
+            {% set stock_img = c.obverse_image or c.reverse_image %}
+            {% set personal_img = c.personal_obverse_image or c.personal_reverse_image %}
+            <div class="coin-disc{% if stock_img or personal_img %} has-coin-image{% else %} empty{% endif %}">
+                {% if stock_img %}
+                    <img src="{{ stock_img }}" alt="{{ c.name }}">
+                {% elif c.personal_obverse_image %}
+                    <img src="{{ url_for('static', filename='uploads/coins/' ~ c.personal_obverse_image) }}" alt="{{ c.name }}">
+                {% elif c.personal_reverse_image %}
+                    <img src="{{ url_for('static', filename='uploads/coins/' ~ c.personal_reverse_image) }}" alt="{{ c.name }}">
+                {% endif %}
+            </div>
+            <div class="coin-label">{{ c.name }}</div>
+            <div class="coin-date">
+                {% if c.year %}{{ c.year }}{% endif %}
+                {% if c.country %}{% if c.year %} · {% endif %}{{ c.country }}{% endif %}
+            </div>
+            <div class="coin-about">
+                {% if c.denomination %}{{ c.denomination }}{% endif %}
+                {% if c.material %}{% if c.denomination %} · {% endif %}{{ c.material }}{% endif %}
+                {% if c.mint %}<br>Mint: {{ c.mint }}{% endif %}
+            </div>
+            <a class="coin-owned" href="{{ url_for('coin_detail', coin_id=c.id) }}">From your collection →</a>
+        {% else %}
+            <div class="coin-disc empty"></div>
+            <div class="coin-label">Coin still needed</div>
+            <div class="coin-date">{{ moment.dates }}</div>
+            <div class="coin-about">{{ moment.coin_rule }}</div>
+            <div class="coin-owned">Open slot</div>
+        {% endif %}
+    </div>
+{% endmacro %}
+
+{% macro history_block(moment, number) %}
+    <div class="history-side">
+        <div class="moment-no">Moment {{ number }}</div>
+        <h4>{{ moment.title }}</h4>
+        <div class="dates">{{ moment.dates }}</div>
+        <p>{{ moment.story }}</p>
+        <div class="story-rule"><b>Coin connection:</b> {{ moment.coin_rule }}</div>
+    </div>
+{% endmacro %}
+
+{% block content %}
+<style>
+:root{
+    --hs-gold:#c69a48;
+    --hs-gold2:#efc86d;
+    --hs-ivory:#f3ead9;
+    --hs-bg:#06080b;
+    --hs-panel:#090c0f;
+}
+
+body{background:var(--hs-bg);}
+
+.human-story-page{
+    width:100vw;
+    margin-left:calc(50% - 50vw);
+    margin-top:-1.5rem;
+    color:#eee6d6;
+    background:#06080b;
+    overflow-x:hidden;
+}
+
+/* =========================================================
+   HERO
+   ========================================================= */
+
+.hs-hero{
+    position:relative;
+    width:min(95vw,1760px);
+    margin:0 auto;
+    min-height:405px;
+    overflow:hidden;
+    background:#04080b;
+    border-bottom:1px solid rgba(198,154,72,.22);
+}
+
+/*
+  Keep the artwork anchored to the RIGHT side of the hero.
+  The whole horizontal banner remains visible; only a little vertical
+  cropping can happen if the browser is unusually wide.
+*/
+.hs-hero::before{
+    content:"";
+    position:absolute;
+    z-index:0;
+    top:0;
+    right:0;
+    bottom:0;
+    left:36.5%;
+    background-image:url("{{ url_for('static', filename='human_story_art/Banner_timeline.jpg') }}");
+    background-repeat:no-repeat;
+    background-position:left center;
+    background-size:cover;
+}
+
+/*
+  This is the seam between the title panel and the artwork.
+  The fade is narrow so the image feels flush with the title instead of
+  starting behind a giant dark overlay.
+*/
+.hs-hero::after{
+    content:"";
+    position:absolute;
+    z-index:1;
+    inset:0;
+    pointer-events:none;
+    background:
+      linear-gradient(
+        90deg,
+        #04080b 0%,
+        #050a0e 29%,
+        rgba(5,10,14,.98) 34%,
+        rgba(5,10,14,.74) 38%,
+        rgba(5,10,14,.24) 42%,
+        rgba(5,10,14,0) 47%
+      ),
+      linear-gradient(
+        180deg,
+        rgba(3,7,10,.20) 0%,
+        rgba(3,7,10,0) 55%,
+        rgba(3,7,10,.28) 100%
+      );
+}
+
+.hs-hero-inner{
+    position:relative;
+    z-index:2;
+    width:100%;
+    min-height:405px;
+    margin:0 auto;
+    padding:28px 28px 24px;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    align-items:flex-start;
+}
+
+/*
+  A fixed editorial column keeps the title/progress compact and aligned
+  with the point where the banner begins.
+*/
+.hs-hero-inner > *{
+    width:min(31vw,510px);
+    max-width:510px;
+}
+
+.hs-kicker,.era-kicker{
+    color:var(--hs-gold2);
+    text-transform:uppercase;
+    letter-spacing:.23em;
+    font-size:.62rem;
+    font-weight:800;
+}
+
+.hs-hero h1{
+    margin:5px 0 7px;
+    max-width:475px;
+    font-family:Georgia,serif;
+    font-size:clamp(2.65rem,4.35vw,4.55rem);
+    line-height:.90;
+    font-weight:500;
+    color:#f5efe4;
+    text-shadow:0 4px 16px rgba(0,0,0,.55);
+}
+
+.hs-hero h1 span{
+    display:block;
+    margin-top:11px;
+    font-size:.19em;
+    line-height:1.15;
+    letter-spacing:.22em;
+    color:var(--hs-gold2);
+    text-transform:uppercase;
+}
+
+.hs-hero p{
+    max-width:475px;
+    margin:0;
+    font-family:Georgia,serif;
+    font-size:.86rem;
+    line-height:1.46;
+    color:#ddd4c4;
+    text-shadow:0 2px 9px rgba(0,0,0,.70);
+}
+
+.hs-progress{
+    width:min(31vw,510px);
+    max-width:510px;
+    margin-top:14px;
+    display:grid;
+    grid-template-columns:auto minmax(110px,1fr) auto;
+    align-items:center;
+    gap:14px;
+}
+
+.hs-progress strong{
+    font:1.08rem Georgia,serif;
+    color:var(--hs-gold2);
+}
+
+.hs-progress small{
+    font-size:.68rem;
+    color:#dfd5c4;
+    white-space:nowrap;
+}
+
+.hs-progress-track{
+    width:100%;
+    height:5px;
+    border:1px solid #71552a;
+    background:#15120d;
+}
+
+.hs-progress-track span{
+    display:block;
+    height:100%;
+    background:linear-gradient(90deg,#8b6529,#efc66d);
+}
+
+/* Keep the hero usable at narrower widths without touching the rest of page. */
+@media(max-width:1100px){
+    .hs-hero::before{left:43%;}
+    .hs-hero-inner > *,
+    .hs-progress{width:min(39vw,470px);}
+    .hs-hero h1{font-size:clamp(2.45rem,5.4vw,4rem);}
+}
+
+@media(max-width:760px){
+    .hs-hero{
+        min-height:390px;
+    }
+
+    .hs-hero::before{
+        left:0;
+        opacity:.48;
+        background-position:center center;
+    }
+
+    .hs-hero::after{
+        background:
+          linear-gradient(
+            180deg,
+            rgba(4,8,11,.34) 0%,
+            rgba(4,8,11,.67) 54%,
+            #04080b 100%
+          );
+    }
+
+    .hs-hero-inner{
+        min-height:390px;
+        padding:24px 20px 22px;
+        justify-content:flex-end;
+    }
+
+    .hs-hero-inner > *,
+    .hs-progress{
+        width:100%;
+        max-width:470px;
+    }
+
+    .hs-progress{
+        grid-template-columns:auto 1fr auto;
+    }
+}
+
+
+/* =========================================================
+   ERA NAV + PREVIEWS
+   ========================================================= */
+
+.hs-nav,.era,.hs-footer{
+    width:min(96vw,1900px);
+    margin-left:auto;
+    margin-right:auto;
+}
+
+.hs-nav{
+    /*
+      Center the era selector INSIDE the lower part of the banner instead
+      of stretching it edge-to-edge across the whole page.
+    */
+    position:sticky;
+    top:0;
+    z-index:50;
+
+    width:min(75vw,1370px);
+    margin:-30px auto 0;
+
+    display:grid;
+    grid-template-columns:repeat(8,1fr);
+
+    background:rgba(5,8,11,.86);
+    backdrop-filter:blur(11px);
+
+    border:1px solid rgba(198,154,72,.34);
+    border-top-color:rgba(226,187,104,.42);
+
+    box-shadow:
+      0 10px 28px rgba(0,0,0,.34),
+      inset 0 1px 0 rgba(255,255,255,.025);
+}
+
+.hs-nav a{
+    color:#d6ccb9;
+    text-decoration:none;
+    text-align:center;
+
+    padding:6px 4px 5px;
+
+    font-size:.47rem;
+    line-height:1.14;
+    letter-spacing:.065em;
+    text-transform:uppercase;
+
+    border-right:1px solid rgba(255,255,255,.05);
+}
+
+.hs-nav a:last-child{
+    border-right:0;
+}
+
+.hs-nav a span{
+    display:block;
+    margin-bottom:1px;
+    color:var(--hs-gold2);
+    font:.64rem Georgia,serif;
+}
+
+.hs-nav a:hover{
+    background:rgba(198,154,72,.12);
+    color:#fff;
+}
+
+.era{
+    position:relative;
+    border-bottom:1px solid rgba(198,154,72,.34);
+    scroll-margin-top:65px;
+}
+
+.era-summary{
+    position:relative;
+    width:min(63vw,1160px);
+    margin-left:auto;
+    margin-right:auto;
+    min-height:265px;
+    display:grid;
+    grid-template-columns:minmax(320px,.9fr) minmax(430px,1.1fr) auto;
+    align-items:end;
+    gap:20px;
+    padding:32px 30px;
+    cursor:pointer;
+    isolation:isolate;
+    overflow:hidden;
+}
+
+.era-summary::before{
+    content:"";
+    position:absolute;
+    inset:0;
+    z-index:-2;
+    background-size:cover!important;
+    background-position:center!important;
+    transform:scale(1.01);
+}
+
+.era-summary::after{
+    content:"";
+    position:absolute;
+    inset:0;
+    z-index:-1;
+    background:linear-gradient(90deg,
+      rgba(5,7,9,.94) 0%,
+      rgba(5,7,9,.81) 29%,
+      rgba(5,7,9,.25) 58%,
+      rgba(5,7,9,.32) 78%,
+      rgba(5,7,9,.68) 100%);
+}
+
+.era-origins .era-summary::before{
+    background-image:linear-gradient(rgba(52,33,15,.20),rgba(20,13,7,.24)),
+    url("{{ url_for('static', filename='human_story_art/origins.jpg') }}");
+}
+.era-faith .era-summary::before{
+    background-image:linear-gradient(rgba(45,12,10,.28),rgba(23,8,8,.30)),
+    url("{{ url_for('static', filename='human_story_art/faith.jpg') }}");
+}
+.era-exploration .era-summary::before{
+    background-image:linear-gradient(rgba(8,27,34,.20),rgba(12,25,30,.22)),
+    url("{{ url_for('static', filename='human_story_art/exploration.jpg') }}");
+}
+.era-revolutions .era-summary::before{
+    background-image:linear-gradient(rgba(38,11,8,.20),rgba(20,10,9,.28)),
+    url("{{ url_for('static', filename='human_story_art/revolutions.jpg') }}");
+}
+.era-industry .era-summary::before{
+    background-image:linear-gradient(rgba(7,8,9,.16),rgba(7,8,9,.25)),
+    url("{{ url_for('static', filename='human_story_art/industry.jpg') }}");
+}
+.era-worldwars .era-summary::before{
+    background-image:linear-gradient(rgba(8,9,10,.20),rgba(8,9,10,.30)),
+    url("{{ url_for('static', filename='human_story_art/worldwars.jpg') }}");
+    filter:grayscale(.72) contrast(1.06) brightness(.82);
+}
+.era-coldwar .era-summary::before{
+    background-image:linear-gradient(rgba(4,13,20,.28),rgba(5,12,17,.32)),
+    url("{{ url_for('static', filename='human_story_art/coldwar.jpg') }}");
+    filter:grayscale(.35) saturate(.72) contrast(1.05);
+}
+.era-modern .era-summary::before{
+    background-image:linear-gradient(rgba(3,8,15,.16),rgba(3,8,15,.24)),
+    url("{{ url_for('static', filename='human_story_art/modern.jpg') }}");
+}
+
+.era-summary-copy{position:relative;z-index:2;max-width:520px;min-width:0;}
+
+.era-title{
+    margin:6px 0 7px;
+    font:500 clamp(2rem,3.1vw,3.15rem)/1 Georgia,serif;
+    color:#f5f0e7;
+    text-shadow:0 3px 15px rgba(0,0,0,.72);
+}
+
+.era-range{
+    color:var(--hs-gold2);
+    font:.88rem Georgia,serif;
+}
+
+.era-subtitle{
+    max-width:500px;
+    margin-top:9px;
+    color:#ddd5c8;
+    line-height:1.48;
+    font-size:.89rem;
+}
+
+.era-meta{
+    display:flex;
+    align-items:center;
+    flex-wrap:wrap;
+    gap:13px;
+    margin-top:13px;
+}
+
+.era-count{
+    min-width:105px;
+    padding:9px 11px;
+    border:1px solid rgba(198,154,72,.55);
+    background:rgba(4,6,8,.46);
+}
+.era-count strong{
+    display:block;
+    color:var(--hs-gold2);
+    font:1.2rem Georgia,serif;
+}
+
+.era-expand{
+    position:relative;
+    z-index:3;
+    align-self:center;
+    justify-self:end;
+    white-space:nowrap;
+    border:1px solid var(--hs-gold);
+    color:#f4ddaa;
+    padding:9px 12px;
+    background:rgba(6,8,10,.58);
+    text-transform:uppercase;
+    letter-spacing:.14em;
+    font-size:.56rem;
+    display:flex;
+    gap:8px;
+}
+
+.era-expand .chev{transition:transform .35s;}
+.era.open .era-expand .chev{transform:rotate(180deg);}
+
+/* preview coins */
+
+.era-preview-coins{
+    position:relative;
+    z-index:2;
+    align-self:end;
+    display:flex;
+    align-items:flex-end;
+    justify-content:center;
+    gap:7px;
+    min-width:0;
+    padding:50px 0 7px;
+}
+
+.era-preview-label{
+    position:absolute;
+    top:4px;
+    left:50%;
+    transform:translateX(-50%);
+    color:rgba(244,219,163,.78);
+    font-size:.46rem;
+    font-weight:800;
+    letter-spacing:.15em;
+    text-transform:uppercase;
+    white-space:nowrap;
+}
+.era-preview-label::after{content:" →";color:#efd17e;}
+
+.preview-coin{width:48px;flex:0 0 48px;position:relative;text-align:center;}
+.preview-coin-disc{
+    width:48px;height:48px;border-radius:50%;overflow:hidden;
+    display:grid;place-items:center;position:relative;
+    border:1px solid rgba(232,196,116,.66);
+    background:rgba(8,10,12,.34);
+    box-shadow:0 8px 16px rgba(0,0,0,.50),0 0 0 2px rgba(13,10,6,.28);
+}
+.preview-coin-disc img{width:100%;height:100%;object-fit:contain;display:block;border-radius:50%;}
+.preview-coin.owned .preview-coin-disc{border-color:#efcf87;}
+.preview-coin-badge{
+    position:absolute;top:-2px;right:-1px;width:9px;height:9px;border-radius:50%;
+    background:#d9ae59;border:2px solid #15100a;
+}
+.preview-coin:not(.owned) .preview-coin-disc{
+    background:radial-gradient(circle at 50% 45%,rgba(38,35,30,.90) 0 32%,rgba(20,19,17,.96) 33% 63%,rgba(8,8,8,.99) 64% 100%);
+    border:2px dashed rgba(225,190,112,.45);
+}
+.preview-coin-title{
+    margin-top:4px;
+    min-height:1.4em;
+    color:#eee3cc;
+    font:600 .42rem/1.03 Georgia,serif;
+    overflow:hidden;
+}
+.preview-coin-date{margin-top:1px;color:#d7b766;font-size:.40rem;}
+
+/* =========================================================
+   EXPANDED ERA BASE
+   ========================================================= */
+
+.era-expanded{
+    max-height:0;
+    overflow:hidden;
+    opacity:0;
+    transition:max-height .8s cubic-bezier(.2,.7,.2,1),opacity .35s ease;
+    background:
+      radial-gradient(circle at 50% 0%,rgba(198,154,72,.07),transparent 24%),
+      linear-gradient(180deg,#090c0f,#06080b);
+}
+.era.open .era-expanded{max-height:40000px;opacity:1;}
+
+.era-intro{
+    max-width:1080px;
+    margin:auto;
+    padding:35px 28px 15px;
+    text-align:center;
+}
+.era-intro h3{
+    margin:4px 0 6px;
+    font:2rem Georgia,serif;
+    color:#f2e8d7;
+}
+.era-intro p{
+    max-width:760px;
+    margin:7px auto 0;
+    color:#bfb7aa;
+    line-height:1.55;
+    font-size:.92rem;
+}
+
+/* =========================================================
+   SHARED JOURNEY SYSTEM — CHAPTERS I–VIII
+   One authoritative block. No stacked experimental overrides.
+   ========================================================= */
+
+.era .era-expanded{
+    width:min(63vw,1160px);
+    margin:0 auto;
+    position:relative;
+    background:
+      radial-gradient(ellipse at 50% 7%,rgba(191,139,49,.055),transparent 22%),
+      linear-gradient(180deg,#071118 0%,#061016 40%,#050a0e 100%);
+}
+
+/* ---------- Chapter opening ---------- */
+.era .c1-opening{
+    position:relative;
+    width:100%;
+    max-width:none;
+    min-height:168px;
+    box-sizing:border-box;
+    padding:28px 110px 18px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+}
+
+.era .c1-opening h3{
+    margin:5px 0 8px;
+    color:#ead4a1;
+    font:500 clamp(2.2rem,3vw,3.25rem)/.98 Georgia,serif;
+}
+
+.era .c1-opening p{
+    max-width:700px;
+    margin:0 auto;
+    color:#a99f8e;
+    font:.88rem/1.5 Georgia,serif;
+}
+
+.era .c1-opening-note{
+    position:absolute;
+    top:64px;
+    width:125px;
+    color:rgba(219,190,131,.48);
+    text-transform:uppercase;
+    letter-spacing:.24em;
+    font:600 .50rem/1.75 Georgia,serif;
+}
+.era .c1-opening-note-left{left:22px;text-align:left;}
+.era .c1-opening-note-right{right:22px;text-align:right;}
+
+/* ---------- Timeline canvas ---------- */
+.era .timeline{
+    position:relative;
+    width:100%;
+    max-width:100%;
+    margin:0 auto;
+    box-sizing:border-box;
+    padding:14px 26px 128px;
+    isolation:isolate;
+    overflow:visible;
+}
+
+.era .timeline::before{
+    content:"";
+    position:absolute;
+    z-index:0;
+    inset:0;
+    pointer-events:none;
+    background:
+      radial-gradient(ellipse at 50% 17%,rgba(210,153,54,.045),transparent 24%),
+      radial-gradient(ellipse at 50% 55%,rgba(63,91,106,.04),transparent 34%);
+}
+
+/* ---------- Fixed road ---------- */
+.era .c1-road-layer{
+    position:absolute;
+    inset:18px 0 72px;
+    z-index:5;
+    pointer-events:none;
+}
+
+.era .c1-road-svg{
+    position:absolute;
+    inset:0;
+    width:100%;
+    height:100%;
+    overflow:visible;
+}
+
+.era .c1-road-shadow,
+.era .c1-road-haze,
+.era .c1-road-glow,
+.era .c1-road-main,
+.era .c1-road-highlight{
+    fill:none;
+    stroke-linecap:round;
+    stroke-linejoin:round;
+    vector-effect:non-scaling-stroke;
+}
+
+/* Soft dark bed under the road creates the photo-to-trail fade. */
+.era .c1-road-shadow{
+    stroke:rgba(3,7,10,.78);
+    stroke-width:20px;
+    filter:blur(7px);
+    opacity:.72;
+}
+.era .c1-road-haze{
+    stroke:rgba(225,167,62,.12);
+    stroke-width:10px;
+    filter:blur(5px);
+}
+.era .c1-road-glow{
+    stroke:rgba(239,186,76,.34);
+    stroke-width:5px;
+    filter:blur(3px);
+}
+.era .c1-road-main{
+    stroke:#dba748;
+    stroke-width:2.35px;
+    filter:drop-shadow(0 0 4px rgba(241,189,81,.68));
+}
+.era .c1-road-highlight{
+    stroke:rgba(255,232,169,.76);
+    stroke-width:.52px;
+}
+
+.era .c1-road-marker{
+    position:absolute;
+    z-index:7;
+    width:23px;
+    height:23px;
+    display:grid;
+    place-items:center;
+    transform:translate(-50%,-50%);
+    border-radius:50%;
+    color:#f1c96c;
+    font:700 .50rem Georgia,serif;
+    background:#0c0d0c;
+    border:1.5px solid #ca9639;
+    box-shadow:0 0 0 3px rgba(198,154,72,.05),0 0 12px rgba(224,171,65,.23);
+}
+
+/* ---------- One compact row per historical moment ---------- */
+.era .c1-moment{
+    position:relative;
+    z-index:2;
+    height:336px;
+    min-height:336px;
+    display:grid;
+    grid-template-columns:minmax(0,1fr) 118px minmax(0,1fr);
+    align-items:center;
+    gap:16px;
+    padding:6px 0;
+}
+
+.era .c1-exhibit{
+    position:relative;
+    z-index:3;
+    width:100%;
+    max-width:100%;
+    height:308px;
+    min-height:308px;
+    display:grid;
+    grid-template-columns:132px minmax(0,1fr);
+    gap:28px;
+    align-items:center;
+}
+
+.era .c1-exhibit::before{
+    content:"";
+    position:absolute;
+    z-index:-1;
+    inset:-22px -20px;
+    pointer-events:none;
+    background:radial-gradient(ellipse at center,rgba(4,9,13,.62),rgba(4,9,13,.26) 60%,transparent 100%);
+}
+
+.era .c1-moment.odd .c1-exhibit{
+    grid-column:1;
+    grid-template-columns:132px minmax(0,1fr);
+}
+.era .c1-moment.even .c1-exhibit{
+    grid-column:3;
+    grid-template-columns:minmax(0,1fr) 132px;
+}
+
+.era .c1-moment.odd .coin-side{grid-column:1;text-align:center;}
+.era .c1-moment.odd .history-side{grid-column:2;text-align:left;}
+.era .c1-moment.even .history-side{grid-column:1;text-align:right;}
+.era .c1-moment.even .coin-side{grid-column:2;text-align:center;}
+
+/* ---------- Coin + text spacing ---------- */
+.era .coin-side{
+    width:132px;
+    min-width:132px;
+    max-width:132px;
+    justify-self:center;
+    padding:0;
+    background:transparent;
+    border:0;
+    box-shadow:none;
+}
+
+.era .coin-disc.has-coin-image{
+    width:158px;
+    margin-left:50%;
+    transform:translateX(-50%);
+    border-color:rgba(242,207,128,.72);
+    box-shadow:0 14px 35px rgba(0,0,0,.48),0 0 24px rgba(215,160,58,.12);
+}
+
+.era .coin-disc.empty{
+    width:112px;
+    opacity:.78;
+    background:radial-gradient(circle at 35% 30%,rgba(173,135,62,.25),rgba(57,42,22,.20) 38%,rgba(10,12,12,.84) 76%,rgba(5,7,8,.96) 100%);
+    border-color:rgba(205,166,85,.34);
+    box-shadow:0 10px 26px rgba(0,0,0,.34),0 0 14px rgba(196,145,52,.04);
+}
+.era .coin-disc.empty::after{
+    content:"TARGET";
+    font:700 .56rem Georgia,serif;
+    letter-spacing:.17em;
+    color:rgba(238,212,156,.42);
+}
+
+.era .coin-label{
+    max-width:13ch;
+    margin:7px auto 0;
+    color:#f0e4ce;
+    font:1.04rem/1.12 Georgia,serif;
+}
+.era .coin-date{margin:5px 0 8px;color:#e2bd68;font-size:.80rem;}
+.era .coin-about{max-width:150px;margin:0 auto;color:#b2a795;font-size:.71rem;line-height:1.38;}
+.era .coin-owned{margin-top:10px;padding:5px 9px;font-size:.50rem;}
+
+.era .history-side{
+    min-width:0;
+    width:100%;
+    max-width:330px;
+    padding:0;
+    background:transparent;
+    border:0;
+    box-shadow:none;
+}
+.era .c1-moment.odd .history-side{justify-self:start;}
+.era .c1-moment.even .history-side{justify-self:end;}
+
+.era .history-side .moment-no{
+    display:inline-block;
+    margin-bottom:8px;
+    padding:5px 8px;
+    border:1px solid rgba(213,169,77,.52);
+    color:#efc66e;
+    background:rgba(6,8,10,.52);
+    text-transform:uppercase;
+    font-size:.52rem;
+    letter-spacing:.17em;
+    font-weight:800;
+}
+
+.era .history-side h4{
+    max-width:15ch;
+    margin:0 0 7px;
+    color:#f5ecdc;
+    font:clamp(1.58rem,1.78vw,1.98rem)/.98 Georgia,serif;
+    text-wrap:balance;
+    text-shadow:0 3px 12px rgba(0,0,0,.88);
+}
+
+.era .history-side .dates{
+    margin:0 0 10px;
+    color:#e9bc58;
+    font:700 .92rem Georgia,serif;
+}
+
+.era .history-side p{
+    max-width:34ch;
+    margin:0;
+    color:#d4cabc;
+    font:.84rem/1.48 Georgia,serif;
+    text-shadow:0 2px 8px rgba(0,0,0,.88);
+}
+
+.era .story-rule{
+    max-width:35ch;
+    margin-top:11px;
+    padding:0;
+    border:0;
+    background:transparent;
+    color:#b9ad98;
+    font-size:.72rem;
+    line-height:1.38;
+}
+.era .story-rule b{color:#ddb75f;}
+.era .c1-moment.even .history-side p,
+.era .c1-moment.even .story-rule{margin-left:auto;}
+
+/* ---------- Historical scene photos ---------- */
+.era .c1-scene{
+    position:absolute;
+    z-index:1;
+    top:50%;
+    bottom:auto;
+    width:62%;
+    height:308px;
+    min-height:308px;
+    transform:translateY(-50%);
+    overflow:hidden;
+    background-size:cover;
+    background-repeat:no-repeat;
+    background-position:center;
+    filter:saturate(.90) contrast(1.04) brightness(.78);
+    will-change:clip-path;
+
+    /* only a light vertical feather; the circular vignette is below */
+    -webkit-mask-image:linear-gradient(to bottom,transparent 0%,rgba(0,0,0,.94) 9%,#000 18%,#000 82%,rgba(0,0,0,.94) 91%,transparent 100%);
+    mask-image:linear-gradient(to bottom,transparent 0%,rgba(0,0,0,.94) 9%,#000 18%,#000 82%,rgba(0,0,0,.94) 91%,transparent 100%);
+}
+.era .c1-moment.odd .c1-scene{right:0;left:auto;}
+.era .c1-moment.even .c1-scene{left:0;right:auto;}
+
+/* Soft fade on the edge that meets the trail. */
+.era .c1-scene::before{
+    content:"";
+    position:absolute;
+    inset:0;
+    z-index:2;
+    pointer-events:none;
+}
+.era .c1-moment.odd .c1-scene::before{
+    background:
+      linear-gradient(90deg,
+        rgba(4,7,11,.80) 0%,
+        rgba(4,7,11,.45) 8%,
+        rgba(4,7,11,.18) 15%,
+        transparent 24%);
+}
+.era .c1-moment.even .c1-scene::before{
+    background:
+      linear-gradient(270deg,
+        rgba(4,7,11,.80) 0%,
+        rgba(4,7,11,.45) 8%,
+        rgba(4,7,11,.18) 15%,
+        transparent 24%);
+}
+
+/* Stronger circular vignette like the painted reference. */
+.era .c1-scene::after{
+    content:"";
+    position:absolute;
+    inset:0;
+    z-index:3;
+    pointer-events:none;
+    background:
+      radial-gradient(circle at 50% 50%,
+        rgba(0,0,0,0) 0%,
+        rgba(0,0,0,0) 40%,
+        rgba(3,7,10,.10) 58%,
+        rgba(3,7,10,.28) 70%,
+        rgba(3,7,10,.56) 82%,
+        rgba(3,7,10,.82) 100%),
+      radial-gradient(ellipse 92% 78% at 50% 50%,
+        rgba(255,230,170,.05) 0%,
+        rgba(255,230,170,0) 48%,
+        rgba(0,0,0,0) 65%,
+        rgba(0,0,0,.30) 84%,
+        rgba(0,0,0,.72) 100%),
+      linear-gradient(to bottom,
+        rgba(2,4,7,.46) 0%,
+        rgba(2,4,7,.14) 12%,
+        rgba(2,4,7,0) 24%,
+        rgba(2,4,7,0) 76%,
+        rgba(2,4,7,.16) 88%,
+        rgba(2,4,7,.50) 100%);
+    box-shadow:
+      inset 0 0 78px 22px rgba(3,7,10,.42),
+      inset 0 0 160px 24px rgba(0,0,0,.16);
+}
+
+
+}");background-position:center 48%;}
+}");background-position:center 52%;}
+}");background-position:center 48%;}
+}");background-position:center 58%;}
+}");background-position:center 35%;}
+}");background-position:center 58%;}
+}");background-position:center 54%;}
+}");background-position:center 46%;}
+}");background-position:center 60%;}
+
+.era .c1-scene-caption{
+    position:absolute;
+    z-index:4;
+    bottom:20px;
+    width:150px;
+    color:rgba(227,195,129,.45);
+    text-transform:uppercase;
+    letter-spacing:.24em;
+    font:600 .45rem/1.6 Georgia,serif;
+    text-shadow:0 2px 8px rgba(0,0,0,.9);
+}
+.era .c1-moment.odd .c1-scene-caption{right:28px;text-align:right;}
+.era .c1-moment.even .c1-scene-caption{left:28px;text-align:left;}
+.era .c1-scene-caption::after{content:"";display:block;width:26px;height:1px;margin-top:7px;background:rgba(222,178,86,.40);}
+.era .c1-moment.odd .c1-scene-caption::after{margin-left:auto;}
+
+/* ---------- Small decorative journey details ---------- */
+.era .c1-foot{position:absolute;z-index:6;width:15px;height:21px;opacity:.28;}
+.era .c1-foot::before,.era .c1-foot::after{content:"";position:absolute;width:4px;height:7px;border:1px solid #c9953d;border-radius:55% 55% 42% 42%;}
+.era .c1-foot::before{left:1px;top:1px;transform:rotate(17deg);}
+.era .c1-foot::after{right:1px;bottom:1px;transform:rotate(-17deg);}
+.era .c1-foot.f1{left:50.3%;top:12.2%;transform:rotate(23deg);}
+.era .c1-foot.f2{left:50%;top:33.8%;transform:rotate(-17deg);}
+.era .c1-foot.f3{left:55.2%;top:57%;transform:rotate(19deg);}
+.era .c1-foot.f4{left:49%;top:78.5%;transform:rotate(-15deg);}
+
+.era .c1-traveler{position:absolute;z-index:7;width:18px;height:26px;color:#e6b85b;opacity:.58;filter:drop-shadow(0 0 4px rgba(221,164,54,.28));}
+.era .c1-traveler svg{width:100%;height:100%;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;}
+.era .c1-traveler.t1{left:55.6%;top:9.1%;transform:translate(-50%,-50%) rotate(8deg);}
+.era .c1-traveler.t2{left:49.2%;top:47.2%;transform:translate(-50%,-50%) rotate(-7deg);}
+.era .c1-traveler.t3{left:52.5%;top:80.5%;transform:translate(-50%,-50%) rotate(8deg);}
+
+.era .c1-journey-begins{position:absolute;z-index:7;top:4.7%;left:66%;color:rgba(220,189,126,.48);text-transform:uppercase;letter-spacing:.25em;font:600 .47rem Georgia,serif;}
+.era .c1-compass{position:absolute;z-index:6;left:49%;bottom:-10px;transform:translateX(-50%);width:78px;height:78px;border:1px solid rgba(214,168,74,.38);border-radius:50%;display:grid;place-items:center;color:#e8b957;font-size:1.35rem;background:radial-gradient(circle,rgba(205,153,57,.09),rgba(6,8,10,.20) 68%);box-shadow:0 0 28px rgba(205,153,57,.11);}
+.era .c1-compass::before,.era .c1-compass::after{content:"";position:absolute;background:rgba(214,168,74,.28);}
+.era .c1-compass::before{width:102px;height:1px;left:-12px;top:38px;}
+.era .c1-compass::after{height:102px;width:1px;top:-12px;left:38px;}
+.era .c1-story-continues{position:absolute;z-index:7;left:49%;bottom:-105px;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:7px;color:#d9b568;text-transform:uppercase;letter-spacing:.26em;font:600 .56rem Georgia,serif;white-space:nowrap;}
+.era .c1-story-continues b{font-size:1.25rem;line-height:1;color:#e1ac3d;font-weight:400;}
+
+/* ---------- Responsive ---------- */
+@media(max-width:1180px){
+    .era .era-expanded{width:min(86vw,900px);}
+    .era .c1-opening{padding:26px 70px 18px;}
+    .era .timeline{padding-left:18px;padding-right:18px;}
+    .era .c1-moment{height:316px;min-height:316px;grid-template-columns:minmax(0,1fr) 100px minmax(0,1fr);}
+    .era .c1-exhibit{height:282px;min-height:282px;grid-template-columns:112px minmax(0,1fr);gap:18px;}
+    .era .c1-moment.even .c1-exhibit{grid-template-columns:minmax(0,1fr) 112px;}
+    .era .c1-scene{height:282px;min-height:282px;}
+    .era .coin-side{width:112px;min-width:112px;max-width:112px;}
+    .era .coin-disc.empty{width:94px;}
+    .era .history-side{max-width:285px;}
+    .era .history-side h4{font-size:clamp(1.42rem,1.85vw,1.78rem);max-width:15ch;}
+    .era .history-side p{font-size:.78rem;max-width:30ch;}
+}
+
+@media(max-width:1000px){
+    .era .era-expanded{width:94vw;}
+    .era .c1-opening{min-height:auto;padding:26px 24px 18px;}
+    .era .c1-opening-note{display:none;}
+    .era .c1-road-layer{display:none;}
+    .era .c1-moment{height:auto;min-height:0;display:flex;flex-direction:column;gap:10px;padding:26px 0;}
+    .era .c1-scene{position:relative;order:1;width:100%;height:240px;min-height:240px;top:auto;left:auto!important;right:auto!important;transform:none;}
+    .era .c1-exhibit{order:2;width:100%;height:auto;min-height:0;grid-template-columns:120px minmax(0,1fr);padding:0 14px;}
+    .era .c1-moment.even .history-side,.era .c1-moment.odd .history-side{text-align:left;}
+    .era .c1-moment.even .history-side{grid-column:2;grid-row:1;}
+    .era .c1-moment.even .coin-side{grid-column:1;grid-row:1;}
+    .era .c1-traveler,.era .c1-journey-begins,.era .c1-story-continues{display:none;}
+}
+
+@media(max-width:700px){
+    .era .c1-exhibit{grid-template-columns:1fr;gap:12px;padding:0 12px;}
+    .era .c1-exhibit .coin-side,.era .c1-exhibit .history-side{grid-column:1!important;grid-row:auto!important;text-align:left!important;}
+    .era .coin-side{width:100%;min-width:0;max-width:none;}
+    .era .coin-disc{margin-left:0;transform:none;}
+    .era .c1-scene{height:220px;min-height:220px;}
+}
+
+
+
+
+/* =========================================================
+   FOOTER
+   ========================================================= */
+
+.hs-footer{
+    min-height:270px;
+    display:grid;
+    place-items:center;
+    text-align:center;
+    padding:58px 25px;
+    background:radial-gradient(circle at 50% 0,rgba(198,154,72,.16),transparent 35%),#05070a;
+}
+.hs-footer h2{margin-bottom:10px;font:2.5rem Georgia,serif;color:#f4ead7;}
+.hs-footer p{max-width:700px;color:#b9b0a1;line-height:1.62;}
+.hs-art-credit{opacity:.42;margin-top:16px;font-size:.55rem;letter-spacing:.06em;line-height:1.5;}
+
+/* =========================================================
+   RESPONSIVE — GENERAL PAGE ONLY
+   All expanded eras share the same responsive journey rules above.
+   ========================================================= */
+
+@media(max-width:1180px){
+    .era-summary{grid-template-columns:minmax(290px,.9fr) minmax(380px,1.1fr) auto;}
+    .preview-coin{width:44px;flex-basis:44px;}
+    .preview-coin-disc{width:44px;height:44px;}
+    .coin-disc.has-coin-image{width:180px;}
+    .coin-disc.empty{width:130px;}
+}
+
+@media(max-width:1000px){
+    .hs-nav{
+        width:min(84vw,900px);
+        margin-top:-18px;
+        grid-template-columns:repeat(4,1fr);
+    }
+
+    .era-summary{
+        width:min(86vw,900px);
+        grid-template-columns:1fr;
+        min-height:auto;
+        padding:30px 22px;
+    }
+
+    .era-preview-coins{justify-content:flex-start;overflow-x:auto;padding:34px 0 8px;}
+    .era-preview-label{left:0;transform:none;}
+    .era-expand{justify-self:start;}
+}
+
+@media(max-width:700px){
+    .hs-hero{min-height:355px;width:96vw;}
+    .hs-hero::before{inset:0;opacity:.47;background-position:center;background-size:cover;}
+    .hs-hero::after{background:linear-gradient(180deg,rgba(5,9,12,.35),rgba(5,9,12,.88));}
+    .hs-hero-inner{min-height:355px;padding:22px 18px 17px;justify-content:flex-end;}
+    .hs-hero-inner > *{width:100%;max-width:430px;}
+    .hs-hero h1{font-size:clamp(2.1rem,9vw,3.5rem);}
+    .hs-hero p{font-size:.80rem;}
+    .hs-progress-track{width:min(190px,47vw);}
+
+    .hs-nav{width:94vw;margin-top:0;grid-template-columns:repeat(2,1fr);}
+    .era-summary{width:94vw;}
+    .era-title{font-size:clamp(1.9rem,8vw,2.6rem);}
+    .preview-coin{width:48px;flex-basis:48px;}
+    .preview-coin-disc{width:48px;height:48px;}
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* === EXACT CHAPTER I ALIGNMENT RESTORE === */
+.era-origins .c1-road-marker.m1{left:54.5%;top:5.55%;}
+.era-origins .c1-road-marker.m2{left:47.5%;top:16.66%;}
+.era-origins .c1-road-marker.m3{left:56.5%;top:27.77%;}
+.era-origins .c1-road-marker.m4{left:45.5%;top:38.88%;}
+.era-origins .c1-road-marker.m5{left:51.5%;top:50%;}
+.era-origins .c1-road-marker.m6{left:58%;top:61.11%;}
+.era-origins .c1-road-marker.m7{left:46.5%;top:72.22%;}
+.era-origins .c1-road-marker.m8{left:54.5%;top:83.33%;}
+.era-origins .c1-road-marker.m9{left:49%;top:94.44%;}
+
+.era-origins .c1-scene-1{background-position:center 48% !important;}
+.era-origins .c1-scene-2{background-position:center 52% !important;}
+.era-origins .c1-scene-3{background-position:center 48% !important;}
+.era-origins .c1-scene-4{background-position:center 58% !important;}
+.era-origins .c1-scene-5{background-position:center 35% !important;}
+.era-origins .c1-scene-6{background-position:center 58% !important;}
+.era-origins .c1-scene-7{background-position:center 54% !important;}
+.era-origins .c1-scene-8{background-position:center 46% !important;}
+.era-origins .c1-scene-9{background-position:center 60% !important;}
+/* === END EXACT CHAPTER I ALIGNMENT RESTORE === */
+
+
+
+/* === COIN IMAGE SIZE FIX === */
+/*
+  Keep actual collection/catalog coin images inside the intended coin disc.
+  Previously the wrapper had a width, but the <img> itself had no sizing
+  rule, so large source images rendered at their native dimensions.
+*/
+.era .coin-disc{
+    position:relative;
+    aspect-ratio:1 / 1;
+    border-radius:50%;
+    overflow:hidden;
+    display:grid;
+    place-items:center;
+    box-sizing:border-box;
+}
+
+.era .coin-disc.has-coin-image{
+    width:158px !important;
+    height:158px !important;
+    max-width:158px !important;
+    max-height:158px !important;
+}
+
+.era .coin-disc.has-coin-image img{
+    display:block !important;
+    width:100% !important;
+    height:100% !important;
+    max-width:100% !important;
+    max-height:100% !important;
+    object-fit:contain !important;
+    object-position:center !important;
+    border-radius:50% !important;
+}
+
+.era .coin-disc.empty{
+    height:auto;
+    aspect-ratio:1 / 1;
+}
+
+@media(max-width:1180px){
+    .era .coin-disc.has-coin-image{
+        width:138px !important;
+        height:138px !important;
+        max-width:138px !important;
+        max-height:138px !important;
+    }
+}
+
+@media(max-width:700px){
+    .era .coin-disc.has-coin-image{
+        width:128px !important;
+        height:128px !important;
+        max-width:128px !important;
+        max-height:128px !important;
+        margin-left:0 !important;
+        transform:none !important;
+    }
+}
+/* === END COIN IMAGE SIZE FIX === */
+
+</style>
+
+<div class="human-story-page">
+
+
+
+<section class="hs-hero" id="human-story-top">
+    <div class="hs-hero-inner">
+        <div class="hs-kicker">Coins connect us</div>
+        <h1>The Human Story <span>History Through Coins</span></h1>
+        <p>From the first coinage to a connected world, each object is a physical bookmark in the human story. Scroll through the eras, or open any chapter to see the major moments, people, ideas, and coins within it.</p>
+        <div class="hs-progress">
+            <div><strong>{{ completed }} / {{ total }}</strong><br><small>moments represented</small></div>
+            <div class="hs-progress-track"><span style="width:{{ percent }}%"></span></div>
+            <div><strong>{{ percent }}%</strong><br><small>of the journey</small></div>
+        </div>
+    </div>
+</section>
+
+<nav class="hs-nav" aria-label="Human Story chapters">
+{% for era in eras %}
+    <a href="#era-{{ era.id }}"><span>{{ era.roman }}</span>{{ era.title.split('&')[0].strip() }}</a>
+{% endfor %}
+</nav>
+
+{% for era in eras %}
+<section class="era era-{{ era.theme }}" id="era-{{ era.id }}">
+
+    <div class="era-summary" role="button" tabindex="0" aria-expanded="false">
+        <div class="era-summary-copy">
+            <div class="era-kicker">Chapter {{ era.roman }}</div>
+            <h2 class="era-title">{{ era.title }}</h2>
+            <div class="era-range">{{ era.range }}</div>
+            <div class="era-subtitle">{{ era.subtitle }}</div>
+            <div class="era-meta">
+                <div class="era-count"><strong>{{ era.completed }} / {{ era.total }}</strong>moments collected</div>
+            </div>
+        </div>
+
+        <div class="era-preview-coins" aria-label="{{ era.title }} coin timeline">
+            <div class="era-preview-label">Coins in chronological order</div>
+            {% for moment in era.moments %}
+                {% set pc = moment.coin %}
+                <div class="preview-coin{% if pc %} owned{% endif %}"
+                     title="{{ moment.title }} · {{ moment.dates }}{% if pc %} · {{ pc.name }}{% endif %}">
+                    <div class="preview-coin-disc{% if not pc %} slot{% endif %}">
+                        {% if pc %}
+                            {% if pc.obverse_image %}
+                                <img src="{{ pc.obverse_image }}" alt="{{ pc.name }}">
+                            {% elif pc.reverse_image %}
+                                <img src="{{ pc.reverse_image }}" alt="{{ pc.name }}">
+                            {% elif pc.personal_obverse_image %}
+                                <img src="{{ url_for('static', filename='uploads/coins/' ~ pc.personal_obverse_image) }}" alt="{{ pc.name }}">
+                            {% elif pc.personal_reverse_image %}
+                                <img src="{{ url_for('static', filename='uploads/coins/' ~ pc.personal_reverse_image) }}" alt="{{ pc.name }}">
+                            {% endif %}
+                        {% endif %}
+                    </div>
+                    {% if pc %}<span class="preview-coin-badge" title="Represented in your collection"></span>{% endif %}
+                    <div class="preview-coin-title">
+                        {% if pc %}{{ pc.denomination or pc.name }}{% else %}{{ moment.title }}{% endif %}
+                    </div>
+                    <div class="preview-coin-date">{{ moment.dates }}</div>
+                </div>
+            {% endfor %}
+        </div>
+
+        <div class="era-expand">
+            <span class="expand-copy">Open this era</span>
+            <span class="chev">⌄</span>
+        </div>
+    </div>
+
+    <div class="era-expanded">
+        <div class="era-intro c1-opening">
+            <div class="era-kicker">Chapter {{ era.roman }} · {{ era.range }}</div>
+            <h3>{{ era.title }}</h3>
+            <p>{{ era.subtitle }} Follow the timeline below. Each stop connects a historical moment to a coin.</p>
+            <div class="c1-opening-note c1-opening-note-left">Coins connect<br>us still</div>
+            <div class="c1-opening-note c1-opening-note-right">Small objects<br>Big histories</div>
+        </div>
+
+        {% set journey_scene_folders = {
+            'faith': 'chapter2_basic',
+            'exploration': 'chapter3_basic',
+            'revolutions': 'chapter4_basic',
+            'industry': 'chapter5_basic',
+            'worldwars': 'chapter6_basic',
+            'coldwar': 'chapter7_basic',
+            'modern': 'chapter8_basic'
+        } %}
+
+        {% set origins_scene_files = [
+            '01_birth_coinage.png',
+            '02_greco_persian.png',
+            '03_alexander.png',
+            '04_caesar.png',
+            '05_augustus.png',
+            '06_pompeii.png',
+            '07_trajan.png',
+            '08_constantine.png',
+            '09_fall_rome.png'
+        ] %}
+
+        {% set origins_captions = [
+            'Lydia · a small coin, a big idea',
+            'Athens · city-states resist empire',
+            'Macedon · one vision grows larger',
+            'Rome · republic and ambition',
+            'Empire · a new order',
+            'Pompeii · life beneath Vesuvius',
+            'Rome · power at its height',
+            'Constantine · an empire transforms',
+            '476 CE · an end and a beginning'
+        ] %}
+
+        {% if era.theme == 'origins' %}
+            {% set journey_scene_folder = 'chapter1_vignette' %}
+        {% else %}
+            {% set journey_scene_folder = journey_scene_folders.get(era.theme, 'chapter2_basic') %}
+        {% endif %}
+
+        <div class="timeline" data-shared-journey>
+
+            <div class="c1-road-layer" aria-hidden="true">
+                <svg class="c1-road-svg" viewBox="0 0 100 100" preserveAspectRatio="none">
+                    <defs>
+                        <linearGradient id="journeyGold-{{ era.id }}" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stop-color="#ffe09a"/>
+                            <stop offset="28%" stop-color="#dba748"/>
+                            <stop offset="52%" stop-color="#f0c15d"/>
+                            <stop offset="77%" stop-color="#b87929"/>
+                            <stop offset="100%" stop-color="#ffe2a0"/>
+                        </linearGradient>
+                    </defs>
+
+                    {% set journey_path = "
+                    M 53 0.8
+                    C 60 1.8, 61 3.8, 58 5.0
+                    C 56 5.8, 55 5.4, 54.5 5.55
+
+                    C 53 8.0, 48 9.2, 47 11.5
+                    C 46 13.5, 49 15.0, 47.5 16.66
+
+                    C 46 19.1, 54 20.3, 55 22.4
+                    C 57 24.5, 56.2 26.1, 56.5 27.77
+
+                    C 57 30.0, 49 31.0, 46.5 33.5
+                    C 43.8 36.0, 44.2 37.5, 45.5 38.88
+
+                    C 47.6 41.0, 53.5 43.0, 52.0 45.0
+                    C 50.8 47.0, 49.5 48.7, 51.5 50.0
+
+                    C 53.6 52.2, 59.2 53.8, 58.4 56.0
+                    C 57.4 58.6, 56.6 59.8, 58.0 61.11
+
+                    C 59.2 63.4, 52.0 65.0, 48.5 67.1
+                    C 45.3 69.1, 45.2 71.1, 46.5 72.22
+
+                    C 48.5 74.5, 56.5 76.0, 56.0 78.2
+                    C 55.6 80.5, 53.4 81.9, 54.5 83.33
+
+                    C 55.7 85.7, 49.2 87.4, 47.5 89.4
+                    C 46.0 91.5, 47.8 93.0, 49.0 94.44
+
+                    C 51.0 96.2, 50.2 98.5, 49.0 99.2
+                    " %}
+
+                    <path class="c1-road-shadow" d="{{ journey_path }}"/>
+                    <path class="c1-road-haze" d="{{ journey_path }}"/>
+                    <path class="c1-road-glow" d="{{ journey_path }}"/>
+                    <path class="c1-road-main"
+                          style="stroke:url(#journeyGold-{{ era.id }})"
+                          d="{{ journey_path }}"/>
+                    <path class="c1-road-highlight" d="{{ journey_path }}"/>
+                </svg>
+
+                {% for moment in era.moments %}
+                    <div class="c1-road-marker m{{ loop.index }}"
+                         data-journey-marker="{{ loop.index }}">{{ loop.index }}</div>
+                {% endfor %}
+
+                <div class="c1-foot f1"></div>
+                <div class="c1-foot f2"></div>
+                <div class="c1-foot f3"></div>
+                <div class="c1-foot f4"></div>
+
+                <div class="c1-traveler t1" aria-hidden="true">
+                    <svg viewBox="0 0 24 32">
+                        <circle cx="12" cy="4.5" r="2.7"></circle>
+                        <path d="M12 8 L11 17 M11.3 11 L6.8 15.5 M11.4 11.2 L16.5 14.2 M11 17 L7.7 24 M11 17 L15.8 23.2"></path>
+                    </svg>
+                </div>
+                <div class="c1-traveler t2" aria-hidden="true">
+                    <svg viewBox="0 0 24 32">
+                        <circle cx="12" cy="4.5" r="2.7"></circle>
+                        <path d="M12 8 L11 17 M11.3 11 L6.8 15.5 M11.4 11.2 L16.5 14.2 M11 17 L7.7 24 M11 17 L15.8 23.2"></path>
+                    </svg>
+                </div>
+                <div class="c1-traveler t3" aria-hidden="true">
+                    <svg viewBox="0 0 24 32">
+                        <circle cx="12" cy="4.5" r="2.7"></circle>
+                        <path d="M12 8 L11 17 M11.3 11 L6.8 15.5 M11.4 11.2 L16.5 14.2 M11 17 L7.7 24 M11 17 L15.8 23.2"></path>
+                    </svg>
+                </div>
+
+                <div class="c1-journey-begins">The Journey Begins</div>
+                <div class="c1-compass">✦</div>
+                <div class="c1-story-continues">
+                    <span>The Story Continues</span><b>⌄</b>
+                </div>
+            </div>
+
+            {% for moment in era.moments %}
+                {% if era.theme == 'origins' %}
+                    {% set scene_file = origins_scene_files[loop.index0] %}
+                    {% set scene_caption = origins_captions[loop.index0] %}
+                {% else %}
+                    {% set scene_file = loop.index ~ '.jpg' %}
+                    {% set scene_caption = moment.title ~ ' · ' ~ moment.dates %}
+                {% endif %}
+
+                <article class="c1-moment {% if loop.index is odd %}odd{% else %}even{% endif %}">
+                    {% if loop.index is odd %}
+                        <div class="c1-exhibit">
+                            {{ coin_block(moment) }}
+                            {{ history_block(moment, loop.index) }}
+                        </div>
+
+                        <div class="c1-scene c1-scene-{{ loop.index }}"
+                             style="background-image:url('{{ url_for('static', filename='human_story_art/' ~ journey_scene_folder ~ '/' ~ scene_file) }}')">
+                            <div class="c1-scene-caption">{{ scene_caption }}</div>
+                        </div>
+                    {% else %}
+                        <div class="c1-scene c1-scene-{{ loop.index }}"
+                             style="background-image:url('{{ url_for('static', filename='human_story_art/' ~ journey_scene_folder ~ '/' ~ scene_file) }}')">
+                            <div class="c1-scene-caption">{{ scene_caption }}</div>
+                        </div>
+
+                        <div class="c1-exhibit">
+                            {{ history_block(moment, loop.index) }}
+                            {{ coin_block(moment) }}
+                        </div>
+                    {% endif %}
+                </article>
+            {% endfor %}
+        </div>
+
+    </div>
+</section>
+{% endfor %}
+
+<section class="hs-footer">
+    <div>
+        <div class="era-kicker">The Human Story</div>
+        <h2>Small objects. A vast human story.</h2>
+        <p>Every completed slot adds another physical link to the people, places, ideas, conflicts, discoveries, and everyday lives that came before us.</p>
+    </div>
+    <div class="hs-art-credit">
+        Era ambience uses locally cached historical imagery from Wikimedia Commons;
+        modern Earth imagery originates from NASA. Coin images come from your collection/catalog references.
+    </div>
+</section>
+
+</div>
+
+<script id="human-story-era-toggle">
+(() => {
+    const eras = [...document.querySelectorAll('.era')];
+
+    function setOpen(era, open){
+        era.classList.toggle('open', open);
+
+        const summary = era.querySelector('.era-summary');
+        const copy = era.querySelector('.expand-copy');
+
+        if(summary){
+            summary.setAttribute('aria-expanded', open ? 'true' : 'false');
+        }
+
+        if(copy){
+            copy.textContent = open ? 'Close this era' : 'Open this era';
+        }
+    }
+
+    eras.forEach(era => {
+        const summary = era.querySelector('.era-summary');
+        if(!summary) return;
+
+        summary.addEventListener('click', () => {
+            setOpen(era, !era.classList.contains('open'));
+        });
+
+        summary.addEventListener('keydown', event => {
+            if(event.key === 'Enter' || event.key === ' '){
+                event.preventDefault();
+                setOpen(era, !era.classList.contains('open'));
+            }
+        });
+    });
+
+    document.querySelectorAll('.hs-nav a').forEach(link => {
+        link.addEventListener('click', () => {
+            const era = document.querySelector(link.getAttribute('href'));
+            if(era) setOpen(era, true);
+        });
+    });
+})();
+</script>
+
+<script id="shared-coordinate-scene-crop">
+(() => {
+    /*
+      ONE ROAD/PHOTO ENGINE FOR CHAPTERS I-VIII.
+
+      This is the Chapter I coordinate-driven method generalized without
+      changing its visual logic. The rendered SVG road is the source of truth.
+      The same road coordinates crop each photo and position each marker.
+    */
+
+    function renderedTrailSamples(path, svg, count = 700){
+        const length = path.getTotalLength();
+        const matrix = svg.getScreenCTM();
+
+        if(!matrix) return [];
+
+        const points = [];
+
+        for(let i = 0; i <= count; i++){
+            const p = path.getPointAtLength(length * i / count);
+            const screen = new DOMPoint(p.x, p.y).matrixTransform(matrix);
+            points.push({x:screen.x, y:screen.y});
+        }
+
+        points.sort((a,b) => a.y - b.y);
+        return points;
+    }
+
+    function nearestPointAtY(samples, targetY){
+        if(!samples.length) return null;
+
+        let best = samples[0];
+        let bestDistance = Math.abs(best.y - targetY);
+
+        for(let i = 1; i < samples.length; i++){
+            const candidate = samples[i];
+            const distance = Math.abs(candidate.y - targetY);
+
+            if(distance < bestDistance){
+                best = candidate;
+                bestDistance = distance;
+            }
+        }
+
+        return best;
+    }
+
+    function cropSceneToTrail(scene, samples, side){
+        const rect = scene.getBoundingClientRect();
+
+        if(rect.width < 20 || rect.height < 20) return;
+
+        const border = [];
+        const steps = 42;
+
+        for(let i = 0; i <= steps; i++){
+            const yRatio = i / steps;
+            const screenY = rect.top + rect.height * yRatio;
+            const trailPoint = nearestPointAtY(samples, screenY);
+
+            if(!trailPoint) continue;
+
+            /*
+              Exact Chapter I behavior:
+              photo border coordinate === rendered gold road coordinate.
+              The fade comes from the dark road bed, not a crop offset.
+            */
+            let xPercent =
+                ((trailPoint.x - rect.left) / rect.width) * 100;
+
+            xPercent = Math.max(-2, Math.min(102, xPercent));
+
+            border.push(
+                `${xPercent.toFixed(3)}% ${(yRatio * 100).toFixed(3)}%`
+            );
+        }
+
+        if(border.length < 4) return;
+
+        const polygon = side === 'right'
+            ? [...border, '100% 100%', '100% 0%']
+            : ['0% 0%', ...border, '0% 100%'];
+
+        const value = `polygon(${polygon.join(',')})`;
+
+        scene.style.clipPath = value;
+        scene.style.webkitClipPath = value;
+    }
+
+    function updateJourney(era){
+        if(!era || !era.classList.contains('open')) return;
+
+        const timeline = era.querySelector('[data-shared-journey]');
+        const svg = timeline?.querySelector('.c1-road-svg');
+        const path = svg?.querySelector('.c1-road-main');
+        const layer = timeline?.querySelector('.c1-road-layer');
+
+        if(!timeline || !svg || !path || !layer) return;
+
+        const samples = renderedTrailSamples(path, svg);
+
+        if(!samples.length) return;
+
+        const layerRect = layer.getBoundingClientRect();
+
+        timeline.querySelectorAll('.c1-moment').forEach((moment, index) => {
+            const scene = moment.querySelector('.c1-scene');
+            const marker = layer.querySelector(
+                `[data-journey-marker="${index + 1}"]`
+            );
+
+            const momentRect = moment.getBoundingClientRect();
+            const centerY = momentRect.top + momentRect.height / 2;
+            const point = nearestPointAtY(samples, centerY);
+
+            if(
+                marker &&
+                point &&
+                !era.classList.contains('era-origins')
+            ){
+                marker.style.left = `${point.x - layerRect.left}px`;
+                marker.style.top = `${point.y - layerRect.top}px`;
+            }
+
+            if(scene){
+                const side = moment.classList.contains('odd')
+                    ? 'right'
+                    : 'left';
+
+                cropSceneToTrail(scene, samples, side);
+            }
+        });
+    }
+
+    function schedule(era){
+        [0, 80, 220, 600].forEach(ms => {
+            setTimeout(() => updateJourney(era), ms);
+        });
+    }
+
+    function scheduleOpen(){
+        document.querySelectorAll('.era.open').forEach(schedule);
+    }
+
+    document.querySelectorAll('.era').forEach(era => {
+        new MutationObserver(() => {
+            if(era.classList.contains('open')){
+                schedule(era);
+            }
+        }).observe(
+            era,
+            {
+                attributes:true,
+                attributeFilter:['class']
+            }
+        );
+    });
+
+    if(document.readyState === 'loading'){
+        document.addEventListener('DOMContentLoaded', scheduleOpen);
+    }else{
+        scheduleOpen();
+    }
+
+    window.addEventListener('load', scheduleOpen);
+
+    let resizeTimer;
+
+    window.addEventListener('resize', () => {
+        clearTimeout(resizeTimer);
+
+        resizeTimer = setTimeout(() => {
+            document.querySelectorAll('.era.open').forEach(updateJourney);
+        }, 120);
+    });
+
+    if(document.fonts?.ready){
+        document.fonts.ready.then(scheduleOpen);
+    }
+})();
+</script>
+
+{% endblock %}

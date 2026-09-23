@@ -1,0 +1,3361 @@
+{% extends "base.html" %}
+
+{% block title %}
+Add Coin
+{% endblock %}
+
+{% block content %}
+
+<h1>Add Coin</h1>
+
+<div class="card mb-4 border-info">
+    <div class="card-body d-flex justify-content-between align-items-center flex-wrap gap-3">
+        <div>
+            <h5 class="card-title mb-1">Not sure what coin this is?</h5>
+            <p class="text-muted mb-0">
+                Use the Identify Coin page to narrow down possible Numista matches,
+                then bring the selected coin back here automatically.
+            </p>
+        </div>
+
+        <a
+            href="{{ url_for('identify_coin') }}"
+            class="btn btn-outline-primary">
+            Identify Coin
+        </a>
+    </div>
+</div>
+
+
+<!-- ====================================================== -->
+<!-- NUMISTA SEARCH -->
+<!-- ====================================================== -->
+
+<div class="card mb-4">
+
+    <div class="card-body">
+
+        <h4 class="card-title">
+            Search Numista
+        </h4>
+
+        <p class="text-muted">
+            Search the Numista catalogue and use a result
+            to prefill the form below.
+        </p>
+
+
+        <div class="row">
+
+            <div class="col-md-6 mb-3">
+
+                <label class="form-label">
+                    Coin Name
+                </label>
+
+                <input
+                    type="text"
+                    id="numistaSearchName"
+                    class="form-control"
+                    placeholder="Example: Morgan Dollar">
+
+            </div>
+
+
+            <div class="col-md-3 mb-3">
+
+                <label class="form-label">
+                    Year
+                </label>
+
+                <input
+                    type="number"
+                    id="numistaSearchYear"
+                    class="form-control"
+                    placeholder="1921">
+
+            </div>
+
+
+            <div class="col-md-3 mb-3 d-flex align-items-end">
+
+                <button
+                    type="button"
+                    id="numistaSearchButton"
+                    class="btn btn-primary w-100">
+
+                    Search Numista
+
+                </button>
+
+            </div>
+
+        </div>
+
+
+        <div
+            id="numistaStatus"
+            class="mb-3">
+        </div>
+
+
+        <div
+            id="numistaResults">
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- ====================================================== -->
+<!-- ADD COIN FORM -->
+<!-- ====================================================== -->
+
+<form method="POST" enctype="multipart/form-data">
+<input type="hidden" name="guided_obverse" id="guidedObverseFlag" value="0">
+<input type="hidden" name="guided_reverse" id="guidedReverseFlag" value="0">
+<input
+    type="hidden"
+    name="numista_type_id"
+    id="numistaTypeId">
+
+<input
+    type="hidden"
+    name="numista_issue_id"
+    id="numistaIssueId">
+
+<input
+    type="hidden"
+    name="variant"
+    id="variantInput">
+
+<input
+    type="hidden"
+    name="mintage"
+    id="mintageInput">
+<input
+    type="hidden"
+    name="obverse_image"
+    id="obverseImageInput">
+
+<input
+    type="hidden"
+    name="reverse_image"
+    id="reverseImageInput">
+
+<input
+    type="hidden"
+    name="numista_url"
+    id="numistaUrlInput">
+
+<input
+    type="hidden"
+    name="obverse_copyright"
+    id="obverseCopyrightInput">
+
+<input
+    type="hidden"
+    name="obverse_license"
+    id="obverseLicenseInput">
+
+<input
+    type="hidden"
+    name="reverse_copyright"
+    id="reverseCopyrightInput">
+
+<input
+    type="hidden"
+    name="reverse_license"
+    id="reverseLicenseInput">
+    <!-- ================================================== -->
+    <!-- PHOTO-ASSISTED IDENTIFICATION -->
+    <!-- ================================================== -->
+
+    <div class="card mb-4">
+
+        <div class="card-body">
+
+            <div
+                class="
+                    d-flex
+                    justify-content-between
+                    align-items-start
+                    flex-wrap
+                    gap-2
+                    mb-3
+                ">
+
+                <div>
+
+                    <h4 class="card-title mb-1">
+                        Coin Photos
+                    </h4>
+
+                    <p class="text-muted mb-0">
+                        Add photos of your actual coin.
+                        These photos will be saved with your
+                        collection record.
+                    </p>
+
+                </div>
+
+                <span class="badge text-bg-secondary">
+                    Photo ID
+                </span>
+
+            </div>
+
+
+            <div class="row g-3">
+
+
+                <div class="col-md-6">
+
+                    <div
+                        class="
+                            border
+                            rounded
+                            p-3
+                            h-100
+                        ">
+
+                        <label
+                            for="personalObverseImage"
+                            class="form-label fw-semibold">
+
+                            Obverse / Front
+
+                        </label>
+
+                        <input
+                            type="file"
+                            name="personal_obverse_image"
+                            id="personalObverseImage"
+                            class="form-control"
+                            accept="image/*">
+                        <button
+                            type="button"
+                            class="btn btn-outline-warning coin-camera-launch"
+                            data-coin-camera-target="personalObverseImage">
+                            📷 Guided Camera — Obverse
+                        </button>
+
+                        <div
+                            id="obversePreviewArea"
+                            class="
+                                mt-3
+                                text-center
+                                d-none
+                            ">
+
+                            <img
+                                id="obversePreview"
+                                alt="Obverse preview"
+                                class="
+                                    img-fluid
+                                    rounded
+                                    border
+                                "
+                                style="
+                                    max-height: 260px;
+                                    object-fit: contain;
+                                ">
+
+                            <div
+                                id="obverseFileName"
+                                class="
+                                    small
+                                    text-muted
+                                    mt-2
+                                ">
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <div class="col-md-6">
+
+                    <div
+                        class="
+                            border
+                            rounded
+                            p-3
+                            h-100
+                        ">
+
+                        <label
+                            for="personalReverseImage"
+                            class="form-label fw-semibold">
+
+                            Reverse / Back
+
+                        </label>
+
+                        <input
+                            type="file"
+                            name="personal_reverse_image"
+                            id="personalReverseImage"
+                            class="form-control"
+                            accept="image/*">
+                        <button
+                            type="button"
+                            class="btn btn-outline-warning coin-camera-launch"
+                            data-coin-camera-target="personalReverseImage">
+                            📷 Guided Camera — Reverse
+                        </button>
+
+                        <div
+                            id="reversePreviewArea"
+                            class="
+                                mt-3
+                                text-center
+                                d-none
+                            ">
+
+                            <img
+                                id="reversePreview"
+                                alt="Reverse preview"
+                                class="
+                                    img-fluid
+                                    rounded
+                                    border
+                                "
+                                style="
+                                    max-height: 260px;
+                                    object-fit: contain;
+                                ">
+
+                            <div
+                                id="reverseFileName"
+                                class="
+                                    small
+                                    text-muted
+                                    mt-2
+                                ">
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+            </div>
+
+
+            <div
+                class="
+                    alert
+                    alert-light
+                    border
+                    mt-3
+                    mb-0
+                    small
+                ">
+
+                For a useful collection record, use a clear,
+                straight-on photo with the whole coin visible.
+                You can add one side or both sides.
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <div class="card mb-4">
+
+        <div class="card-body">
+
+            <h4 class="card-title">
+                Coin Information
+            </h4>
+
+
+            <div class="row">
+
+
+                <div class="col-md-6 mb-3">
+
+                    <label class="form-label">
+                        Coin Name
+                    </label>
+
+                    <input
+                        type="text"
+                        name="name"
+                        id="coinName"
+                        class="form-control"
+                        required>
+
+                </div>
+
+
+                <div class="col-md-3 mb-3">
+
+                    <label class="form-label">
+                        Country / Issuer
+                    </label>
+
+                    <input
+                        type="text"
+                        name="country"
+                        id="coinCountry"
+                        class="form-control">
+
+                </div>
+
+
+                <div class="col-md-3 mb-3">
+
+                    <label class="form-label">
+                        Year
+                    </label>
+
+                    <input
+                        type="number"
+                        name="year"
+                        id="coinYear"
+                        class="form-control">
+
+                </div>
+
+
+            </div>
+
+
+            <div class="row">
+
+
+                <div class="col-md-4 mb-3">
+
+                    <label class="form-label">
+                        Denomination
+                    </label>
+
+                    <input
+                        type="text"
+                        name="denomination"
+                        id="coinDenomination"
+                        class="form-control">
+
+                </div>
+
+
+                <div class="col-md-4 mb-3">
+
+                    <label class="form-label">
+                        Material
+                    </label>
+
+                    <input
+                        type="text"
+                        name="material"
+                        id="coinMaterial"
+                        class="form-control">
+
+                </div>
+                <div class="mb-3">
+
+    <label
+        for="estimatedValue"
+        class="form-label">
+        Estimated Value ($)
+    </label>
+
+    <input
+        type="number"
+        step="0.01"
+        min="0"
+        name="estimated_value"
+        id="estimatedValue"
+        class="form-control">
+
+</div>
+
+                <div class="col-md-4 mb-3">
+
+                    <label class="form-label">
+                        Condition
+                    </label>
+
+                    <input
+                        type="text"
+                        name="condition"
+                        class="form-control">
+
+                </div>
+
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- ================================================== -->
+    <!-- MINT -->
+    <!-- ================================================== -->
+
+    <div class="card mb-4">
+
+        <div class="card-body">
+
+            <h4 class="card-title">
+                Mint
+            </h4>
+
+
+            <div class="row">
+
+
+                <div class="col-md-8 mb-3">
+
+                    <label class="form-label">
+                        Mint
+                    </label>
+
+                    <div class="mint-picker" id="mintPicker">
+                        <input
+                            type="text"
+                            id="mintSearchInput"
+                            class="form-control"
+                            autocomplete="off"
+                            placeholder="Type a mint, city, state, or country..."
+                            aria-label="Search for a mint">
+
+                        <div
+                            id="mintSearchResults"
+                            class="mint-search-results d-none"
+                            role="listbox">
+                        </div>
+
+                        <div
+                            id="mintSelectedDisplay"
+                            class="mint-selected-display mt-2">
+                        </div>
+
+                        <select
+                            name="mint_id"
+                            id="mintSelect"
+                            class="d-none"
+                            aria-hidden="true">
+
+                            <option value="">Unknown / Not Listed</option>
+
+                            {% for mint in mints %}
+                            <option
+                                value="{{ mint.id }}"
+                                data-name="{{ mint.name }}"
+                                data-city="{{ mint.city or '' }}"
+                                data-state="{{ mint.state or '' }}"
+                                data-country="{{ mint.country or '' }}">
+
+                                {{ mint.name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                </div>
+
+
+                <div class="col-md-4 mb-3">
+
+                    <label class="form-label">
+                        Mint Mark
+                    </label>
+
+                    <input
+    type="text"
+    name="mint_mark"
+    id="mintMarkInput"
+    class="form-control">
+
+                </div>
+
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- ================================================== -->
+    <!-- COLLECTION INFORMATION -->
+    <!-- ================================================== -->
+
+    <div class="card mb-4">
+
+        <div class="card-body">
+
+            <h4 class="card-title">
+                Collection Information
+            </h4>
+
+
+            <div class="row">
+
+
+                <div class="col-md-4 mb-3">
+
+                    <label class="form-label">
+                        Quantity
+                    </label>
+
+                    <input
+                        type="number"
+                        name="quantity"
+                        class="form-control"
+                        value="1"
+                        min="1">
+
+                </div>
+
+
+                <div class="col-md-4 mb-3">
+
+                    <label class="form-label">
+                        Date Acquired
+                    </label>
+
+                    <input
+                        type="date"
+                        name="date_acquired"
+                        class="form-control">
+
+                </div>
+
+                <div class="col-md-4 mb-3">
+
+                    <label for="purchasePrice" class="form-label">
+                        Price Paid ($)
+                    </label>
+
+                    <input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        name="purchase_price"
+                        id="purchasePrice"
+                        class="form-control"
+                        placeholder="0.00">
+
+                    <div class="form-text">
+                        🔒 Private — stored for your records only and not shown on the public/visitor website.
+                    </div>
+
+                </div>
+
+
+            </div>
+
+
+            <div class="mb-3">
+
+                <label class="form-label">
+                    Notes
+                </label>
+
+                <textarea
+                    name="notes"
+                    class="form-control"
+                    rows="4">
+                </textarea>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <button
+        type="submit"
+        class="btn btn-success">
+
+        Add Coin
+
+    </button>
+
+
+    <a
+        href="{{ url_for('coins') }}"
+        class="btn btn-outline-secondary">
+
+        Cancel
+
+    </a>
+
+
+</form>
+
+
+<!-- ====================================================== -->
+<!-- JAVASCRIPT -->
+<!-- ====================================================== -->
+
+
+<style>
+.coin-camera-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 2000;
+    display: none;
+    background: rgba(0,0,0,.94);
+    color: white;
+}
+.coin-camera-modal.open {
+    display: flex;
+    flex-direction: column;
+}
+.coin-camera-stage {
+    position: relative;
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: hidden;
+    background: #000;
+}
+.coin-camera-video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+.coin-camera-guide {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: min(78vw, 62vh);
+    aspect-ratio: 1 / 1;
+    transform: translate(-50%, -50%);
+    border: 4px solid rgba(255,215,90,.95);
+    border-radius: 50%;
+    box-shadow:
+        0 0 0 9999px rgba(0,0,0,.32),
+        0 0 22px rgba(255,215,90,.45);
+    pointer-events: none;
+}
+.coin-camera-guide::before,
+.coin-camera-guide::after {
+    content: "";
+    position: absolute;
+    background: rgba(255,255,255,.75);
+}
+.coin-camera-guide::before {
+    width: 1px;
+    height: 12%;
+    left: 50%;
+    top: 44%;
+}
+.coin-camera-guide::after {
+    height: 1px;
+    width: 12%;
+    top: 50%;
+    left: 44%;
+}
+.coin-camera-help {
+    position: absolute;
+    left: 1rem;
+    right: 1rem;
+    top: 1rem;
+    text-align: center;
+    text-shadow: 0 2px 5px #000;
+    font-weight: 600;
+    pointer-events: none;
+}
+.coin-camera-controls {
+    flex: 0 0 auto;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: .75rem;
+    padding: 1rem;
+    background: #0d1114;
+}
+.coin-camera-shutter {
+    width: 68px;
+    height: 68px;
+    border-radius: 50%;
+    border: 5px solid white;
+    background: #d8ad58;
+}
+.coin-camera-preview {
+    display: none;
+    position: absolute;
+    inset: 0;
+    background: #080b0d;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: .75rem;
+    padding: 1rem;
+}
+.coin-camera-preview.show {
+    display: flex;
+}
+.coin-camera-preview img {
+    width: min(88vw, 62vh);
+    height: min(88vw, 62vh);
+    object-fit: contain;
+    background: #050708;
+    border-radius: .75rem;
+}
+.coin-camera-preview-actions {
+    display: flex;
+    gap: .5rem;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+.coin-camera-launch {
+    margin-top: .5rem;
+}
+</style>
+
+<div id="coinCameraModal" class="coin-camera-modal" aria-hidden="true">
+    <div class="coin-camera-stage">
+        <video id="coinCameraVideo" class="coin-camera-video" autoplay playsinline muted></video>
+        <div class="coin-camera-guide"></div>
+        <div class="coin-camera-help">
+            Keep the whole coin just inside the gold circle, leaving a small even gap.
+        </div>
+        <div id="coinCameraPreviewBox" class="coin-camera-preview">
+            <img id="coinCameraPreviewImage" alt="Cropped coin preview">
+            <div class="coin-camera-preview-actions">
+                <button type="button" id="coinCameraRetake" class="btn btn-outline-light">Retake</button>
+                <button type="button" id="coinCameraRotateLeft" class="btn btn-outline-light">↶ Rotate</button>
+                <button type="button" id="coinCameraRotateRight" class="btn btn-outline-light">Rotate ↷</button>
+                <button type="button" id="coinCameraUse" class="btn btn-warning">Use Photo</button>
+            </div>
+        </div>
+    </div>
+    <div class="coin-camera-controls">
+        <button type="button" id="coinCameraClose" class="btn btn-outline-light">Cancel</button>
+        <button type="button" id="coinCameraShutter" class="coin-camera-shutter" aria-label="Take photo"></button>
+    </div>
+</div>
+
+<style>
+.mint-picker {
+    position: relative;
+}
+.mint-search-results {
+    position: absolute;
+    z-index: 1050;
+    top: calc(100% - 2.2rem);
+    left: 0;
+    right: 0;
+    max-height: 320px;
+    overflow-y: auto;
+    background: var(--bs-body-bg, #fff);
+    border: 1px solid var(--bs-border-color, #ced4da);
+    border-radius: .5rem;
+    box-shadow: 0 .75rem 2rem rgba(0,0,0,.18);
+}
+.mint-search-result {
+    width: 100%;
+    border: 0;
+    border-bottom: 1px solid var(--bs-border-color, #e5e5e5);
+    background: transparent;
+    color: inherit;
+    padding: .7rem .8rem;
+    text-align: left;
+}
+.mint-search-result:last-child {
+    border-bottom: 0;
+}
+.mint-search-result:hover,
+.mint-search-result.active {
+    background: rgba(13,110,253,.10);
+}
+.mint-search-result-name {
+    font-weight: 600;
+}
+.mint-search-result-location {
+    display: block;
+    margin-top: .12rem;
+    font-size: .82rem;
+    color: var(--bs-secondary-color, #6c757d);
+}
+.mint-selected-display {
+    min-height: 1.8rem;
+    font-size: .88rem;
+    color: var(--bs-secondary-color, #6c757d);
+}
+.mint-selected-display strong {
+    color: var(--bs-body-color, #212529);
+}
+</style>
+
+<script>
+
+const personalObverseImage =
+    document.getElementById(
+        "personalObverseImage"
+    );
+
+const personalReverseImage =
+    document.getElementById(
+        "personalReverseImage"
+    );
+
+
+function connectPhotoPreview(
+    input,
+    previewAreaId,
+    previewImageId,
+    fileNameId
+) {
+
+    const previewArea =
+        document.getElementById(
+            previewAreaId
+        );
+
+    const previewImage =
+        document.getElementById(
+            previewImageId
+        );
+
+    const fileName =
+        document.getElementById(
+            fileNameId
+        );
+
+
+    input.addEventListener(
+        "change",
+        function() {
+
+            const file =
+                input.files[0];
+
+
+            if (!file) {
+
+                previewImage.removeAttribute(
+                    "src"
+                );
+
+                fileName.textContent =
+                    "";
+
+                previewArea.classList.add(
+                    "d-none"
+                );
+
+                return;
+
+            }
+
+
+            if (
+                !file.type.startsWith(
+                    "image/"
+                )
+            ) {
+
+                input.value =
+                    "";
+
+                previewImage.removeAttribute(
+                    "src"
+                );
+
+                fileName.textContent =
+                    "";
+
+                previewArea.classList.add(
+                    "d-none"
+                );
+
+                alert(
+                    "Please choose an image file."
+                );
+
+                return;
+
+            }
+
+
+            const reader =
+                new FileReader();
+
+
+            reader.addEventListener(
+                "load",
+                function() {
+
+                    previewImage.src =
+                        reader.result;
+
+                    fileName.textContent =
+                        file.name;
+
+                    previewArea.classList.remove(
+                        "d-none"
+                    );
+
+                }
+            );
+
+
+            reader.readAsDataURL(
+                file
+            );
+
+        }
+    );
+
+}
+
+
+connectPhotoPreview(
+    personalObverseImage,
+    "obversePreviewArea",
+    "obversePreview",
+    "obverseFileName"
+);
+
+
+connectPhotoPreview(
+    personalReverseImage,
+    "reversePreviewArea",
+    "reversePreview",
+    "reverseFileName"
+);
+
+
+
+
+const searchButton =
+    document.getElementById(
+        "numistaSearchButton"
+    );
+
+const searchName =
+    document.getElementById(
+        "numistaSearchName"
+    );
+
+const searchYear =
+    document.getElementById(
+        "numistaSearchYear"
+    );
+
+const statusBox =
+    document.getElementById(
+        "numistaStatus"
+    );
+
+const resultsBox =
+    document.getElementById(
+        "numistaResults"
+    );
+
+
+const coinName =
+    document.getElementById(
+        "coinName"
+    );
+
+const coinCountry =
+    document.getElementById(
+        "coinCountry"
+    );
+
+const coinYear =
+    document.getElementById(
+        "coinYear"
+    );
+
+const coinDenomination =
+    document.getElementById(
+        "coinDenomination"
+    );
+
+const coinMaterial =
+    document.getElementById(
+        "coinMaterial"
+    );
+
+const mintSelect =
+    document.getElementById(
+        "mintSelect"
+    );
+const mintMarkInput =
+    document.getElementById(
+        "mintMarkInput"
+    );
+
+const numistaTypeId =
+    document.getElementById(
+        "numistaTypeId"
+    );
+
+const numistaIssueId =
+    document.getElementById(
+        "numistaIssueId"
+    );
+
+const variantInput =
+    document.getElementById(
+        "variantInput"
+    );
+
+const mintageInput =
+    document.getElementById(
+        "mintageInput"
+    );
+const obverseImageInput =
+    document.getElementById(
+        "obverseImageInput"
+    );
+
+const reverseImageInput =
+    document.getElementById(
+        "reverseImageInput"
+    );
+
+const numistaUrlInput =
+    document.getElementById(
+        "numistaUrlInput"
+    );
+
+const obverseCopyrightInput =
+    document.getElementById(
+        "obverseCopyrightInput"
+    );
+
+const obverseLicenseInput =
+    document.getElementById(
+        "obverseLicenseInput"
+    );
+
+const reverseCopyrightInput =
+    document.getElementById(
+        "reverseCopyrightInput"
+    );
+
+const reverseLicenseInput =
+    document.getElementById(
+        "reverseLicenseInput"
+    );
+// ============================================================
+// ESCAPE HTML
+// ============================================================
+
+function escapeHtml(value) {
+
+    if (
+        value === null
+        ||
+        value === undefined
+    ) {
+        return "";
+    }
+
+    return String(value)
+
+        .replaceAll(
+            "&",
+            "&amp;"
+        )
+
+        .replaceAll(
+            "<",
+            "&lt;"
+        )
+
+        .replaceAll(
+            ">",
+            "&gt;"
+        )
+
+        .replaceAll(
+            '"',
+            "&quot;"
+        )
+
+        .replaceAll(
+            "'",
+            "&#039;"
+        );
+
+}
+
+
+// ============================================================
+// SEARCH NUMISTA
+// ============================================================
+
+async function searchNumista() {
+
+    const name =
+        searchName.value.trim();
+
+    const year =
+        searchYear.value.trim();
+
+
+    if (!name) {
+
+        statusBox.innerHTML =
+            '<div class="alert alert-warning">'
+            + 'Enter a coin name first.'
+            + '</div>';
+
+        return;
+
+    }
+
+
+    resultsBox.innerHTML = "";
+
+    statusBox.innerHTML =
+        '<div class="alert alert-info">'
+        + 'Searching Numista...'
+        + '</div>';
+
+
+    const params =
+        new URLSearchParams();
+
+    params.set(
+        "q",
+        name
+    );
+
+
+    if (year) {
+
+        params.set(
+            "year",
+            year
+        );
+
+    }
+
+
+    try {
+
+        const response =
+            await fetch(
+                "/api/numista/search?"
+                + params.toString()
+            );
+
+
+        const data =
+            await response.json();
+
+
+        if (!response.ok) {
+
+            throw new Error(
+                data.error
+                || "Search failed."
+            );
+
+        }
+
+
+        statusBox.innerHTML =
+            '<div class="alert alert-success">'
+            + data.count
+            + ' result(s) found.'
+            + '</div>';
+
+
+        showSearchResults(
+            data.results
+        );
+
+    }
+
+    catch (error) {
+
+        statusBox.innerHTML =
+            '<div class="alert alert-danger">'
+            + escapeHtml(
+                error.message
+            )
+            + '</div>';
+
+    }
+
+}
+
+
+// ============================================================
+// SHOW SEARCH RESULTS
+// ============================================================
+
+function showSearchResults(
+    results
+) {
+
+    resultsBox.innerHTML =
+        "";
+
+
+    if (
+        !results
+        ||
+        results.length === 0
+    ) {
+
+        resultsBox.innerHTML =
+            '<p class="text-muted">'
+            + 'No matching coins found.'
+            + '</p>';
+
+        return;
+
+    }
+
+
+    for (
+        const coin
+        of results
+    ) {
+
+        const card =
+            document.createElement(
+                "div"
+            );
+
+        card.className =
+            "card mb-2 numista-search-result";
+
+
+        let dateText =
+            "";
+
+
+        if (
+            coin.min_year !== null
+            &&
+            coin.max_year !== null
+        ) {
+
+            dateText =
+                coin.min_year
+                + " – "
+                + coin.max_year;
+
+        }
+
+
+        card.innerHTML = `
+
+            <div class="card-body">
+
+                <div
+                    class="
+                        d-flex
+                        justify-content-between
+                        align-items-start
+                        gap-3
+                    ">
+
+                    <div>
+
+                        <h5 class="mb-1">
+
+                            ${escapeHtml(
+                                coin.title
+                            )}
+
+                        </h5>
+
+                        <div class="text-muted">
+
+                            ${escapeHtml(
+                                coin.issuer
+                                || "Unknown issuer"
+                            )}
+
+                        </div>
+
+                        <div class="small">
+
+                            ${escapeHtml(
+                                dateText
+                            )}
+
+                        </div>
+
+                        <div class="small text-muted">
+
+                            Numista Type ID:
+                            ${escapeHtml(
+                                coin.id
+                            )}
+
+                        </div>
+
+                    </div>
+
+
+                    <button
+                        type="button"
+                        class="btn btn-outline-primary"
+                        data-type-id="${coin.id}">
+
+                        Use This Coin
+
+                    </button>
+
+                </div>
+
+            </div>
+        `;
+
+
+        const button =
+            card.querySelector(
+                "button"
+            );
+
+
+        button.addEventListener(
+            "click",
+            function() {
+
+                loadNumistaType(
+                    coin.id
+                );
+
+            }
+        );
+
+
+        resultsBox.appendChild(
+            card
+        );
+
+    }
+
+}
+
+
+// ============================================================
+// LOAD SELECTED NUMISTA TYPE
+// ============================================================
+
+async function loadNumistaType(
+    typeId
+) {
+
+    statusBox.innerHTML =
+        '<div class="alert alert-info">'
+        + 'Loading coin details...'
+        + '</div>';
+
+
+    try {
+
+        const [
+            typeResponse,
+            issuesResponse
+        ] = await Promise.all([
+
+            fetch(
+                "/api/numista/type/"
+                + typeId
+            ),
+
+            fetch(
+                "/api/numista/type/"
+                + typeId
+                + "/issues"
+            )
+
+        ]);
+
+
+        const coin =
+            await typeResponse.json();
+
+        const issues =
+            await issuesResponse.json();
+
+
+        if (!typeResponse.ok) {
+
+            throw new Error(
+                coin.error
+                || "Could not load coin."
+            );
+
+        }
+
+
+        if (!issuesResponse.ok) {
+
+            throw new Error(
+                issues.error
+                || "Could not load coin issues."
+            );
+
+        }
+
+
+        coin.issues =
+            Array.isArray(issues)
+            ? issues
+            : [];
+
+
+        applyNumistaCoin(
+            coin
+        );
+
+
+        showSelectedCoin(
+            coin
+        );
+
+
+        const searchResultCards =
+            resultsBox.querySelectorAll(
+                ".numista-search-result"
+            );
+
+        for (
+            const resultCard
+            of searchResultCards
+        ) {
+
+            resultCard.remove();
+
+        }
+
+
+        statusBox.innerHTML =
+            '<div class="alert alert-success">'
+            + 'Numista information loaded. '
+            + 'Review the form before saving.'
+            + '</div>';
+
+    }
+
+    catch (error) {
+
+        statusBox.innerHTML =
+            '<div class="alert alert-danger">'
+            + escapeHtml(
+                error.message
+            )
+            + '</div>';
+
+    }
+
+}
+
+
+// ============================================================
+// PREFILL FORM
+// ============================================================
+
+function applyNumistaCoin(
+    coin
+) {
+
+    numistaTypeId.value =
+        coin.id
+        || "";
+
+
+    // A new Numista type means the old exact issue,
+    // variant, and mintage should be cleared.
+
+    numistaIssueId.value =
+        "";
+
+    variantInput.value =
+        "";
+
+    mintageInput.value =
+        "";
+
+
+    if (coin.title) {
+
+        coinName.value =
+            coin.title;
+
+    }
+
+
+    if (coin.issuer) {
+
+        coinCountry.value =
+            coin.issuer;
+
+    }
+
+
+    if (coin.denomination) {
+
+        coinDenomination.value =
+            coin.denomination;
+
+    }
+
+
+    if (coin.composition) {
+
+        coinMaterial.value =
+            coin.composition;
+
+    }
+
+
+    const searchedYear =
+        searchYear.value.trim();
+
+
+    if (searchedYear) {
+
+        coinYear.value =
+            searchedYear;
+
+    }
+
+
+    obverseImageInput.value =
+        coin.obverse_image
+        || "";
+
+    reverseImageInput.value =
+        coin.reverse_image
+        || "";
+
+    numistaUrlInput.value =
+        coin.numista_url
+        || "";
+
+    obverseCopyrightInput.value =
+        coin.obverse_copyright
+        || "";
+
+    obverseLicenseInput.value =
+        coin.obverse_license
+        || "";
+
+    reverseCopyrightInput.value =
+        coin.reverse_copyright
+        || "";
+
+    reverseLicenseInput.value =
+        coin.reverse_license
+        || "";
+
+
+    // If there is exactly one locally matched mint,
+    // select it automatically. Do not try to guess
+    // the mint mark here.
+
+    const matchedMints =
+        (
+            coin.mints
+            || []
+        ).filter(
+            mint =>
+                mint.local_mint_id
+                !== null
+        );
+
+
+    if (
+        matchedMints.length === 1
+    ) {
+
+        mintSelect.value =
+            String(
+                matchedMints[0]
+                    .local_mint_id
+            );
+
+    }
+
+}
+
+
+// ============================================================
+// SHOW SELECTED COIN
+// ============================================================
+
+function showSelectedCoin(
+    coin
+) {
+
+    const existing =
+        document.getElementById(
+            "selectedNumistaCoin"
+        );
+
+
+    if (existing) {
+
+        existing.remove();
+
+    }
+
+
+    const box =
+        document.createElement(
+            "div"
+        );
+
+    box.id =
+        "selectedNumistaCoin";
+
+    box.className =
+        "card mt-3 border-primary";
+
+
+    // ========================================================
+    // COIN IMAGES
+    // ========================================================
+
+    let images = "";
+
+
+    if (
+        coin.obverse_thumbnail
+        ||
+        coin.reverse_thumbnail
+    ) {
+
+        images += `
+            <div class="
+                d-flex
+                gap-3
+                flex-wrap
+                mt-3
+            ">
+        `;
+
+
+        if (
+            coin.obverse_thumbnail
+        ) {
+
+            images += `
+
+                <div>
+
+                    <div class="
+                        small
+                        text-muted
+                        mb-1
+                    ">
+                        Obverse
+                    </div>
+
+                    <img
+                        src="${escapeHtml(
+                            coin.obverse_thumbnail
+                        )}"
+                        alt="Numista obverse"
+                        style="
+                            max-width: 180px;
+                            max-height: 180px;
+                            object-fit: contain;
+                        ">
+
+                </div>
+            `;
+
+        }
+
+
+        if (
+            coin.reverse_thumbnail
+        ) {
+
+            images += `
+
+                <div>
+
+                    <div class="
+                        small
+                        text-muted
+                        mb-1
+                    ">
+                        Reverse
+                    </div>
+
+                    <img
+                        src="${escapeHtml(
+                            coin.reverse_thumbnail
+                        )}"
+                        alt="Numista reverse"
+                        style="
+                            max-width: 180px;
+                            max-height: 180px;
+                            object-fit: contain;
+                        ">
+
+                </div>
+            `;
+
+        }
+
+
+        images +=
+            "</div>";
+
+    }
+
+
+   // ========================================================
+// MINT BUTTONS
+// ========================================================
+
+let mintHtml =
+    "";
+
+
+// Year currently entered in the form.
+
+const selectedYear =
+    parseInt(
+        coinYear.value
+    );
+
+
+// Get only Numista issues
+// belonging to the selected year.
+
+const issuesForSelectedYear =
+    (
+        coin.issues
+        || []
+    ).filter(
+        issue =>
+            issue.gregorian_year
+            === selectedYear
+    );
+
+
+// Build a set of all mint marks
+// Numista says exist for that year.
+//
+// No mint_letter becomes an empty string,
+// which represents a no-mint-mark issue.
+
+const availableMintMarks =
+    new Set(
+        issuesForSelectedYear.map(
+            issue =>
+                issue.mint_letter
+                || ""
+        )
+    );
+
+
+// Mapping between our mint names
+// and Numista mint letters.
+
+const mintMarkMap = {
+
+    "philadelphia":
+        "",
+
+    "denver":
+        "D",
+
+    "san francisco":
+        "S",
+
+    "carson city":
+        "CC",
+
+    "new orleans":
+        "O",
+
+    "west point":
+        "W"
+
+};
+
+
+if (
+    coin.mints
+    &&
+    coin.mints.length > 0
+) {
+
+    mintHtml += `
+
+        <div class="mt-3">
+
+            <strong>
+                Choose Mint:
+            </strong>
+
+            <div
+                class="
+                    d-flex
+                    flex-wrap
+                    gap-2
+                    mt-2
+                "
+                id="numistaMintButtons">
+    `;
+
+
+    let visibleMintCount =
+        0;
+
+
+    for (
+        const mint
+        of coin.mints
+    ) {
+
+        const mintName =
+            (
+                mint.local_mint_name
+                ||
+                mint.name
+                ||
+                ""
+            )
+            .toLowerCase();
+
+
+        let expectedMark =
+            null;
+
+
+        // Determine the expected mint mark
+        // from the mint name.
+
+        for (
+            const mappedMintName
+            in mintMarkMap
+        ) {
+
+            if (
+                mintName.includes(
+                    mappedMintName
+                )
+            ) {
+
+                expectedMark =
+                    mintMarkMap[
+                        mappedMintName
+                    ];
+
+                break;
+
+            }
+
+        }
+
+
+        // ====================================================
+        // FILTER MINTS BY YEAR
+        // ====================================================
+
+        /*
+            Only hide a mint when:
+
+            1. We have issue information for this year.
+            2. We know the expected mint mark for this mint.
+            3. That mark does NOT appear in Numista's issues.
+
+            Unknown mappings remain visible so we don't
+            accidentally hide foreign or unusual mints.
+        */
+
+        if (
+            issuesForSelectedYear.length > 0
+            &&
+            expectedMark !== null
+            &&
+            !availableMintMarks.has(
+                expectedMark
+            )
+        ) {
+
+            continue;
+
+        }
+
+
+        visibleMintCount +=
+            1;
+
+
+        // ====================================================
+        // LINKED LOCAL MINT
+        // ====================================================
+
+        if (
+            mint.local_mint_id
+            !== null
+        ) {
+
+            mintHtml += `
+
+                <button
+                    type="button"
+                    class="
+                        btn
+                        btn-outline-secondary
+                        numista-mint-button
+                    "
+                    data-local-mint-id="${
+                        mint.local_mint_id
+                    }">
+
+                    ${escapeHtml(
+                        mint.local_mint_name
+                        || mint.name
+                    )}
+
+                </button>
+            `;
+
+        }
+
+
+        // ====================================================
+        // NOT LINKED LOCALLY
+        // ====================================================
+
+        else {
+
+            mintHtml += `
+
+                <button
+                    type="button"
+                    class="
+                        btn
+                        btn-outline-secondary
+                    "
+                    disabled
+                    title="
+                        This Numista mint
+                        is not linked to
+                        a local mint yet.
+                    ">
+
+                    ${escapeHtml(
+                        mint.name
+                    )}
+
+                    ⚠
+
+                </button>
+            `;
+
+        }
+
+    }
+
+
+    mintHtml += `
+
+            </div>
+    `;
+
+
+    // Tell the user that the mint list
+    // was filtered using the entered year.
+
+    if (
+        issuesForSelectedYear.length > 0
+        &&
+        !Number.isNaN(
+            selectedYear
+        )
+    ) {
+
+        mintHtml += `
+
+            <div
+                class="
+                    small
+                    text-muted
+                    mt-2
+                ">
+
+                Showing mints available
+                for ${selectedYear}.
+
+            </div>
+        `;
+
+    }
+
+
+    if (
+        visibleMintCount === 0
+    ) {
+
+        mintHtml += `
+
+            <div
+                class="
+                    alert
+                    alert-warning
+                    mt-2
+                    mb-0
+                ">
+
+                No matching mint was found
+                for this year.
+
+            </div>
+        `;
+
+    }
+
+
+    mintHtml += `
+
+            <div
+                id="selectedMintMessage"
+                class="
+                    small
+                    text-success
+                    mt-2
+                ">
+            </div>
+
+        </div>
+    `;
+
+}
+
+    // ========================================================
+    // BUILD SELECTED COIN CARD
+    // ========================================================
+
+    box.innerHTML = `
+
+        <div class="card-body">
+
+            <h5 class="card-title">
+
+                ${escapeHtml(
+                    coin.title
+                )}
+
+            </h5>
+
+
+            <div>
+
+                <strong>
+                    Issuer:
+                </strong>
+
+                ${escapeHtml(
+                    coin.issuer
+                    || "Unknown"
+                )}
+
+            </div>
+
+
+            <div>
+
+                <strong>
+                    Denomination:
+                </strong>
+
+                ${escapeHtml(
+                    coin.denomination
+                    || "Unknown"
+                )}
+
+            </div>
+
+
+            <div>
+
+                <strong>
+                    Composition:
+                </strong>
+
+                ${escapeHtml(
+                    coin.composition
+                    || "Unknown"
+                )}
+
+            </div>
+
+
+           ${mintHtml}
+
+<div
+    id="numistaVariantArea"
+    class="mt-3">
+</div>
+
+${images}
+
+
+            <div class="
+                small
+                text-muted
+                mt-3
+            ">
+
+                Catalogue information
+                supplied by Numista.
+
+            </div>
+
+        </div>
+    `;
+
+
+    resultsBox.prepend(
+        box
+    );
+
+
+    // ========================================================
+    // CONNECT MINT BUTTONS
+    // ========================================================
+
+    const mintButtons =
+        box.querySelectorAll(
+            ".numista-mint-button"
+        );
+
+    for (
+        const button
+        of mintButtons
+    ) {
+
+        button.addEventListener(
+            "click",
+            function() {
+
+                const localMintId =
+                    button.dataset
+                        .localMintId;
+
+
+                // Select the matching mint
+                // in the actual Add Coin form.
+
+                mintSelect.value =
+                    String(
+                        localMintId
+                    );
+const selectedYear =
+    parseInt(
+        coinYear.value
+    );
+
+
+const issuesForYear =
+    (
+        coin.issues
+        || []
+    ).filter(
+        issue =>
+            issue.gregorian_year
+            === selectedYear
+    );
+
+
+const selectedOption =
+    mintSelect.options[
+        mintSelect.selectedIndex
+    ];
+
+
+const selectedMintName =
+    selectedOption.text
+        .trim()
+        .toLowerCase();
+
+
+const mintMarkMap = {
+
+    "philadelphia":
+        "",
+
+    "denver":
+        "D",
+
+    "san francisco":
+        "S",
+
+    "carson city":
+        "CC",
+
+    "new orleans":
+        "O",
+
+    "west point":
+        "W"
+
+};
+
+
+let expectedMark =
+    null;
+
+
+for (
+    const mintName
+    in mintMarkMap
+) {
+
+    if (
+        selectedMintName.includes(
+            mintName
+        )
+    ) {
+
+        expectedMark =
+            mintMarkMap[
+                mintName
+            ];
+
+        break;
+
+    }
+
+}
+
+
+let mintMark =
+    "";
+
+
+if (
+    expectedMark !== null
+) {
+
+    const matchingIssue =
+        issuesForYear.find(
+            issue => {
+
+                const issueMark =
+                    issue.mint_letter
+                    || "";
+
+                return (
+                    issueMark
+                    === expectedMark
+                );
+
+            }
+        );
+
+
+    if (
+        matchingIssue
+    ) {
+
+        mintMark =
+            expectedMark;
+
+    }
+
+}
+
+
+mintMarkInput.value =
+    mintMark;
+const selectedMintOption =
+    mintSelect.options[
+        mintSelect.selectedIndex
+    ];
+
+
+showVariantsForSelectedMint(
+    coin,
+    selectedMintOption.text.trim()
+);
+                // Remove highlight
+                // from all mint buttons.
+
+                for (
+                    const otherButton
+                    of mintButtons
+                ) {
+
+                    otherButton.classList
+                        .remove(
+                            "btn-success"
+                        );
+
+                    otherButton.classList
+                        .remove(
+                            "text-white"
+                        );
+
+                    otherButton.classList
+                        .add(
+                            "btn-outline-secondary"
+                        );
+
+                }
+
+
+                // Highlight the
+                // selected mint.
+
+                button.classList
+                    .remove(
+                        "btn-outline-secondary"
+                    );
+
+                button.classList
+                    .add(
+                        "btn-success"
+                    );
+
+                button.classList
+                    .add(
+                        "text-white"
+                    );
+
+
+                // Show confirmation.
+
+                const message =
+                    document.getElementById(
+                        "selectedMintMessage"
+                    );
+
+
+                if (message) {
+
+                    const selectedOption =
+                        mintSelect.options[
+                            mintSelect.selectedIndex
+                        ];
+
+
+                    message.textContent =
+                        "Selected: "
+                        + selectedOption.text
+                            .trim();
+
+                }
+
+            }
+        );
+
+    }
+
+
+    // If there is exactly one linked mint button,
+    // select it only AFTER its click listener exists.
+    if (
+        mintButtons.length === 1
+    ) {
+
+        mintButtons[0].click();
+
+    }
+
+}
+function showVariantsForSelectedMint(
+    coin,
+    selectedMintName
+) {
+
+    const variantArea =
+        document.getElementById(
+            "numistaVariantArea"
+        );
+
+    if (!variantArea) {
+        return;
+    }
+
+
+    const selectedYear =
+        parseInt(
+            coinYear.value
+        );
+
+
+    const mintName =
+        selectedMintName
+            .toLowerCase();
+
+
+    const mintMarkMap = {
+
+        "philadelphia":
+            "",
+
+        "denver":
+            "D",
+
+        "san francisco":
+            "S",
+
+        "carson city":
+            "CC",
+
+        "new orleans":
+            "O",
+
+        "west point":
+            "W"
+
+    };
+
+
+    let expectedMark =
+        null;
+
+
+    for (
+        const mappedMintName
+        in mintMarkMap
+    ) {
+
+        if (
+            mintName.includes(
+                mappedMintName
+            )
+        ) {
+
+            expectedMark =
+                mintMarkMap[
+                    mappedMintName
+                ];
+
+            break;
+
+        }
+
+    }
+
+
+    const matchingIssues =
+        (
+            coin.issues
+            || []
+        ).filter(
+            issue => {
+
+                const sameYear =
+                    issue.gregorian_year
+                    === selectedYear;
+
+
+                const issueMark =
+                    issue.mint_letter
+                    || "";
+
+
+                const sameMint =
+                    expectedMark === null
+                    ||
+                    issueMark === expectedMark;
+
+
+                return (
+                    sameYear
+                    &&
+                    sameMint
+                );
+
+            }
+        );
+
+
+    if (
+        matchingIssues.length === 0
+    ) {
+
+        variantArea.innerHTML = `
+
+            <div class="
+                alert
+                alert-warning
+            ">
+
+                No Numista variants
+                were found for this
+                year and mint.
+
+            </div>
+        `;
+
+        return;
+
+    }
+
+
+    let html = `
+
+        <strong>
+            Choose Variant:
+        </strong>
+
+        <div
+            class="
+                d-flex
+                flex-column
+                gap-2
+                mt-2
+            ">
+    `;
+
+
+    for (
+        const issue
+        of matchingIssues
+    ) {
+
+        const variantName =
+            issue.comment
+            || "Regular issue";
+
+
+        let mintageText =
+            "Mintage unknown";
+
+
+        if (
+            issue.mintage
+            !== undefined
+            &&
+            issue.mintage
+            !== null
+        ) {
+
+            mintageText =
+                Number(
+                    issue.mintage
+                ).toLocaleString();
+
+        }
+
+
+        html += `
+
+            <button
+                type="button"
+                class="
+                    btn
+                    btn-outline-secondary
+                    text-start
+                    numista-variant-button
+                "
+                data-issue-id="${
+                    issue.id
+                }"
+                data-variant="${escapeHtml(
+                    variantName
+                )}"
+                data-mintage="${
+                    issue.mintage
+                    ?? ""
+                }">
+
+                <strong>
+
+                    ${escapeHtml(
+                        variantName
+                    )}
+
+                </strong>
+
+                <br>
+
+                <span class="
+                    small
+                    text-muted
+                ">
+
+                    Mintage:
+                    ${escapeHtml(
+                        mintageText
+                    )}
+
+                </span>
+
+            </button>
+        `;
+
+    }
+
+
+    html +=
+        "</div>";
+
+
+    variantArea.innerHTML =
+        html;
+
+
+    const variantButtons =
+        variantArea.querySelectorAll(
+            ".numista-variant-button"
+        );
+
+
+    for (
+        const button
+        of variantButtons
+    ) {
+
+        button.addEventListener(
+            "click",
+            function() {
+
+                numistaIssueId.value =
+                    button.dataset.issueId
+                    || "";
+
+
+                variantInput.value =
+                    button.dataset.variant
+                    || "";
+
+
+                mintageInput.value =
+                    button.dataset.mintage
+                    || "";
+
+
+                for (
+                    const otherButton
+                    of variantButtons
+                ) {
+
+                    otherButton.classList
+                        .remove(
+                            "btn-success"
+                        );
+
+                    otherButton.classList
+                        .remove(
+                            "text-white"
+                        );
+
+                    otherButton.classList
+                        .add(
+                            "btn-outline-secondary"
+                        );
+
+                }
+
+
+                button.classList
+                    .remove(
+                        "btn-outline-secondary"
+                    );
+
+                button.classList
+                    .add(
+                        "btn-success"
+                    );
+
+                button.classList
+                    .add(
+                        "text-white"
+                    );
+
+            }
+        );
+
+    }
+
+}
+
+// ============================================================
+// LOAD COIN PASSED FROM IDENTIFY PAGE
+// ============================================================
+
+async function loadCoinFromIdentifyPage() {
+
+    const params =
+        new URLSearchParams(
+            window.location.search
+        );
+
+    const typeId =
+        params.get(
+            "numista_type_id"
+        );
+
+    const year =
+        params.get(
+            "year"
+        );
+
+    if (!typeId) {
+        return;
+    }
+
+    if (year) {
+        searchYear.value = year;
+        coinYear.value = year;
+    }
+
+    statusBox.innerHTML =
+        '<div class="alert alert-info">'
+        + 'Loading the coin selected on the Identify page...'
+        + '</div>';
+
+    await loadNumistaType(
+        typeId
+    );
+}
+
+
+// ============================================================
+// EVENTS
+// ============================================================
+
+searchButton.addEventListener(
+    "click",
+    searchNumista
+);
+
+
+searchName.addEventListener(
+    "keydown",
+    function(event) {
+
+        if (
+            event.key === "Enter"
+        ) {
+
+            event.preventDefault();
+
+            searchNumista();
+
+        }
+
+    }
+);
+
+
+searchYear.addEventListener(
+    "keydown",
+    function(event) {
+
+        if (
+            event.key === "Enter"
+        ) {
+
+            event.preventDefault();
+
+            searchNumista();
+
+        }
+
+    }
+);
+
+// If opened from Identify Coin, load that Numista type automatically.
+loadCoinFromIdentifyPage();
+
+
+// ============================================================
+// SEARCHABLE MINT PICKER
+// ============================================================
+
+(function setupSearchableMintPicker() {
+    const searchInput = document.getElementById("mintSearchInput");
+    const results = document.getElementById("mintSearchResults");
+    const selectedDisplay = document.getElementById("mintSelectedDisplay");
+    const select = document.getElementById("mintSelect");
+    const countryInput = document.getElementById("coinCountry");
+
+    if (!searchInput || !results || !selectedDisplay || !select) {
+        return;
+    }
+
+    function normalized(value) {
+        return String(value || "").trim().toLowerCase();
+    }
+
+    function optionData(option) {
+        const parts = [
+            option.dataset.city,
+            option.dataset.state,
+            option.dataset.country
+        ].filter(Boolean);
+
+        return {
+            option: option,
+            name: option.dataset.name || option.textContent.trim(),
+            city: option.dataset.city || "",
+            state: option.dataset.state || "",
+            country: option.dataset.country || "",
+            location: parts.join(", ")
+        };
+    }
+
+    const mintOptions = Array.from(select.options)
+        .filter(option => option.value)
+        .map(optionData);
+
+    function updateSelectedDisplay() {
+        const selected = select.options[select.selectedIndex];
+
+        if (!selected || !selected.value) {
+            selectedDisplay.innerHTML =
+                '<span>No mint selected — Unknown / Not Listed</span>';
+            return;
+        }
+
+        const data = optionData(selected);
+        selectedDisplay.innerHTML =
+            '<strong>' + escapeHtml(data.name) + '</strong>'
+            + (data.location
+                ? ' · ' + escapeHtml(data.location)
+                : '');
+    }
+
+    function chooseMint(item) {
+        select.value = item.option.value;
+        searchInput.value = item.name;
+        results.classList.add("d-none");
+        updateSelectedDisplay();
+
+        // Preserve all existing mint/Numista behavior.
+        select.dispatchEvent(new Event("change", { bubbles: true }));
+    }
+
+    function renderResults() {
+        const query = normalized(searchInput.value);
+        const coinCountryValue = normalized(
+            countryInput ? countryInput.value : ""
+        );
+
+        let matches = mintOptions.map(item => {
+            const haystack = normalized([
+                item.name,
+                item.city,
+                item.state,
+                item.country
+            ].join(" "));
+
+            let score = 0;
+
+            if (query) {
+                const name = normalized(item.name);
+                const city = normalized(item.city);
+                const state = normalized(item.state);
+                const country = normalized(item.country);
+
+                if (name === query) score += 100;
+                else if (name.startsWith(query)) score += 70;
+                else if (name.includes(query)) score += 45;
+
+                if (city.startsWith(query)) score += 30;
+                else if (city.includes(query)) score += 18;
+
+                if (state.startsWith(query)) score += 22;
+                else if (state.includes(query)) score += 12;
+
+                if (country.startsWith(query)) score += 18;
+                else if (country.includes(query)) score += 10;
+
+                if (!haystack.includes(query)) {
+                    return null;
+                }
+            }
+
+            // Favor mints whose country resembles the coin issuer/country.
+            if (
+                coinCountryValue
+                && normalized(item.country)
+                && (
+                    coinCountryValue.includes(normalized(item.country))
+                    || normalized(item.country).includes(coinCountryValue)
+                )
+            ) {
+                score += 25;
+            }
+
+            return { item, score };
+        }).filter(Boolean);
+
+        matches.sort((a, b) => {
+            if (b.score !== a.score) return b.score - a.score;
+            return a.item.name.localeCompare(b.item.name);
+        });
+
+        matches = matches.slice(0, 30);
+
+        if (!matches.length) {
+            results.innerHTML =
+                '<div class="p-3 text-muted">No matching mints found.</div>';
+            results.classList.remove("d-none");
+            return;
+        }
+
+        results.innerHTML = "";
+
+        matches.forEach(({ item }) => {
+            const button = document.createElement("button");
+            button.type = "button";
+            button.className = "mint-search-result";
+            button.setAttribute("role", "option");
+
+            const name = document.createElement("span");
+            name.className = "mint-search-result-name";
+            name.textContent = item.name;
+            button.appendChild(name);
+
+            if (item.location) {
+                const location = document.createElement("span");
+                location.className = "mint-search-result-location";
+                location.textContent = item.location;
+                button.appendChild(location);
+            }
+
+            button.addEventListener("click", function () {
+                chooseMint(item);
+            });
+
+            results.appendChild(button);
+        });
+
+        results.classList.remove("d-none");
+    }
+
+    searchInput.addEventListener("input", renderResults);
+    searchInput.addEventListener("focus", renderResults);
+
+    document.addEventListener("click", function (event) {
+        if (!event.target.closest("#mintPicker")) {
+            results.classList.add("d-none");
+        }
+    });
+
+    // If existing Numista code changes the hidden select, keep the label synced.
+    select.addEventListener("change", updateSelectedDisplay);
+
+    updateSelectedDisplay();
+
+    const initiallySelected = select.options[select.selectedIndex];
+    if (initiallySelected && initiallySelected.value) {
+        searchInput.value =
+            initiallySelected.dataset.name
+            || initiallySelected.textContent.trim();
+    }
+})();
+
+</script>
+
+<script>
+(function () {
+    const modal = document.getElementById("coinCameraModal");
+    const video = document.getElementById("coinCameraVideo");
+    const shutter = document.getElementById("coinCameraShutter");
+    const closeButton = document.getElementById("coinCameraClose");
+    const previewBox = document.getElementById("coinCameraPreviewBox");
+    const previewImage = document.getElementById("coinCameraPreviewImage");
+    const retakeButton = document.getElementById("coinCameraRetake");
+    const rotateLeftButton = document.getElementById("coinCameraRotateLeft");
+    const rotateRightButton = document.getElementById("coinCameraRotateRight");
+    const useButton = document.getElementById("coinCameraUse");
+
+    let stream = null;
+    let targetInput = null;
+    let currentCanvas = null;
+
+    async function openCamera(input) {
+        targetInput = input;
+        previewBox.classList.remove("show");
+
+        // Open the overlay BEFORE requesting camera permission.
+        // This makes the tap visibly respond even while the browser
+        // permission request is being handled.
+        modal.style.display = "flex";
+        modal.classList.add("open");
+        modal.setAttribute("aria-hidden", "false");
+
+        try {
+            if (!window.isSecureContext) {
+                throw new Error(
+                    "Camera access requires the HTTPS version of this site."
+                );
+            }
+
+            if (
+                !navigator.mediaDevices
+                || !navigator.mediaDevices.getUserMedia
+            ) {
+                throw new Error(
+                    "This browser does not provide camera access to this page."
+                );
+            }
+
+            stream = await navigator.mediaDevices.getUserMedia({
+                video: {
+                    facingMode: "environment"
+                },
+                audio: false
+            });
+
+            video.srcObject = stream;
+
+            try {
+                await video.play();
+            } catch (playError) {
+                console.warn(
+                    "Camera preview play warning:",
+                    playError
+                );
+            }
+
+        } catch (error) {
+            closeCamera();
+
+            alert(
+                "Could not open the guided camera.\n\n"
+                + (error && error.message
+                    ? error.message
+                    : String(error))
+                + "\n\nMake sure Camera is allowed for this site and open the HTTPS Tailscale address."
+            );
+        }
+    }
+
+    function stopStream() {
+        if (stream) {
+            stream.getTracks().forEach(track => track.stop());
+            stream = null;
+        }
+        video.srcObject = null;
+    }
+
+    function closeCamera() {
+        stopStream();
+        modal.classList.remove("open");
+        modal.style.display = "none";
+        modal.setAttribute("aria-hidden", "true");
+        previewBox.classList.remove("show");
+        currentCanvas = null;
+    }
+
+    function captureCoin() {
+        if (!video.videoWidth || !video.videoHeight) return;
+
+        const vw = video.videoWidth;
+        const vh = video.videoHeight;
+        const stage = video.getBoundingClientRect();
+        const guide = modal.querySelector(".coin-camera-guide").getBoundingClientRect();
+
+        // Translate the visible circular guide into source-video coordinates.
+        // object-fit: cover may crop either the sides or the top/bottom.
+        const scale = Math.max(stage.width / vw, stage.height / vh);
+        const shownW = vw * scale;
+        const shownH = vh * scale;
+        const offsetX = (shownW - stage.width) / 2;
+        const offsetY = (shownH - stage.height) / 2;
+
+        const gx = guide.left - stage.left;
+        const gy = guide.top - stage.top;
+        const gd = guide.width;
+
+        let sx = (gx + offsetX) / scale;
+        let sy = (gy + offsetY) / scale;
+        let sd = gd / scale;
+
+        // Keep a small safety margin outside the guide so the rim is not clipped.
+        const margin = sd * 0.03;
+        sx -= margin;
+        sy -= margin;
+        sd += margin * 2;
+
+        sx = Math.max(0, sx);
+        sy = Math.max(0, sy);
+        sd = Math.min(sd, vw - sx, vh - sy);
+
+        const outputSize = 1000;
+        const canvas = document.createElement("canvas");
+        canvas.width = outputSize;
+        canvas.height = outputSize;
+        const ctx = canvas.getContext("2d");
+
+        ctx.fillStyle = "#07090a";
+        ctx.fillRect(0, 0, outputSize, outputSize);
+        ctx.drawImage(video, sx, sy, sd, sd, 0, 0, outputSize, outputSize);
+
+        currentCanvas = canvas;
+        previewImage.src = canvas.toDataURL("image/jpeg", .95);
+        previewBox.classList.add("show");
+    }
+
+    function rotateCurrent(degrees) {
+        if (!currentCanvas) return;
+        const rotated = document.createElement("canvas");
+        rotated.width = currentCanvas.width;
+        rotated.height = currentCanvas.height;
+        const ctx = rotated.getContext("2d");
+        ctx.fillStyle = "#07090a";
+        ctx.fillRect(0, 0, rotated.width, rotated.height);
+        ctx.translate(rotated.width / 2, rotated.height / 2);
+        ctx.rotate(degrees * Math.PI / 180);
+        ctx.drawImage(currentCanvas, -currentCanvas.width / 2, -currentCanvas.height / 2);
+        currentCanvas = rotated;
+        previewImage.src = rotated.toDataURL("image/jpeg", .95);
+    }
+
+    function usePhoto() {
+        if (!currentCanvas || !targetInput) return;
+
+        currentCanvas.toBlob(function (blob) {
+            const side = targetInput.name.includes("reverse") ? "reverse" : "obverse";
+            const file = new File(
+                [blob],
+                "coin_" + side + "_" + Date.now() + ".jpg",
+                { type: "image/jpeg" }
+            );
+
+            const transfer = new DataTransfer();
+            transfer.items.add(file);
+            targetInput.files = transfer.files;
+
+            const form = targetInput.closest("form");
+            if (form) {
+                let flagName = side === "reverse"
+                    ? "guided_reverse"
+                    : "guided_obverse";
+
+                let flag = form.querySelector(
+                    'input[name="' + flagName + '"]'
+                );
+
+                if (!flag) {
+                    flag = document.createElement("input");
+                    flag.type = "hidden";
+                    flag.name = flagName;
+                    form.appendChild(flag);
+                }
+
+                flag.value = "1";
+            }
+            targetInput.dispatchEvent(new Event("change", { bubbles: true }));
+            closeCamera();
+        }, "image/jpeg", .95);
+    }
+
+    document.querySelectorAll("[data-coin-camera-target]").forEach(button => {
+        button.addEventListener("click", function () {
+            const input = document.getElementById(button.dataset.coinCameraTarget);
+            if (!input) return;
+
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                alert("This browser does not support the guided camera. Use Choose File instead.");
+                return;
+            }
+
+            openCamera(input);
+        });
+    });
+
+    shutter.addEventListener("click", captureCoin);
+    closeButton.addEventListener("click", closeCamera);
+    retakeButton.addEventListener("click", () => previewBox.classList.remove("show"));
+    rotateLeftButton.addEventListener("click", () => rotateCurrent(-90));
+    rotateRightButton.addEventListener("click", () => rotateCurrent(90));
+    useButton.addEventListener("click", usePhoto);
+})();
+</script>
+
+
+<script id="add-similar-prefill-feature">
+document.addEventListener("DOMContentLoaded", function () {
+    const mainForm =
+        document.querySelector('form[method="POST"][enctype*="multipart"]') ||
+        document.querySelector('form[method="POST"]');
+    if (!mainForm) return;
+
+    if (!document.getElementById("saveAddAnotherSimilar")) {
+        const saveSimilar = document.createElement("button");
+        saveSimilar.type = "submit";
+        saveSimilar.name = "save_action";
+        saveSimilar.value = "add_similar";
+        saveSimilar.id = "saveAddAnotherSimilar";
+        saveSimilar.className = "btn btn-outline-warning ms-2";
+        saveSimilar.textContent = "Save & Add Another Similar";
+
+        const buttons = Array.from(
+            mainForm.querySelectorAll('button[type="submit"], input[type="submit"]')
+        );
+        const normalSubmit = buttons[buttons.length - 1];
+        if (normalSubmit) {
+            normalSubmit.insertAdjacentElement("afterend", saveSimilar);
+        } else {
+            mainForm.appendChild(saveSimilar);
+        }
+    }
+
+    {% if prefill_coin %}
+    const prefill = {{ prefill_coin | tojson }};
+
+    if (!document.getElementById("similarCoinBanner")) {
+        const banner = document.createElement("div");
+        banner.id = "similarCoinBanner";
+        banner.className = "alert alert-warning border-warning mb-4";
+        const sourceYear = prefill._source_year ? " (" + prefill._source_year + ")" : "";
+        banner.innerHTML =
+            "<strong>Add Similar Coin</strong><br>" +
+            "Type information copied from <strong>" +
+            String(prefill._source_name || "the selected coin") +
+            sourceYear +
+            "</strong>. Enter the new year and change anything that differs. " +
+            "Personal photos, condition, value, purchase information, notes, " +
+            "mintage, and Numista issue ID were left blank.";
+
+        const heading = document.querySelector("h1");
+        if (heading) heading.insertAdjacentElement("afterend", banner);
+        else mainForm.insertAdjacentElement("beforebegin", banner);
+    }
+
+    Object.entries(prefill).forEach(function ([name, value]) {
+        if (name.startsWith("_")) return;
+        const field = mainForm.elements.namedItem(name);
+        if (!field) return;
+        if (field instanceof HTMLInputElement && field.type === "file") return;
+
+        field.value = value === null || value === undefined ? "" : String(value);
+        field.dispatchEvent(new Event("change", { bubbles: true }));
+    });
+
+    const searchName = document.getElementById("numistaSearchName");
+    const searchYear = document.getElementById("numistaSearchYear");
+    if (searchName) searchName.value = prefill.name || "";
+    if (searchYear) searchYear.value = "";
+
+    const yearField = mainForm.elements.namedItem("year");
+    if (yearField) {
+        yearField.value = "";
+        yearField.placeholder = "Enter the new year";
+        setTimeout(function () { yearField.focus(); }, 150);
+    }
+    {% endif %}
+});
+</script>
+
+{% endblock %}

@@ -1,0 +1,371 @@
+{% extends "base.html" %}
+
+{% block title %}
+Edit {{ side|title }} Photo - {{ coin.name }}
+{% endblock %}
+
+{% block content %}
+
+<style>
+.crop-editor{max-width:1120px;margin:0 auto}
+.crop-editor-head{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;margin-bottom:18px}
+.crop-kicker{color:#b88b47;text-transform:uppercase;letter-spacing:.15em;font-size:.68rem;font-weight:800}
+.crop-title{margin:4px 0 5px;color:#efc873}
+.crop-sub{margin:0;color:#9f9587}
+.crop-layout{display:grid;grid-template-columns:minmax(0,1fr) 280px;gap:18px;align-items:start}
+.crop-panel,.finish-panel{border:1px solid rgba(216,173,88,.34);border-radius:15px;background:#0c0e0e;box-shadow:0 18px 45px rgba(0,0,0,.24)}
+.crop-panel{padding:15px}
+.image-stage{
+    position:relative;
+    display:inline-block;
+    max-width:100%;
+    line-height:0;
+    background:#000;
+    overflow:hidden;
+    user-select:none;
+    touch-action:none;
+    border-radius:12px;
+}
+.image-stage img{
+    display:block;
+    max-width:100%;
+    max-height:72vh;
+    width:auto;
+    height:auto;
+    user-select:none;
+    pointer-events:none;
+    background:#000;
+}
+.crop-box{
+    position:absolute;
+    border:2px solid #e2b55f;
+    box-shadow:0 0 0 9999px rgba(0,0,0,.52),0 0 0 1px rgba(0,0,0,.6);
+    cursor:move;
+    touch-action:none;
+}
+.crop-box::before,.crop-box::after{
+    content:"";
+    position:absolute;
+    pointer-events:none;
+}
+.crop-box::before{
+    left:33.333%;
+    right:33.333%;
+    top:0;
+    bottom:0;
+    border-left:1px solid rgba(255,255,255,.20);
+    border-right:1px solid rgba(255,255,255,.20);
+}
+.crop-box::after{
+    top:33.333%;
+    bottom:33.333%;
+    left:0;
+    right:0;
+    border-top:1px solid rgba(255,255,255,.20);
+    border-bottom:1px solid rgba(255,255,255,.20);
+}
+.circle-guide{
+    position:absolute;
+    inset:12px;
+    border:4px solid rgba(126,83,25,.98);
+    border-radius:50%;
+    box-shadow:
+        0 0 0 2px rgba(0,0,0,.88),
+        0 0 12px rgba(0,0,0,.72),
+        inset 0 0 0 1px rgba(225,173,79,.45);
+    pointer-events:none;
+}
+.circle-guide-label{
+    position:absolute;
+    left:50%;
+    bottom:10px;
+    transform:translateX(-50%);
+    padding:5px 11px;
+    border-radius:999px;
+    background:rgba(0,0,0,.82);
+    border:1px solid rgba(126,83,25,.9);
+    color:#d4a34f;
+    font-size:.70rem;
+    font-weight:800;
+    letter-spacing:.04em;
+    pointer-events:none;
+}
+.crop-handle{
+    position:absolute;
+    width:18px;
+    height:18px;
+    border-radius:50%;
+    background:#e0ad4b;
+    border:2px solid #0a0b0b;
+    box-shadow:0 0 0 1px rgba(255,226,163,.75);
+    z-index:4;
+}
+.crop-handle.nw{left:-10px;top:-10px;cursor:nwse-resize}
+.crop-handle.n{left:50%;top:-10px;transform:translateX(-50%);cursor:ns-resize}
+.crop-handle.ne{right:-10px;top:-10px;cursor:nesw-resize}
+.crop-handle.e{right:-10px;top:50%;transform:translateY(-50%);cursor:ew-resize}
+.crop-handle.se{right:-10px;bottom:-10px;cursor:nwse-resize}
+.crop-handle.s{left:50%;bottom:-10px;transform:translateX(-50%);cursor:ns-resize}
+.crop-handle.sw{left:-10px;bottom:-10px;cursor:nesw-resize}
+.crop-handle.w{left:-10px;top:50%;transform:translateY(-50%);cursor:ew-resize}
+.crop-tip{margin:12px 2px 0;color:#8f8576;font-size:.72rem;line-height:1.5}
+.finish-panel{padding:16px}
+.finish-title{margin:0 0 14px;color:#e9c16d;font-size:.95rem}
+.editor-actions{display:grid;gap:8px;margin-bottom:17px}
+.btn-editor{width:100%;border:1px solid #765427;border-radius:8px;padding:9px 10px;background:#12100c;color:#e9c16f;cursor:pointer;text-decoration:none;text-align:center}
+.btn-editor:hover{border-color:#b8863b;color:#f8d88f}
+.btn-editor.primary{background:#8d641f;border-color:#c5943e;color:#fff6e4}
+.rotate-row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.finish-control{margin:15px 0}
+.finish-control-top{display:flex;justify-content:space-between;gap:10px;margin-bottom:6px}
+.finish-control label{color:#ddd0bb;font-size:.76rem;font-weight:700}
+.finish-control output{color:#cda45b;font-size:.72rem}
+.finish-control input{width:100%;accent-color:#c99743}
+.original-note{color:#7f776c;font-size:.67rem;line-height:1.5}
+@media(max-width:800px){
+    .crop-layout{grid-template-columns:1fr}
+    .crop-editor-head{flex-direction:column}
+    .image-stage img{max-height:none}
+}
+</style>
+
+<div class="crop-editor">
+
+    <div class="crop-editor-head">
+        <div>
+            <div class="crop-kicker">Owner photo tools</div>
+            <h1 class="crop-title">Crop {{ side|title }} Photo</h1>
+            <p class="crop-sub">
+                {{ coin.name }}
+                {% if coin.year %}- {{ coin.year }}{% endif %}
+            </p>
+        </div>
+
+        <a class="btn-editor"
+           style="width:auto"
+           href="{{ url_for('coin_detail', coin_id=coin.id) }}">
+            Cancel
+        </a>
+    </div>
+
+    <form method="POST" id="cropForm">
+        <input type="hidden" name="crop_left" id="cropLeft" value="5">
+        <input type="hidden" name="crop_top" id="cropTop" value="5">
+        <input type="hidden" name="crop_right" id="cropRight" value="95">
+        <input type="hidden" name="crop_bottom" id="cropBottom" value="95">
+        <input type="hidden" name="rotate_steps" id="rotateSteps" value="0">
+
+        <div class="crop-layout">
+
+            <section class="crop-panel">
+                <div class="image-stage" id="imageStage">
+                    <img
+                        id="editorImage"
+                        src="{{ url_for('static', filename='uploads/coins/' ~ source_filename) }}"
+                        alt="{{ side|title }} original">
+
+                    <div class="crop-box" id="cropBox">
+                        <div class="circle-guide"></div>
+                        <div class="circle-guide-label">Coin guide</div>
+
+                        <div class="crop-handle nw" data-handle="nw"></div>
+                        <div class="crop-handle n" data-handle="n"></div>
+                        <div class="crop-handle ne" data-handle="ne"></div>
+                        <div class="crop-handle e" data-handle="e"></div>
+                        <div class="crop-handle se" data-handle="se"></div>
+                        <div class="crop-handle s" data-handle="s"></div>
+                        <div class="crop-handle sw" data-handle="sw"></div>
+                        <div class="crop-handle w" data-handle="w"></div>
+                    </div>
+                </div>
+
+                <p class="crop-tip">
+                    Drag the gold corners or side handles to frame the coin.
+                    The dashed circle shows the part that will stay visible.
+                    Everything outside it saves as black.
+                </p>
+            </section>
+
+            <aside class="finish-panel">
+                <h2 class="finish-title">Photo Finishing</h2>
+
+                <div class="editor-actions">
+                    <div class="rotate-row">
+                        <button type="button" class="btn-editor" id="rotateLeft">↶ Rotate</button>
+                        <button type="button" class="btn-editor" id="rotateRight">Rotate ↷</button>
+                    </div>
+
+                    <button type="button" class="btn-editor" id="resetCrop">Reset Crop</button>
+                </div>
+
+                <div class="finish-control">
+                    <div class="finish-control-top">
+                        <label for="brightness">Brightness</label>
+                        <output id="brightnessOut">1.00</output>
+                    </div>
+                    <input id="brightness" name="brightness" type="range" min="0.5" max="1.8" step="0.01" value="1">
+                </div>
+
+                <div class="finish-control">
+                    <div class="finish-control-top">
+                        <label for="contrast">Contrast</label>
+                        <output id="contrastOut">1.00</output>
+                    </div>
+                    <input id="contrast" name="contrast" type="range" min="0.5" max="1.8" step="0.01" value="1">
+                </div>
+
+                <div class="finish-control">
+                    <div class="finish-control-top">
+                        <label for="sharpness">Sharpness</label>
+                        <output id="sharpnessOut">1.00</output>
+                    </div>
+                    <input id="sharpness" name="sharpness" type="range" min="0.5" max="2.5" step="0.01" value="1">
+                </div>
+
+                <button type="submit" class="btn-editor primary">Save Photo</button>
+
+                <p class="original-note">
+                    The original upload stays untouched.
+                    Saved photos now use a black background with a circular coin cutout.
+                </p>
+            </aside>
+
+        </div>
+    </form>
+</div>
+
+<script>
+(() => {
+    const stage = document.getElementById("imageStage");
+    const image = document.getElementById("editorImage");
+    const box = document.getElementById("cropBox");
+
+    const leftInput = document.getElementById("cropLeft");
+    const topInput = document.getElementById("cropTop");
+    const rightInput = document.getElementById("cropRight");
+    const bottomInput = document.getElementById("cropBottom");
+    const rotateInput = document.getElementById("rotateSteps");
+
+    let crop = {left:5, top:5, right:95, bottom:95};
+    const minSize = 8;
+    let drag = null;
+
+    function clamp(value, min, max) {
+        return Math.max(min, Math.min(max, value));
+    }
+
+    function renderCrop() {
+        box.style.left = crop.left + "%";
+        box.style.top = crop.top + "%";
+        box.style.width = (crop.right - crop.left) + "%";
+        box.style.height = (crop.bottom - crop.top) + "%";
+
+        leftInput.value = crop.left.toFixed(4);
+        topInput.value = crop.top.toFixed(4);
+        rightInput.value = crop.right.toFixed(4);
+        bottomInput.value = crop.bottom.toFixed(4);
+    }
+
+    function pointerPercent(event) {
+        const rect = stage.getBoundingClientRect();
+        return {
+            x: (event.clientX - rect.left) / rect.width * 100,
+            y: (event.clientY - rect.top) / rect.height * 100
+        };
+    }
+
+    function startDrag(event, mode) {
+        event.preventDefault();
+        const p = pointerPercent(event);
+
+        drag = {
+            mode,
+            startX: p.x,
+            startY: p.y,
+            original: {...crop}
+        };
+    }
+
+    box.addEventListener("pointerdown", event => {
+        const handle = event.target.dataset.handle;
+        startDrag(event, handle || "move");
+    });
+
+    window.addEventListener("pointermove", event => {
+        if (!drag) return;
+
+        const p = pointerPercent(event);
+        const dx = p.x - drag.startX;
+        const dy = p.y - drag.startY;
+        const o = drag.original;
+        let n = {...o};
+
+        if (drag.mode === "move") {
+            const width = o.right - o.left;
+            const height = o.bottom - o.top;
+
+            n.left = clamp(o.left + dx, 0, 100 - width);
+            n.top = clamp(o.top + dy, 0, 100 - height);
+            n.right = n.left + width;
+            n.bottom = n.top + height;
+        } else {
+            if (drag.mode.includes("w")) {
+                n.left = clamp(o.left + dx, 0, o.right - minSize);
+            }
+            if (drag.mode.includes("e")) {
+                n.right = clamp(o.right + dx, o.left + minSize, 100);
+            }
+            if (drag.mode.includes("n")) {
+                n.top = clamp(o.top + dy, 0, o.bottom - minSize);
+            }
+            if (drag.mode.includes("s")) {
+                n.bottom = clamp(o.bottom + dy, o.top + minSize, 100);
+            }
+        }
+
+        crop = n;
+        renderCrop();
+    });
+
+    window.addEventListener("pointerup", () => {
+        drag = null;
+    });
+
+    document.getElementById("resetCrop").addEventListener("click", () => {
+        crop = {left:5, top:5, right:95, bottom:95};
+        rotateInput.value = 0;
+        image.style.transform = "rotate(0deg)";
+        renderCrop();
+    });
+
+    function rotate(direction) {
+        let steps = Number(rotateInput.value);
+        steps = (steps + direction + 4) % 4;
+        rotateInput.value = steps;
+        image.style.transform = `rotate(${steps * 90}deg)`;
+        crop = {left:5, top:5, right:95, bottom:95};
+        renderCrop();
+    }
+
+    document.getElementById("rotateLeft").addEventListener("click", () => rotate(-1));
+    document.getElementById("rotateRight").addEventListener("click", () => rotate(1));
+
+    ["brightness", "contrast", "sharpness"].forEach(id => {
+        const control = document.getElementById(id);
+        const output = document.getElementById(id + "Out");
+
+        control.addEventListener("input", () => {
+            output.value = Number(control.value).toFixed(2);
+
+            const brightness = document.getElementById("brightness").value;
+            const contrast = document.getElementById("contrast").value;
+            image.style.filter = `brightness(${brightness}) contrast(${contrast})`;
+        });
+    });
+
+    image.addEventListener("load", renderCrop);
+    renderCrop();
+})();
+</script>
+
+{% endblock %}

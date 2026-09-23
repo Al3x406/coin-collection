@@ -1,0 +1,2478 @@
+{% extends "base.html" %}
+
+{% block title %}
+Edit {{ coin.name }}
+{% endblock %}
+
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="mb-1">Edit Coin</h1>
+        <p class="text-muted mb-0">
+            Update the information for {{ coin.name }}
+        </p>
+    </div>
+
+    <a
+        href="{{ url_for('coin_detail', coin_id=coin.id) }}"
+        class="btn btn-secondary">
+        Cancel
+    </a>
+</div>
+
+
+<!-- ====================================================== -->
+<!-- NUMISTA SEARCH -->
+<!-- ====================================================== -->
+
+<div class="card mb-4 shadow-sm">
+    <div class="card-body">
+
+        <h4 class="card-title">
+            Search Numista
+        </h4>
+
+        <p class="text-muted">
+            Search Numista if you want to correct or change
+            this coin's catalogue match.
+        </p>
+
+        <div class="row">
+
+            <div class="col-md-6 mb-3">
+                <label class="form-label">
+                    Coin Name
+                </label>
+
+                <input
+                    type="text"
+                    id="numistaSearchName"
+                    class="form-control"
+                    value="{{ coin.name or '' }}"
+                    placeholder="Example: Morgan Dollar">
+            </div>
+
+            <div class="col-md-3 mb-3">
+                <label class="form-label">
+                    Year
+                </label>
+
+                <input
+                    type="number"
+                    id="numistaSearchYear"
+                    class="form-control"
+                    value="{{ coin.year if coin.year is not none else '' }}"
+                    placeholder="1921">
+            </div>
+
+            <div class="col-md-3 mb-3 d-flex align-items-end">
+                <button
+                    type="button"
+                    id="numistaSearchButton"
+                    class="btn btn-primary w-100">
+                    Search Numista
+                </button>
+            </div>
+
+        </div>
+
+
+        {% if coin.numista_type_id %}
+
+        <div class="alert alert-light border">
+            <strong>
+                Current Numista Match
+            </strong>
+
+            <div class="mt-1 small">
+                Type ID:
+                {{ coin.numista_type_id }}
+
+                {% if coin.numista_issue_id %}
+                    · Issue ID:
+                    {{ coin.numista_issue_id }}
+                {% endif %}
+
+                {% if coin.variant %}
+                    · Variant:
+                    {{ coin.variant }}
+                {% endif %}
+
+                {% if coin.mintage is not none %}
+                    · Mintage:
+                    {{ "{:,}".format(coin.mintage) }}
+                {% endif %}
+            </div>
+
+            <div class="small text-muted mt-1">
+                Searching again is optional. Your existing
+                Numista information will be kept unless you
+                select a new catalogue entry.
+            </div>
+        </div>
+
+        {% endif %}
+
+
+        <div
+            id="numistaStatus"
+            class="mb-3">
+        </div>
+
+        <div id="numistaResults">
+        </div>
+
+    </div>
+</div>
+
+
+<!-- ====================================================== -->
+<!-- EDIT FORM -->
+<!-- ====================================================== -->
+
+<form method="POST">
+
+    <!-- NUMISTA DATA -->
+
+    <input
+        type="hidden"
+        name="numista_type_id"
+        id="numistaTypeId"
+        value="{{ coin.numista_type_id if coin.numista_type_id is not none else '' }}">
+
+    <input
+        type="hidden"
+        name="numista_issue_id"
+        id="numistaIssueId"
+        value="{{ coin.numista_issue_id if coin.numista_issue_id is not none else '' }}">
+
+    <input
+        type="hidden"
+        name="variant"
+        id="variantInput"
+        value="{{ coin.variant or '' }}">
+
+    <input
+        type="hidden"
+        name="mintage"
+        id="mintageInput"
+        value="{{ coin.mintage if coin.mintage is not none else '' }}">
+
+    <input
+        type="hidden"
+        name="obverse_image"
+        id="obverseImageInput"
+        value="{{ coin.obverse_image or '' }}">
+
+    <input
+        type="hidden"
+        name="reverse_image"
+        id="reverseImageInput"
+        value="{{ coin.reverse_image or '' }}">
+
+    <input
+        type="hidden"
+        name="numista_url"
+        id="numistaUrlInput"
+        value="{{ coin.numista_url or '' }}">
+
+    <input
+        type="hidden"
+        name="obverse_copyright"
+        id="obverseCopyrightInput"
+        value="{{ coin.obverse_copyright or '' }}">
+
+    <input
+        type="hidden"
+        name="obverse_license"
+        id="obverseLicenseInput"
+        value="{{ coin.obverse_license or '' }}">
+
+    <input
+        type="hidden"
+        name="reverse_copyright"
+        id="reverseCopyrightInput"
+        value="{{ coin.reverse_copyright or '' }}">
+
+    <input
+        type="hidden"
+        name="reverse_license"
+        id="reverseLicenseInput"
+        value="{{ coin.reverse_license or '' }}">
+
+
+    <!-- ================================================== -->
+    <!-- COIN INFORMATION -->
+    <!-- ================================================== -->
+
+    <div class="card mb-4 shadow-sm">
+        <div class="card-body">
+
+            <h4 class="card-title mb-3">
+                Coin Information
+            </h4>
+
+            <div class="row">
+
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">
+                        Coin Name
+                    </label>
+
+                    <input
+                        type="text"
+                        name="name"
+                        id="coinName"
+                        value="{{ coin.name or '' }}"
+                        class="form-control"
+                        required>
+                </div>
+
+                <div class="col-md-3 mb-3">
+                    <label class="form-label">
+                        Country / Issuer
+                    </label>
+
+                    <input
+                        type="text"
+                        name="country"
+                        id="coinCountry"
+                        value="{{ coin.country or '' }}"
+                        class="form-control">
+                </div>
+
+                <div class="col-md-3 mb-3">
+                    <label class="form-label">
+                        Year
+                    </label>
+
+                    <input
+                        type="number"
+                        name="year"
+                        id="coinYear"
+                        value="{{ coin.year if coin.year is not none else '' }}"
+                        class="form-control">
+                </div>
+
+            </div>
+
+
+            <div class="row">
+
+                <div class="col-md-3 mb-3">
+                    <label class="form-label">
+                        Denomination
+                    </label>
+
+                    <input
+                        type="text"
+                        name="denomination"
+                        id="coinDenomination"
+                        value="{{ coin.denomination or '' }}"
+                        class="form-control">
+                </div>
+
+                <div class="col-md-3 mb-3">
+                    <label class="form-label">
+                        Material
+                    </label>
+
+                    <input
+                        type="text"
+                        name="material"
+                        id="coinMaterial"
+                        value="{{ coin.material or '' }}"
+                        class="form-control">
+                </div>
+
+                <div class="col-md-3 mb-3">
+                    <label class="form-label">
+                        Condition
+                    </label>
+
+                    <input
+                        type="text"
+                        name="condition"
+                        value="{{ coin.condition or '' }}"
+                        class="form-control">
+                </div>
+
+                <div class="col-md-3 mb-3">
+                    <label
+                        for="estimatedValue"
+                        class="form-label">
+                        Estimated Value ($)
+                    </label>
+
+                    <input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        name="estimated_value"
+                        id="estimatedValue"
+                        value="{{ coin.estimated_value if coin.estimated_value is not none else '' }}"
+                        class="form-control">
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+
+
+    <!-- ================================================== -->
+    <!-- MINT INFORMATION -->
+    <!-- ================================================== -->
+
+    <div class="card mb-4 shadow-sm">
+        <div class="card-body">
+
+            <h4 class="card-title mb-3">
+                Mint Information
+            </h4>
+
+            <div class="row">
+
+                <div class="col-md-8 mb-3">
+
+                    <label class="form-label">
+                        Mint
+                    </label>
+
+                    <div class="mint-picker" id="mintPicker">
+                        <input
+                            type="text"
+                            id="mintSearchInput"
+                            class="form-control"
+                            autocomplete="off"
+                            placeholder="Type a mint, city, state, or country..."
+                            aria-label="Search for a mint">
+
+                        <div
+                            id="mintSearchResults"
+                            class="mint-search-results d-none"
+                            role="listbox">
+                        </div>
+
+                        <div
+                            id="mintSelectedDisplay"
+                            class="mint-selected-display mt-2">
+                        </div>
+
+                        <select
+                            name="mint_id"
+                            id="mintSelect"
+                            class="d-none"
+                            aria-hidden="true">
+
+                            <option value="">Unknown / Not Listed</option>
+
+                            {% for mint in mints %}
+                            <option
+                                value="{{ mint.id }}"
+                                data-name="{{ mint.name }}"
+                                data-city="{{ mint.city or '' }}"
+                                data-state="{{ mint.state or '' }}"
+                                data-country="{{ mint.country or '' }}"
+                            {% if mint.id == coin.mint_id %}
+                            selected
+                            {% endif %}>
+
+                                {{ mint.name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="form-text">
+                        Don't see the mint?
+                        <a href="/mints/add">
+                            Add a new mint
+                        </a>
+                    </div>
+
+                </div>
+
+
+                <div class="col-md-4 mb-3">
+
+                    <label class="form-label">
+                        Mint Mark
+                    </label>
+
+                    <input
+                        type="text"
+                        name="mint_mark"
+                        id="mintMarkInput"
+                        value="{{ coin.mint_mark or '' }}"
+                        class="form-control"
+                        placeholder="CC">
+
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+
+
+    <!-- ================================================== -->
+    <!-- NUMISTA ISSUE INFORMATION -->
+    <!-- ================================================== -->
+
+    <div class="card mb-4 shadow-sm">
+        <div class="card-body">
+
+            <h4 class="card-title mb-3">
+                Numista Issue Information
+            </h4>
+
+            <div class="row">
+
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">
+                        Numista Type ID
+                    </label>
+
+                    <input
+                        type="text"
+                        id="displayTypeId"
+                        value="{{ coin.numista_type_id if coin.numista_type_id is not none else '' }}"
+                        class="form-control"
+                        readonly>
+                </div>
+
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">
+                        Numista Issue ID
+                    </label>
+
+                    <input
+                        type="text"
+                        id="displayIssueId"
+                        value="{{ coin.numista_issue_id if coin.numista_issue_id is not none else '' }}"
+                        class="form-control"
+                        readonly>
+                </div>
+
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">
+                        Mintage
+                    </label>
+
+                    <input
+                        type="text"
+                        id="displayMintage"
+                        value="{% if coin.mintage is not none %}{{ '{:,}'.format(coin.mintage) }}{% endif %}"
+                        class="form-control"
+                        readonly>
+                </div>
+
+            </div>
+
+
+            <div class="mb-3">
+                <label class="form-label">
+                    Variant
+                </label>
+
+                <input
+                    type="text"
+                    id="displayVariant"
+                    value="{{ coin.variant or '' }}"
+                    class="form-control"
+                    readonly>
+            </div>
+
+            <div class="form-text">
+                These fields are updated automatically when
+                you choose a Numista mint and variant above.
+            </div>
+
+        </div>
+    </div>
+
+
+    <!-- ================================================== -->
+    <!-- COLLECTION INFORMATION -->
+    <!-- ================================================== -->
+
+    <div class="card mb-4 shadow-sm">
+        <div class="card-body">
+
+            <h4 class="card-title mb-3">
+                Collection Information
+            </h4>
+
+            <div class="row">
+
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">
+                        Quantity
+                    </label>
+
+                    <input
+                        type="number"
+                        name="quantity"
+                        value="{{ coin.quantity if coin.quantity is not none else 1 }}"
+                        min="1"
+                        class="form-control">
+                </div>
+
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">
+                        Date Acquired
+                    </label>
+
+                    <input
+                        type="date"
+                        name="date_acquired"
+                        value="{{ coin.date_acquired or '' }}"
+                        class="form-control">
+                </div>
+
+                <div class="col-md-4 mb-3">
+                    <label
+                        for="purchasePrice"
+                        class="form-label">
+                        Price Paid ($)
+                    </label>
+
+                    <input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        name="purchase_price"
+                        id="purchasePrice"
+                        value="{{ coin.purchase_price if coin.purchase_price is not none else '' }}"
+                        class="form-control"
+                        placeholder="0.00">
+
+                    <div class="form-text">
+                        🔒 Private — stored for your records only and not shown on the public/visitor website.
+                    </div>
+                </div>
+
+            </div>
+
+
+            <div class="mb-3">
+                <label class="form-label">
+                    Notes
+                </label>
+
+                <textarea
+                    name="notes"
+                    class="form-control"
+                    rows="5">{{ coin.notes or '' }}</textarea>
+            </div>
+
+        </div>
+    </div>
+
+
+    <button
+        type="submit"
+        class="btn btn-success">
+        Save Changes
+    </button>
+
+    <a
+        href="{{ url_for('coin_detail', coin_id=coin.id) }}"
+        class="btn btn-secondary">
+        Cancel
+    </a>
+
+</form>
+
+
+<!-- ====================================================== -->
+<!-- JAVASCRIPT -->
+<!-- ====================================================== -->
+
+
+<style>
+.mint-picker {
+    position: relative;
+}
+.mint-search-results {
+    position: absolute;
+    z-index: 1050;
+    top: calc(100% - 2.2rem);
+    left: 0;
+    right: 0;
+    max-height: 320px;
+    overflow-y: auto;
+    background: var(--bs-body-bg, #fff);
+    border: 1px solid var(--bs-border-color, #ced4da);
+    border-radius: .5rem;
+    box-shadow: 0 .75rem 2rem rgba(0,0,0,.18);
+}
+.mint-search-result {
+    width: 100%;
+    border: 0;
+    border-bottom: 1px solid var(--bs-border-color, #e5e5e5);
+    background: transparent;
+    color: inherit;
+    padding: .7rem .8rem;
+    text-align: left;
+}
+.mint-search-result:last-child {
+    border-bottom: 0;
+}
+.mint-search-result:hover,
+.mint-search-result.active {
+    background: rgba(13,110,253,.10);
+}
+.mint-search-result-name {
+    font-weight: 600;
+}
+.mint-search-result-location {
+    display: block;
+    margin-top: .12rem;
+    font-size: .82rem;
+    color: var(--bs-secondary-color, #6c757d);
+}
+.mint-selected-display {
+    min-height: 1.8rem;
+    font-size: .88rem;
+    color: var(--bs-secondary-color, #6c757d);
+}
+.mint-selected-display strong {
+    color: var(--bs-body-color, #212529);
+}
+</style>
+
+<script>
+
+const searchButton =
+    document.getElementById(
+        "numistaSearchButton"
+    );
+
+const searchName =
+    document.getElementById(
+        "numistaSearchName"
+    );
+
+const searchYear =
+    document.getElementById(
+        "numistaSearchYear"
+    );
+
+const statusBox =
+    document.getElementById(
+        "numistaStatus"
+    );
+
+const resultsBox =
+    document.getElementById(
+        "numistaResults"
+    );
+
+
+const coinName =
+    document.getElementById(
+        "coinName"
+    );
+
+const coinCountry =
+    document.getElementById(
+        "coinCountry"
+    );
+
+const coinYear =
+    document.getElementById(
+        "coinYear"
+    );
+
+const coinDenomination =
+    document.getElementById(
+        "coinDenomination"
+    );
+
+const coinMaterial =
+    document.getElementById(
+        "coinMaterial"
+    );
+
+const mintSelect =
+    document.getElementById(
+        "mintSelect"
+    );
+
+const mintMarkInput =
+    document.getElementById(
+        "mintMarkInput"
+    );
+
+
+const numistaTypeId =
+    document.getElementById(
+        "numistaTypeId"
+    );
+
+const numistaIssueId =
+    document.getElementById(
+        "numistaIssueId"
+    );
+
+const variantInput =
+    document.getElementById(
+        "variantInput"
+    );
+
+const mintageInput =
+    document.getElementById(
+        "mintageInput"
+    );
+
+
+const obverseImageInput =
+    document.getElementById(
+        "obverseImageInput"
+    );
+
+const reverseImageInput =
+    document.getElementById(
+        "reverseImageInput"
+    );
+
+const numistaUrlInput =
+    document.getElementById(
+        "numistaUrlInput"
+    );
+
+const obverseCopyrightInput =
+    document.getElementById(
+        "obverseCopyrightInput"
+    );
+
+const obverseLicenseInput =
+    document.getElementById(
+        "obverseLicenseInput"
+    );
+
+const reverseCopyrightInput =
+    document.getElementById(
+        "reverseCopyrightInput"
+    );
+
+const reverseLicenseInput =
+    document.getElementById(
+        "reverseLicenseInput"
+    );
+
+
+const displayTypeId =
+    document.getElementById(
+        "displayTypeId"
+    );
+
+const displayIssueId =
+    document.getElementById(
+        "displayIssueId"
+    );
+
+const displayVariant =
+    document.getElementById(
+        "displayVariant"
+    );
+
+const displayMintage =
+    document.getElementById(
+        "displayMintage"
+    );
+
+
+let loadedNumistaCoin = null;
+
+
+// ============================================================
+// ESCAPE HTML
+// ============================================================
+
+function escapeHtml(value) {
+
+    if (
+        value === null
+        ||
+        value === undefined
+    ) {
+        return "";
+    }
+
+    return String(value)
+        .replaceAll(
+            "&",
+            "&amp;"
+        )
+        .replaceAll(
+            "<",
+            "&lt;"
+        )
+        .replaceAll(
+            ">",
+            "&gt;"
+        )
+        .replaceAll(
+            '"',
+            "&quot;"
+        )
+        .replaceAll(
+            "'",
+            "&#039;"
+        );
+
+}
+
+
+// ============================================================
+// DISPLAY HIDDEN NUMISTA VALUES
+// ============================================================
+
+function updateNumistaDisplay() {
+
+    displayTypeId.value =
+        numistaTypeId.value;
+
+    displayIssueId.value =
+        numistaIssueId.value;
+
+    displayVariant.value =
+        variantInput.value;
+
+    if (
+        mintageInput.value
+    ) {
+
+        displayMintage.value =
+            Number(
+                mintageInput.value
+            ).toLocaleString();
+
+    }
+
+    else {
+
+        displayMintage.value =
+            "";
+
+    }
+
+}
+
+
+// ============================================================
+// CLEAR EXACT ISSUE
+// ============================================================
+
+function clearExactIssue() {
+
+    numistaIssueId.value = "";
+    variantInput.value = "";
+    mintageInput.value = "";
+
+    updateNumistaDisplay();
+
+}
+
+
+// ============================================================
+// SEARCH NUMISTA
+// ============================================================
+
+async function searchNumista() {
+
+    const name =
+        searchName.value.trim();
+
+    const year =
+        searchYear.value.trim();
+
+
+    if (!name) {
+
+        statusBox.innerHTML =
+            '<div class="alert alert-warning">'
+            + 'Enter a coin name first.'
+            + '</div>';
+
+        return;
+
+    }
+
+
+    resultsBox.innerHTML =
+        "";
+
+    statusBox.innerHTML =
+        '<div class="alert alert-info">'
+        + 'Searching Numista...'
+        + '</div>';
+
+
+    const params =
+        new URLSearchParams();
+
+    params.set(
+        "q",
+        name
+    );
+
+
+    if (year) {
+
+        params.set(
+            "year",
+            year
+        );
+
+    }
+
+
+    try {
+
+        const response =
+            await fetch(
+                "/api/numista/search?"
+                + params.toString()
+            );
+
+        const data =
+            await response.json();
+
+
+        if (!response.ok) {
+
+            throw new Error(
+                data.error
+                || "Search failed."
+            );
+
+        }
+
+
+        statusBox.innerHTML =
+            '<div class="alert alert-success">'
+            + data.count
+            + ' result(s) found.'
+            + '</div>';
+
+
+        showSearchResults(
+            data.results
+            || []
+        );
+
+    }
+
+    catch (error) {
+
+        statusBox.innerHTML =
+            '<div class="alert alert-danger">'
+            + escapeHtml(
+                error.message
+            )
+            + '</div>';
+
+    }
+
+}
+
+
+// ============================================================
+// SEARCH RESULTS
+// ============================================================
+
+function showSearchResults(results) {
+
+    resultsBox.innerHTML =
+        "";
+
+
+    if (
+        results.length === 0
+    ) {
+
+        resultsBox.innerHTML =
+            '<p class="text-muted">'
+            + 'No matching coins found.'
+            + '</p>';
+
+        return;
+
+    }
+
+
+    for (
+        const coin
+        of results
+    ) {
+
+        const card =
+            document.createElement(
+                "div"
+            );
+
+        card.className =
+    "card mb-2 numista-search-result";
+
+
+        let dates =
+            "";
+
+        if (
+            coin.min_year !== null
+            &&
+            coin.max_year !== null
+        ) {
+
+            dates =
+                coin.min_year
+                + " – "
+                + coin.max_year;
+
+        }
+
+
+        card.innerHTML = `
+
+            <div class="card-body">
+
+                <div
+                    class="
+                        d-flex
+                        justify-content-between
+                        align-items-start
+                        gap-3
+                    ">
+
+                    <div>
+
+                        <h5 class="mb-1">
+                            ${escapeHtml(
+                                coin.title
+                            )}
+                        </h5>
+
+                        <div class="text-muted">
+                            ${escapeHtml(
+                                coin.issuer
+                                || "Unknown issuer"
+                            )}
+                        </div>
+
+                        <div class="small">
+                            ${escapeHtml(
+                                dates
+                            )}
+                        </div>
+
+                        <div
+                            class="
+                                small
+                                text-muted
+                            ">
+
+                            Numista Type ID:
+                            ${escapeHtml(
+                                coin.id
+                            )}
+
+                        </div>
+
+                    </div>
+
+                    <button
+                        type="button"
+                        class="
+                            btn
+                            btn-outline-primary
+                        ">
+
+                        Use This Coin
+
+                    </button>
+
+                </div>
+
+            </div>
+        `;
+
+
+        const button =
+            card.querySelector(
+                "button"
+            );
+
+        button.addEventListener(
+            "click",
+            function() {
+
+                loadNumistaType(
+                    coin.id
+                );
+
+            }
+        );
+
+
+        resultsBox.appendChild(
+            card
+        );
+
+    }
+
+}
+
+
+// ============================================================
+// LOAD NUMISTA TYPE + ISSUES
+// ============================================================
+
+async function loadNumistaType(
+    typeId
+) {
+
+    statusBox.innerHTML =
+        '<div class="alert alert-info">'
+        + 'Loading coin details...'
+        + '</div>';
+
+
+    try {
+
+        const [
+            typeResponse,
+            issuesResponse
+        ] = await Promise.all([
+
+            fetch(
+                "/api/numista/type/"
+                + typeId
+            ),
+
+            fetch(
+                "/api/numista/type/"
+                + typeId
+                + "/issues"
+            )
+
+        ]);
+
+
+        const coin =
+            await typeResponse.json();
+
+        const issues =
+            await issuesResponse.json();
+
+
+        if (!typeResponse.ok) {
+
+            throw new Error(
+                coin.error
+                || "Could not load coin."
+            );
+
+        }
+
+
+        if (!issuesResponse.ok) {
+
+            throw new Error(
+                issues.error
+                || "Could not load coin issues."
+            );
+
+        }
+
+
+        coin.issues =
+            Array.isArray(
+                issues
+            )
+            ? issues
+            : [];
+
+
+        loadedNumistaCoin =
+            coin;
+
+
+        applyNumistaCoin(
+            coin
+        );
+
+
+        showSelectedCoin(
+            coin
+        );
+        const searchResultCards =
+    resultsBox.querySelectorAll(
+        ".numista-search-result"
+    );
+
+for (
+    const resultCard
+    of searchResultCards
+) {
+
+    resultCard.remove();
+
+}
+
+        statusBox.innerHTML =
+            '<div class="alert alert-success">'
+            + 'Numista information loaded. '
+            + 'Choose the correct mint and variant, '
+            + 'then review the form before saving.'
+            + '</div>';
+
+    }
+
+    catch (error) {
+
+        statusBox.innerHTML =
+            '<div class="alert alert-danger">'
+            + escapeHtml(
+                error.message
+            )
+            + '</div>';
+
+    }
+
+}
+
+
+// ============================================================
+// APPLY NUMISTA TYPE
+// ============================================================
+
+function applyNumistaCoin(
+    coin
+) {
+
+    numistaTypeId.value =
+        coin.id
+        || "";
+
+
+    /*
+        A newly chosen TYPE does not automatically mean
+        we know the exact issue/variant yet.
+    */
+
+    clearExactIssue();
+
+
+    if (coin.title) {
+
+        coinName.value =
+            coin.title;
+
+    }
+
+
+    if (coin.issuer) {
+
+        coinCountry.value =
+            coin.issuer;
+
+    }
+
+
+    if (coin.denomination) {
+
+        coinDenomination.value =
+            coin.denomination;
+
+    }
+
+
+    if (coin.composition) {
+
+        coinMaterial.value =
+            coin.composition;
+
+    }
+
+
+    const searchedYear =
+        searchYear.value.trim();
+
+
+    if (searchedYear) {
+
+        coinYear.value =
+            searchedYear;
+
+    }
+
+
+    obverseImageInput.value =
+        coin.obverse_image
+        || "";
+
+    reverseImageInput.value =
+        coin.reverse_image
+        || "";
+
+    numistaUrlInput.value =
+        coin.numista_url
+        || "";
+
+    obverseCopyrightInput.value =
+        coin.obverse_copyright
+        || "";
+
+    obverseLicenseInput.value =
+        coin.obverse_license
+        || "";
+
+    reverseCopyrightInput.value =
+        coin.reverse_copyright
+        || "";
+
+    reverseLicenseInput.value =
+        coin.reverse_license
+        || "";
+
+
+    updateNumistaDisplay();
+
+}
+
+
+// ============================================================
+// MINT MARK MAP
+// ============================================================
+
+function getExpectedMintMark(
+    mintName
+) {
+
+    const name =
+        mintName
+            .toLowerCase();
+
+
+    const map = {
+
+        "philadelphia":
+            "",
+
+        "denver":
+            "D",
+
+        "san francisco":
+            "S",
+
+        "carson city":
+            "CC",
+
+        "new orleans":
+            "O",
+
+        "west point":
+            "W"
+
+    };
+
+
+    for (
+        const key
+        in map
+    ) {
+
+        if (
+            name.includes(
+                key
+            )
+        ) {
+
+            return map[
+                key
+            ];
+
+        }
+
+    }
+
+
+    return null;
+
+}
+
+
+// ============================================================
+// SELECTED NUMISTA COIN CARD
+// ============================================================
+
+function showSelectedCoin(
+    coin
+) {
+
+    const oldCard =
+        document.getElementById(
+            "selectedNumistaCoin"
+        );
+
+
+    if (oldCard) {
+
+        oldCard.remove();
+
+    }
+
+
+    const selectedYear =
+        parseInt(
+            coinYear.value
+        );
+
+
+    const yearIssues =
+        (
+            coin.issues
+            || []
+        ).filter(
+            issue =>
+                issue.gregorian_year
+                === selectedYear
+        );
+
+
+    const availableMarks =
+        new Set(
+            yearIssues.map(
+                issue =>
+                    issue.mint_letter
+                    || ""
+            )
+        );
+
+
+    let mintButtons =
+        "";
+
+
+    for (
+        const mint
+        of (
+            coin.mints
+            || []
+        )
+    ) {
+
+        const name =
+            mint.local_mint_name
+            || mint.name
+            || "";
+
+        const expectedMark =
+            getExpectedMintMark(
+                name
+            );
+
+
+        /*
+            If Numista has issue information for this year,
+            hide known mints that did not make the coin
+            during that year.
+        */
+
+        if (
+            yearIssues.length > 0
+            &&
+            expectedMark !== null
+            &&
+            !availableMarks.has(
+                expectedMark
+            )
+        ) {
+
+            continue;
+
+        }
+
+
+        if (
+            mint.local_mint_id
+            !== null
+        ) {
+
+            mintButtons += `
+
+                <button
+                    type="button"
+                    class="
+                        btn
+                        btn-outline-secondary
+                        numista-mint-button
+                    "
+                    data-local-mint-id="${
+                        mint.local_mint_id
+                    }">
+
+                    ${escapeHtml(
+                        name
+                    )}
+
+                </button>
+            `;
+
+        }
+
+        else {
+
+            mintButtons += `
+
+                <button
+                    type="button"
+                    class="
+                        btn
+                        btn-outline-secondary
+                    "
+                    disabled>
+
+                    ${escapeHtml(
+                        name
+                    )}
+                    ⚠
+
+                </button>
+            `;
+
+        }
+
+    }
+
+
+    let images =
+        "";
+
+
+    if (
+        coin.obverse_thumbnail
+        ||
+        coin.reverse_thumbnail
+    ) {
+
+        images += `
+            <div
+                class="
+                    d-flex
+                    flex-wrap
+                    gap-3
+                    mt-3
+                ">
+        `;
+
+
+        if (
+            coin.obverse_thumbnail
+        ) {
+
+            images += `
+
+                <div>
+
+                    <div
+                        class="
+                            small
+                            text-muted
+                            mb-1
+                        ">
+                        Obverse
+                    </div>
+
+                    <img
+                        src="${escapeHtml(
+                            coin.obverse_thumbnail
+                        )}"
+                        alt="Numista obverse"
+                        style="
+                            max-width: 165px;
+                            max-height: 165px;
+                            object-fit: contain;
+                        ">
+
+                </div>
+            `;
+
+        }
+
+
+        if (
+            coin.reverse_thumbnail
+        ) {
+
+            images += `
+
+                <div>
+
+                    <div
+                        class="
+                            small
+                            text-muted
+                            mb-1
+                        ">
+                        Reverse
+                    </div>
+
+                    <img
+                        src="${escapeHtml(
+                            coin.reverse_thumbnail
+                        )}"
+                        alt="Numista reverse"
+                        style="
+                            max-width: 165px;
+                            max-height: 165px;
+                            object-fit: contain;
+                        ">
+
+                </div>
+            `;
+
+        }
+
+
+        images +=
+            "</div>";
+
+    }
+
+
+    const card =
+        document.createElement(
+            "div"
+        );
+
+    card.id =
+        "selectedNumistaCoin";
+
+    card.className =
+        "card border-primary mb-3";
+
+
+    card.innerHTML = `
+
+        <div class="card-body">
+
+            <h5 class="card-title">
+                ${escapeHtml(
+                    coin.title
+                )}
+            </h5>
+
+            <div>
+                <strong>
+                    Issuer:
+                </strong>
+
+                ${escapeHtml(
+                    coin.issuer
+                    || "Unknown"
+                )}
+            </div>
+
+            <div>
+                <strong>
+                    Denomination:
+                </strong>
+
+                ${escapeHtml(
+                    coin.denomination
+                    || "Unknown"
+                )}
+            </div>
+
+            <div>
+                <strong>
+                    Composition:
+                </strong>
+
+                ${escapeHtml(
+                    coin.composition
+                    || "Unknown"
+                )}
+            </div>
+
+
+            <div class="mt-3">
+
+                <strong>
+                    Choose Mint:
+                </strong>
+
+                <div
+                    class="
+                        d-flex
+                        flex-wrap
+                        gap-2
+                        mt-2
+                    "
+                    id="numistaMintButtons">
+
+                    ${mintButtons}
+
+                </div>
+
+                <div
+                    id="selectedMintMessage"
+                    class="
+                        small
+                        text-success
+                        mt-2
+                    ">
+                </div>
+
+            </div>
+
+
+            <div
+                id="numistaVariantArea"
+                class="mt-3">
+            </div>
+
+
+            ${images}
+
+
+            <div
+                class="
+                    small
+                    text-muted
+                    mt-3
+                ">
+                Catalogue information supplied by Numista.
+            </div>
+
+        </div>
+    `;
+
+
+    resultsBox.prepend(
+        card
+    );
+
+
+    connectMintButtons(
+        coin,
+        card
+    );
+    const linkedMintButtons =
+    card.querySelectorAll(
+        ".numista-mint-button"
+    );
+
+
+if (
+    linkedMintButtons.length === 1
+) {
+
+    linkedMintButtons[0].click();
+
+}
+}
+
+
+// ============================================================
+// CONNECT NUMISTA MINT BUTTONS
+// ============================================================
+
+function connectMintButtons(
+    coin,
+    card
+) {
+
+    const buttons =
+        card.querySelectorAll(
+            ".numista-mint-button"
+        );
+
+
+    for (
+        const button
+        of buttons
+    ) {
+
+        button.addEventListener(
+            "click",
+            function() {
+
+                mintSelect.value =
+                    String(
+                        button.dataset
+                            .localMintId
+                    );
+
+
+                const selectedOption =
+                    mintSelect.options[
+                        mintSelect.selectedIndex
+                    ];
+
+
+                const selectedMintName =
+                    selectedOption.text
+                        .trim();
+
+
+                const expectedMark =
+                    getExpectedMintMark(
+                        selectedMintName
+                    );
+
+
+                const year =
+                    parseInt(
+                        coinYear.value
+                    );
+
+
+                const matchingIssue =
+                    (
+                        coin.issues
+                        || []
+                    ).find(
+                        issue => {
+
+                            const mark =
+                                issue.mint_letter
+                                || "";
+
+                            return (
+                                issue.gregorian_year
+                                === year
+                                &&
+                                (
+                                    expectedMark
+                                    === null
+                                    ||
+                                    mark
+                                    === expectedMark
+                                )
+                            );
+
+                        }
+                    );
+
+
+                if (
+                    matchingIssue
+                    &&
+                    expectedMark !== null
+                ) {
+
+                    mintMarkInput.value =
+                        expectedMark;
+
+                }
+
+
+                else if (
+                    expectedMark === ""
+                ) {
+
+                    mintMarkInput.value =
+                        "";
+
+                }
+
+
+                clearExactIssue();
+
+
+                showVariantsForSelectedMint(
+                    coin,
+                    selectedMintName
+                );
+
+
+                for (
+                    const otherButton
+                    of buttons
+                ) {
+
+                    otherButton.classList
+                        .remove(
+                            "btn-success",
+                            "text-white"
+                        );
+
+                    otherButton.classList
+                        .add(
+                            "btn-outline-secondary"
+                        );
+
+                }
+
+
+                button.classList
+                    .remove(
+                        "btn-outline-secondary"
+                    );
+
+                button.classList
+                    .add(
+                        "btn-success",
+                        "text-white"
+                    );
+
+
+                const message =
+                    document.getElementById(
+                        "selectedMintMessage"
+                    );
+
+
+                if (message) {
+
+                    message.textContent =
+                        "Selected: "
+                        + selectedMintName;
+
+                }
+
+            }
+        );
+
+    }
+
+}
+
+
+// ============================================================
+// VARIANTS FOR SELECTED MINT
+// ============================================================
+
+function showVariantsForSelectedMint(
+    coin,
+    selectedMintName
+) {
+
+    const area =
+        document.getElementById(
+            "numistaVariantArea"
+        );
+
+
+    if (!area) {
+
+        return;
+
+    }
+
+
+    const year =
+        parseInt(
+            coinYear.value
+        );
+
+
+    const expectedMark =
+        getExpectedMintMark(
+            selectedMintName
+        );
+
+
+    const matchingIssues =
+        (
+            coin.issues
+            || []
+        ).filter(
+            issue => {
+
+                const issueMark =
+                    issue.mint_letter
+                    || "";
+
+                return (
+                    issue.gregorian_year
+                    === year
+                    &&
+                    (
+                        expectedMark
+                        === null
+                        ||
+                        issueMark
+                        === expectedMark
+                    )
+                );
+
+            }
+        );
+
+
+    if (
+        matchingIssues.length === 0
+    ) {
+
+        area.innerHTML =
+            '<div class="alert alert-warning">'
+            + 'No Numista variants were found '
+            + 'for this year and mint.'
+            + '</div>';
+
+        return;
+
+    }
+
+
+    let html = `
+
+        <strong>
+            Choose Variant:
+        </strong>
+
+        <div
+            class="
+                d-flex
+                flex-column
+                gap-2
+                mt-2
+            ">
+    `;
+
+
+    for (
+        const issue
+        of matchingIssues
+    ) {
+
+        const variant =
+            issue.comment
+            || "Regular issue";
+
+
+        let mintage =
+            "Mintage unknown";
+
+
+        if (
+            issue.mintage
+            !== null
+            &&
+            issue.mintage
+            !== undefined
+        ) {
+
+            mintage =
+                Number(
+                    issue.mintage
+                ).toLocaleString();
+
+        }
+
+
+        html += `
+
+            <button
+                type="button"
+                class="
+                    btn
+                    btn-outline-secondary
+                    text-start
+                    numista-variant-button
+                "
+                data-issue-id="${
+                    issue.id
+                }"
+                data-variant="${escapeHtml(
+                    variant
+                )}"
+                data-mintage="${
+                    issue.mintage
+                    ?? ""
+                }">
+
+                <strong>
+                    ${escapeHtml(
+                        variant
+                    )}
+                </strong>
+
+                <br>
+
+                <span
+                    class="
+                        small
+                        text-muted
+                    ">
+                    Mintage:
+                    ${escapeHtml(
+                        mintage
+                    )}
+                </span>
+
+            </button>
+        `;
+
+    }
+
+
+    html +=
+        "</div>";
+
+
+    area.innerHTML =
+        html;
+
+
+    const buttons =
+        area.querySelectorAll(
+            ".numista-variant-button"
+        );
+
+
+    for (
+        const button
+        of buttons
+    ) {
+
+        button.addEventListener(
+            "click",
+            function() {
+
+                numistaIssueId.value =
+                    button.dataset
+                        .issueId
+                    || "";
+
+                variantInput.value =
+                    button.dataset
+                        .variant
+                    || "";
+
+                mintageInput.value =
+                    button.dataset
+                        .mintage
+                    || "";
+
+
+                updateNumistaDisplay();
+
+
+                for (
+                    const otherButton
+                    of buttons
+                ) {
+
+                    otherButton.classList
+                        .remove(
+                            "btn-success",
+                            "text-white"
+                        );
+
+                    otherButton.classList
+                        .add(
+                            "btn-outline-secondary"
+                        );
+
+                }
+
+
+                button.classList
+                    .remove(
+                        "btn-outline-secondary"
+                    );
+
+                button.classList
+                    .add(
+                        "btn-success",
+                        "text-white"
+                    );
+
+            }
+        );
+
+    }
+
+}
+
+
+// ============================================================
+// EVENTS
+// ============================================================
+
+searchButton.addEventListener(
+    "click",
+    searchNumista
+);
+
+
+searchName.addEventListener(
+    "keydown",
+    function(event) {
+
+        if (
+            event.key === "Enter"
+        ) {
+
+            event.preventDefault();
+
+            searchNumista();
+
+        }
+
+    }
+);
+
+
+searchYear.addEventListener(
+    "keydown",
+    function(event) {
+
+        if (
+            event.key === "Enter"
+        ) {
+
+            event.preventDefault();
+
+            searchNumista();
+
+        }
+
+    }
+);
+
+
+/*
+    If the actual year or mint is manually changed,
+    the old exact Numista issue may no longer be correct.
+*/
+
+coinYear.addEventListener(
+    "change",
+    function() {
+
+        if (
+            loadedNumistaCoin
+        ) {
+
+            clearExactIssue();
+
+            showSelectedCoin(
+                loadedNumistaCoin
+            );
+
+        }
+
+    }
+);
+
+
+mintSelect.addEventListener(
+    "change",
+    function() {
+
+        if (
+            loadedNumistaCoin
+        ) {
+
+            clearExactIssue();
+
+        }
+
+    }
+);
+
+
+updateNumistaDisplay();
+
+
+// ============================================================
+// SEARCHABLE MINT PICKER
+// ============================================================
+
+(function setupSearchableMintPicker() {
+    const searchInput = document.getElementById("mintSearchInput");
+    const results = document.getElementById("mintSearchResults");
+    const selectedDisplay = document.getElementById("mintSelectedDisplay");
+    const select = document.getElementById("mintSelect");
+    const countryInput = document.getElementById("coinCountry");
+
+    if (!searchInput || !results || !selectedDisplay || !select) {
+        return;
+    }
+
+    function normalized(value) {
+        return String(value || "").trim().toLowerCase();
+    }
+
+    function optionData(option) {
+        const parts = [
+            option.dataset.city,
+            option.dataset.state,
+            option.dataset.country
+        ].filter(Boolean);
+
+        return {
+            option: option,
+            name: option.dataset.name || option.textContent.trim(),
+            city: option.dataset.city || "",
+            state: option.dataset.state || "",
+            country: option.dataset.country || "",
+            location: parts.join(", ")
+        };
+    }
+
+    const mintOptions = Array.from(select.options)
+        .filter(option => option.value)
+        .map(optionData);
+
+    function updateSelectedDisplay() {
+        const selected = select.options[select.selectedIndex];
+
+        if (!selected || !selected.value) {
+            selectedDisplay.innerHTML =
+                '<span>No mint selected — Unknown / Not Listed</span>';
+            return;
+        }
+
+        const data = optionData(selected);
+        selectedDisplay.innerHTML =
+            '<strong>' + escapeHtml(data.name) + '</strong>'
+            + (data.location
+                ? ' · ' + escapeHtml(data.location)
+                : '');
+    }
+
+    function chooseMint(item) {
+        select.value = item.option.value;
+        searchInput.value = item.name;
+        results.classList.add("d-none");
+        updateSelectedDisplay();
+
+        // Preserve all existing mint/Numista behavior.
+        select.dispatchEvent(new Event("change", { bubbles: true }));
+    }
+
+    function renderResults() {
+        const query = normalized(searchInput.value);
+        const coinCountryValue = normalized(
+            countryInput ? countryInput.value : ""
+        );
+
+        let matches = mintOptions.map(item => {
+            const haystack = normalized([
+                item.name,
+                item.city,
+                item.state,
+                item.country
+            ].join(" "));
+
+            let score = 0;
+
+            if (query) {
+                const name = normalized(item.name);
+                const city = normalized(item.city);
+                const state = normalized(item.state);
+                const country = normalized(item.country);
+
+                if (name === query) score += 100;
+                else if (name.startsWith(query)) score += 70;
+                else if (name.includes(query)) score += 45;
+
+                if (city.startsWith(query)) score += 30;
+                else if (city.includes(query)) score += 18;
+
+                if (state.startsWith(query)) score += 22;
+                else if (state.includes(query)) score += 12;
+
+                if (country.startsWith(query)) score += 18;
+                else if (country.includes(query)) score += 10;
+
+                if (!haystack.includes(query)) {
+                    return null;
+                }
+            }
+
+            // Favor mints whose country resembles the coin issuer/country.
+            if (
+                coinCountryValue
+                && normalized(item.country)
+                && (
+                    coinCountryValue.includes(normalized(item.country))
+                    || normalized(item.country).includes(coinCountryValue)
+                )
+            ) {
+                score += 25;
+            }
+
+            return { item, score };
+        }).filter(Boolean);
+
+        matches.sort((a, b) => {
+            if (b.score !== a.score) return b.score - a.score;
+            return a.item.name.localeCompare(b.item.name);
+        });
+
+        matches = matches.slice(0, 30);
+
+        if (!matches.length) {
+            results.innerHTML =
+                '<div class="p-3 text-muted">No matching mints found.</div>';
+            results.classList.remove("d-none");
+            return;
+        }
+
+        results.innerHTML = "";
+
+        matches.forEach(({ item }) => {
+            const button = document.createElement("button");
+            button.type = "button";
+            button.className = "mint-search-result";
+            button.setAttribute("role", "option");
+
+            const name = document.createElement("span");
+            name.className = "mint-search-result-name";
+            name.textContent = item.name;
+            button.appendChild(name);
+
+            if (item.location) {
+                const location = document.createElement("span");
+                location.className = "mint-search-result-location";
+                location.textContent = item.location;
+                button.appendChild(location);
+            }
+
+            button.addEventListener("click", function () {
+                chooseMint(item);
+            });
+
+            results.appendChild(button);
+        });
+
+        results.classList.remove("d-none");
+    }
+
+    searchInput.addEventListener("input", renderResults);
+    searchInput.addEventListener("focus", renderResults);
+
+    document.addEventListener("click", function (event) {
+        if (!event.target.closest("#mintPicker")) {
+            results.classList.add("d-none");
+        }
+    });
+
+    // If existing Numista code changes the hidden select, keep the label synced.
+    select.addEventListener("change", updateSelectedDisplay);
+
+    updateSelectedDisplay();
+
+    const initiallySelected = select.options[select.selectedIndex];
+    if (initiallySelected && initiallySelected.value) {
+        searchInput.value =
+            initiallySelected.dataset.name
+            || initiallySelected.textContent.trim();
+    }
+})();
+
+</script>
+
+{% endblock %}

@@ -1,0 +1,198 @@
+{% extends "base.html" %}
+{% block title %}Collection Value{% endblock %}
+{% block content %}
+
+<style>
+.gain-loss-card strong.positive{color:#d8b66e}
+.gain-loss-card strong.negative{color:#c88478}
+.gain-loss-panel{
+    margin-top:14px;
+    padding:18px;
+    border:1px solid #4f3a22;
+    border-radius:14px;
+    background:linear-gradient(145deg,#11100d,#0a0a09);
+}
+.gain-loss-panel h2{
+    margin:0 0 12px;
+    color:#dfb66d;
+    font:700 1.18rem Georgia,serif;
+}
+.gain-loss-grid{
+    display:grid;
+    grid-template-columns:repeat(3,minmax(0,1fr));
+    gap:10px;
+}
+.gain-loss-stat{
+    padding:13px 14px;
+    border:1px solid #3f3121;
+    border-radius:9px;
+    background:#0d0d0c;
+}
+.gain-loss-stat span{
+    display:block;
+    color:#7f766a;
+    font-size:.58rem;
+    text-transform:uppercase;
+    letter-spacing:.1em;
+    font-weight:900;
+}
+.gain-loss-stat strong{
+    display:block;
+    margin-top:5px;
+    color:#d9b36a;
+    font:700 1.05rem Georgia,serif;
+}
+.gain-loss-stat strong.negative{color:#c88478}
+.gain-loss-note{
+    margin:10px 0 0;
+    color:#81776a;
+    font-size:.67rem;
+    line-height:1.5;
+}
+@media(max-width:700px){
+    .gain-loss-grid{grid-template-columns:1fr}
+}
+</style>
+
+<style>
+html,body{background:radial-gradient(circle at 50% -12%,rgba(139,91,37,.10),transparent 38rem),#070809!important;color:#eee6d8}
+.value-page{position:relative;left:50%;transform:translateX(-50%);width:min(1460px,calc(100vw - 36px));padding:28px 0 64px}
+.value-hero{position:relative;overflow:hidden;border:1px solid #765129;border-radius:18px;padding:34px 38px;background:linear-gradient(110deg,rgba(15,11,7,.98),rgba(17,12,8,.89) 57%,rgba(40,26,12,.82)),radial-gradient(circle at 83% 30%,rgba(216,163,79,.16),transparent 24rem);box-shadow:inset 0 0 70px #0008,0 20px 40px #0004}
+.kicker{color:#d2a35c;text-transform:uppercase;letter-spacing:.2em;font-size:.67rem;font-weight:900}
+.value-hero h1{margin:8px 0 7px;color:#efce90;font:700 clamp(2.7rem,5vw,4.8rem)/1 Georgia,serif}
+.value-hero p{margin:0;color:#a99c89;max-width:760px;line-height:1.65}
+.summary-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:16px 0}
+.summary-card{padding:17px 18px;border:1px solid #4b3923;border-radius:12px;background:linear-gradient(145deg,#12110e,#0b0c0b);box-shadow:0 8px 18px #0003}
+.summary-card span{display:block;color:#807568;text-transform:uppercase;letter-spacing:.1em;font-size:.58rem;font-weight:900}
+.summary-card strong{display:block;margin-top:5px;color:#e7bd72;font:700 1.55rem Georgia,serif}
+.summary-card small{display:block;margin-top:3px;color:#8f8577;font-size:.68rem}
+.dashboard-grid{display:grid;grid-template-columns:1.15fr .85fr;gap:14px;margin-top:14px}
+.panel{border:1px solid #4f3a22;border-radius:14px;background:#0c0d0c;overflow:hidden}
+.panel-header{display:flex;justify-content:space-between;align-items:end;gap:12px;padding:15px 17px;border-bottom:1px solid #3a2b1b;background:linear-gradient(#1a130d,#100d09)}
+.panel-header h2{margin:0;color:#dfb66d;font:700 1.25rem Georgia,serif}
+.panel-header span{color:#776e63;font-size:.68rem}
+.breakdown{padding:14px 16px 17px}
+.breakdown-row{display:grid;grid-template-columns:170px 1fr auto;gap:12px;align-items:center;padding:9px 0}
+.breakdown-row + .breakdown-row{border-top:1px solid #252019}
+.breakdown-name{color:#c8b9a3;font-size:.78rem}
+.bar-track{height:8px;overflow:hidden;border-radius:999px;background:#171715;border:1px solid #30271e}
+.bar-fill{height:100%;border-radius:999px;background:linear-gradient(90deg,#9b6f35,#dbb36a)}
+.breakdown-value{color:#dfb66d;font-weight:800;font-size:.76rem;white-space:nowrap}
+.item-list{padding:4px 14px 14px}
+.value-item{display:grid;grid-template-columns:48px 1fr auto;gap:10px;align-items:center;padding:11px 2px}
+.value-item + .value-item{border-top:1px solid #262019}
+.rank{width:32px;height:32px;display:grid;place-items:center;border:1px solid #5a4328;border-radius:50%;color:#c99b55;font:700 .78rem Georgia,serif;background:#11100d}
+.item-name{color:#e0c080;font:700 .86rem Georgia,serif}
+.item-meta{margin-top:2px;color:#7f766b;font-size:.65rem}
+.item-value{color:#d7a956;font-weight:900;font-size:.78rem;text-align:right}
+.category-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;padding:14px}
+.category-card{padding:14px 12px;border:1px solid #3e3020;border-radius:10px;background:linear-gradient(160deg,#13100d,#0b0a09)}
+.category-card strong{display:block;color:#dfb66d;font:700 .9rem Georgia,serif}
+.category-card span{display:block;margin-top:5px;color:#8d8274;font-size:.68rem}
+.category-card b{display:block;margin-top:8px;color:#cda85f;font-size:.8rem}
+.owner-note{margin-top:14px;padding:11px 13px;border:1px solid #3f3325;border-radius:9px;color:#8d8273;background:#0b0c0b;font-size:.7rem}
+@media(max-width:1050px){.summary-grid{grid-template-columns:repeat(2,1fr)}.dashboard-grid{grid-template-columns:1fr}.category-grid{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:620px){.value-page{width:calc(100vw - 18px)}.summary-grid{grid-template-columns:1fr}.category-grid{grid-template-columns:1fr 1fr}.breakdown-row{grid-template-columns:120px 1fr auto}}
+</style>
+
+<div class="value-page">
+<section class="value-hero">
+<div class="kicker">Collection Overview</div>
+<h1>Collection Value</h1>
+<p>A combined view of the coins and Cabinet of Curiosities, using the estimated values stored in your collection.</p>
+</section>
+
+<div class="summary-grid">
+<div class="summary-card"><span>Total Estimated Value</span><strong>${{ "{:,.2f}".format(total_estimated_value) }}</strong><small>Coins + artifacts</small></div>
+<div class="summary-card"><span>Coins</span><strong>${{ "{:,.2f}".format(coin_estimated_value) }}</strong><small>{{ total_coin_count }} physical coins</small></div>
+<div class="summary-card"><span>Cabinet</span><strong>${{ "{:,.2f}".format(artifact_estimated_value) }}</strong><small>{{ total_artifact_count }} artifacts</small></div>
+{% if is_owner %}
+<div class="summary-card"><span>Total Purchase Cost</span><strong>${{ "{:,.2f}".format(total_purchase_cost) }}</strong><small>Owner-only</small></div>
+<div class="summary-card gain-loss-card">
+    <span>Estimated Gain / Loss</span>
+    <strong class="{% if total_gain_loss < 0 %}negative{% else %}positive{% endif %}">
+        {% if total_gain_loss >= 0 %}+{% endif %}${{ "{:,.2f}".format(total_gain_loss) }}
+    </strong>
+    <small>{% if gain_loss_percent >= 0 %}+{% endif %}{{ "{:.1f}".format(gain_loss_percent) }}% vs. purchase cost</small>
+</div>
+
+{% else %}
+<div class="summary-card"><span>Collection Objects</span><strong>{{ total_coin_count + total_artifact_count }}</strong><small>Coins + artifacts</small></div>
+{% endif %}
+</div>
+
+<div class="dashboard-grid">
+<section class="panel">
+<div class="panel-header"><h2>Value Breakdown</h2><span>Estimated value</span></div>
+<div class="breakdown">
+{% for row in value_breakdown %}
+<div class="breakdown-row">
+<div class="breakdown-name">{{ row.label }}</div>
+<div class="bar-track"><div class="bar-fill" style="width:{{ row.percent }}%"></div></div>
+<div class="breakdown-value">${{ "{:,.2f}".format(row.value) }}</div>
+</div>
+{% endfor %}
+</div>
+</section>
+
+<section class="panel">
+<div class="panel-header"><h2>Most Valuable Items</h2><span>Top 6</span></div>
+<div class="item-list">
+{% for item in top_items %}
+<div class="value-item">
+<div class="rank">{{ loop.index }}</div>
+<div><div class="item-name">{{ item.name }}</div><div class="item-meta">{{ item.kind }}{% if item.detail %} · {{ item.detail }}{% endif %}</div></div>
+<div class="item-value">${{ "{:,.2f}".format(item.value) }}</div>
+</div>
+{% else %}
+<div style="padding:30px;color:#81776a;text-align:center">No valued items yet.</div>
+{% endfor %}
+</div>
+</section>
+</div>
+
+<section class="panel" style="margin-top:14px">
+<div class="panel-header"><h2>Cabinet by Category</h2><span>{{ total_artifact_count }} artifacts</span></div>
+<div class="category-grid">
+{% for category in artifact_categories %}
+<div class="category-card"><strong>{{ category.label }}</strong><span>{{ category.count }} item{% if category.count != 1 %}s{% endif %}</span><b>${{ "{:,.2f}".format(category.value) }}</b></div>
+{% endfor %}
+</div>
+</section>
+
+{% if is_owner %}
+<section class="gain-loss-panel">
+    <h2>Purchase Cost vs. Estimated Value</h2>
+
+    <div class="gain-loss-grid">
+        <div class="gain-loss-stat">
+            <span>Total Purchase Cost</span>
+            <strong>${{ "{:,.2f}".format(total_purchase_cost) }}</strong>
+        </div>
+
+        <div class="gain-loss-stat">
+            <span>Current Estimated Value</span>
+            <strong>${{ "{:,.2f}".format(total_estimated_value) }}</strong>
+        </div>
+
+        <div class="gain-loss-stat">
+            <span>Estimated Gain / Loss</span>
+            <strong class="{% if total_gain_loss < 0 %}negative{% endif %}">
+                {% if total_gain_loss >= 0 %}+{% endif %}${{ "{:,.2f}".format(total_gain_loss) }}
+            </strong>
+        </div>
+    </div>
+
+    <p class="gain-loss-note">
+        This is only a collection estimate based on the purchase prices and estimated values you entered.
+        It does not include selling fees, taxes, shipping, grading fees, or other costs.
+    </p>
+</section>
+
+{% endif %}
+
+{% if is_owner %}
+<div class="owner-note">Purchase cost is private and only shown in owner mode. Estimated value is based on the values you entered for each coin and artifact.</div>
+{% endif %}
+</div>
+{% endblock %}

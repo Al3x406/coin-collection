@@ -1,0 +1,1781 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<style>
+.timeline-visual-shell {
+    overflow-x: hidden;
+    overflow-y: hidden;
+    border: 1px solid #dee2e6;
+    border-radius: 12px;
+    background: white;
+}
+
+.timeline-visual {
+    position: relative;
+    min-width: 100%;
+    height: 330px;
+}
+
+.timeline-axis {
+    position: absolute;
+    left: 5%;
+    right: 5%;
+    top: 165px;
+    height: 4px;
+    background: #6c757d;
+    border-radius: 999px;
+}
+
+.timeline-tick {
+    position: absolute;
+    top: 155px;
+    width: 1px;
+    height: 24px;
+    background: #adb5bd;
+    transform: translateX(-50%);
+}
+
+.timeline-tick-label {
+    position: absolute;
+    top: 185px;
+    transform: translateX(-50%);
+    font-size: 0.8rem;
+    color: #6c757d;
+    white-space: nowrap;
+}
+
+.timeline-node {
+    position: absolute;
+    width: 125px;
+    transform: translateX(-50%);
+    text-align: center;
+    z-index: 3;
+}
+
+.timeline-node.above {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+}
+
+.timeline-node.below {
+    display: flex;
+    flex-direction: column;
+}
+
+.timeline-node-card {
+    display: block;
+    text-decoration: none;
+    color: inherit;
+    background: white;
+    border: 1px solid #dee2e6;
+    border-radius: 10px;
+    padding: 6px 8px;
+    box-shadow: 0 2px 7px rgba(0,0,0,0.08);
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.timeline-node-card:hover {
+    color: inherit;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 13px rgba(0,0,0,0.14);
+}
+
+.timeline-node-year {
+    font-weight: 700;
+    font-size: 0.9rem;
+}
+
+.timeline-node-name {
+    font-size: 0.8rem;
+    line-height: 1.2;
+    margin-top: 3px;
+}
+
+.timeline-node-line {
+    width: 2px;
+    height: 24px;
+    background: #adb5bd;
+    margin: 0 auto;
+}
+
+.timeline-node-dot {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: #212529;
+    border: 3px solid white;
+    box-shadow: 0 0 0 2px #212529;
+    margin: 0 auto;
+}
+
+.timeline-node.above .timeline-node-card { order: 1; }
+.timeline-node.above .timeline-node-line { order: 2; }
+.timeline-node.above .timeline-node-dot { order: 3; }
+
+.timeline-node.below .timeline-node-dot { order: 1; }
+.timeline-node.below .timeline-node-line { order: 2; }
+.timeline-node.below .timeline-node-card { order: 3; }
+
+.timeline-empty-note {
+    position: absolute;
+    inset: 0;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    color: #6c757d;
+}
+
+.timeline-legend {
+    font-size: 0.85rem;
+    color: #6c757d;
+}
+
+
+.timeline-overview-wrap {
+    margin-top: 18px;
+}
+
+.timeline-overview-label {
+    font-size: 0.8rem;
+    color: #6c757d;
+    margin-bottom: 6px;
+}
+
+.timeline-overview {
+    position: relative;
+    height: 54px;
+    border: 1px solid #dee2e6;
+    border-radius: 999px;
+    background: #f8f9fa;
+    overflow: hidden;
+    cursor: pointer;
+}
+
+.timeline-overview-axis {
+    position: absolute;
+    left: 3%;
+    right: 3%;
+    top: 50%;
+    height: 3px;
+    background: #adb5bd;
+    transform: translateY(-50%);
+}
+
+.timeline-overview-dot {
+    position: absolute;
+    top: 50%;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #495057;
+    transform: translate(-50%, -50%);
+    z-index: 2;
+}
+
+.timeline-overview-window {
+    position: absolute;
+    top: 6px;
+    bottom: 6px;
+    min-width: 18px;
+    border: 2px solid #212529;
+    background: rgba(33, 37, 41, 0.10);
+    border-radius: 999px;
+    z-index: 3;
+    pointer-events: auto;
+    cursor: grab;
+}
+
+.timeline-overview-window.dragging {
+    cursor: grabbing;
+}
+
+.timeline-overview-handle {
+    position: absolute;
+    top: 50%;
+    width: 12px;
+    height: 28px;
+    background: white;
+    border: 1px solid #495057;
+    border-radius: 6px;
+    transform: translateY(-50%);
+    z-index: 4;
+    cursor: ew-resize;
+}
+
+.timeline-overview-handle.left {
+    left: -6px;
+}
+
+.timeline-overview-handle.right {
+    right: -6px;
+}
+
+.timeline-overview-years {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.75rem;
+    color: #6c757d;
+    margin-top: 5px;
+}
+
+</style>
+
+
+<div class="container mt-4">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="mb-1">Collection Through Time</h1>
+            <p class="text-muted mb-0">
+                Explore your coin collection by year.
+            </p>
+        </div>
+    </div>
+
+    {% if coins %}
+
+        <div class="card shadow-sm mb-4">
+            <div class="card-body">
+
+                <div class="row g-3 align-items-end">
+
+                    <div class="col-md-4">
+                        <label
+                            for="timelineSearch"
+                            class="form-label">
+                            Search Coins
+                        </label>
+
+                        <input
+                            type="text"
+                            id="timelineSearch"
+                            class="form-control"
+                            placeholder="Morgan Dollar, France, etc.">
+                    </div>
+
+                    <div class="col-md-4">
+                        <label
+                            for="yearSlider"
+                            class="form-label">
+                            Year
+                        </label>
+
+                        <input
+                            type="range"
+                            id="yearSlider"
+                            class="form-range">
+                    </div>
+
+                    <div class="col-md-2">
+                        <div class="border rounded p-2 text-center">
+                            <div class="small text-muted">
+                                Selected Year
+                            </div>
+
+                            <strong id="selectedYear">
+                                —
+                            </strong>
+                        </div>
+                    </div>
+
+                    <div class="col-md-2">
+                        <button
+                            type="button"
+                            class="btn btn-outline-secondary w-100"
+                            id="showAllButton">
+                            Show All
+                        </button>
+                    </div>
+
+                </div>
+
+            </div>
+        </div>
+
+
+        <div class="card shadow-sm mb-4">
+            <div class="card-body">
+
+                <h5 class="card-title">
+                    Collection Overview
+                </h5>
+
+                <div class="row text-center">
+
+                    <div class="col-md-4 mb-3 mb-md-0">
+                        <div class="fs-3 fw-bold">
+                            {{ coins|length }}
+                        </div>
+
+                        <div class="text-muted">
+                            Coin Entries
+                        </div>
+                    </div>
+
+                    <div class="col-md-4 mb-3 mb-md-0">
+                        <div
+                            class="fs-3 fw-bold"
+                            id="visibleCoinCount">
+                            {{ coins|length }}
+                        </div>
+
+                        <div class="text-muted">
+                            In Selected Range
+                        </div>
+                    </div>
+
+                    <div class="col-md-4">
+                        <div
+                            class="fs-3 fw-bold"
+                            id="yearRangeDisplay">
+                            —
+                        </div>
+
+                        <div class="text-muted">
+                            Collection Range
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+        </div>
+
+
+
+        <div class="card shadow-sm mb-4">
+            <div class="card-body">
+
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+
+                    <div>
+                        <h5 class="card-title mb-1">
+                            Visual Timeline
+                        </h5>
+
+                        <div class="timeline-legend">
+                            Drag or resize the range below to zoom. The main timeline updates automatically. Click a coin to open its detail page.
+                        </div>
+                    </div>
+
+                    <div class="d-flex gap-2 align-items-center">
+
+                        <span
+                            class="badge text-bg-light border"
+                            id="timelineIncrementLabel">
+                            —
+                        </span>
+
+                        <span
+                            class="badge text-bg-light border"
+                            id="timelineRangeLabel">
+                            —
+                        </span>
+
+                        <span
+                            class="badge text-bg-light border"
+                            id="timelineVisibleLabel">
+                            {{ coins|length }} coins
+                        </span>
+
+                    </div>
+
+                </div>
+
+                <div class="timeline-visual-shell">
+
+                    <div
+                        class="timeline-visual"
+                        id="timelineVisual">
+
+                        <div class="timeline-axis"></div>
+
+                        <div id="timelineTicks"></div>
+
+                        {% for coin in coins %}
+
+                            {% if coin.year %}
+
+                                <div
+                                    class="timeline-node"
+                                    data-year="{{ coin.year }}"
+                                    data-search="{{ coin.name }} {{ coin.country or '' }} {{ coin.mint or '' }} {{ coin.denomination or '' }}">
+
+                                    <a
+                                        href="{{ url_for('coin_detail', coin_id=coin.id) }}"
+                                        class="timeline-node-card">
+
+                                        <div class="timeline-node-year">
+                                            {{ coin.year }}
+                                        </div>
+
+                                        <div class="timeline-node-name">
+                                            {{ coin.name }}
+                                        </div>
+
+                                        {% if coin.mint %}
+                                            <div class="small text-muted mt-1">
+                                                {{ coin.mint }}
+                                            </div>
+                                        {% endif %}
+
+                                    </a>
+
+                                    <div class="timeline-node-line"></div>
+                                    <div class="timeline-node-dot"></div>
+
+                                </div>
+
+                            {% endif %}
+
+                        {% endfor %}
+
+                        <div
+                            class="timeline-empty-note"
+                            id="timelineEmptyNote">
+                            No dated coins match the current filter.
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <div class="timeline-overview-wrap">
+
+                    <div class="timeline-overview-label">
+                        Full timeline — drag the bubble to move through history, or drag either edge to change how much time is shown above.
+                    </div>
+
+                    <div
+                        class="timeline-overview"
+                        id="timelineOverview">
+
+                        <div class="timeline-overview-axis"></div>
+
+                        <div id="timelineOverviewDots"></div>
+
+                        <div
+                            class="timeline-overview-window"
+                            id="timelineOverviewWindow">
+
+                            <div
+                                class="timeline-overview-handle left"
+                                id="timelineOverviewHandleLeft">
+                            </div>
+
+                            <div
+                                class="timeline-overview-handle right"
+                                id="timelineOverviewHandleRight">
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                    <div class="timeline-overview-years">
+                        <span id="timelineOverviewStart">—</span>
+                        <span>Present</span>
+                    </div>
+
+                </div>
+
+            </div>
+        </div>
+
+
+        <div id="coinGridAnchor"></div>
+
+        <div
+            class="row g-3"
+            id="timelineCoinGrid">
+
+            {% for coin in coins %}
+
+                <div
+                    class="col-md-6 col-lg-4 timeline-coin"
+                    data-year="{{ coin.year if coin.year else '' }}"
+                    data-search="
+                        {{ coin.name }}
+                        {{ coin.country or '' }}
+                        {{ coin.mint or '' }}
+                        {{ coin.denomination or '' }}
+                    ">
+
+                    <div class="card h-100 shadow-sm">
+
+                        <div class="card-body">
+
+                            <div class="d-flex justify-content-between align-items-start">
+
+                                <div>
+
+                                    <h5 class="card-title mb-1">
+                                        {{ coin.name }}
+                                    </h5>
+
+                                    <div class="text-muted">
+                                        {{ coin.country or "Unknown Country" }}
+                                    </div>
+
+                                </div>
+
+                                {% if coin.year %}
+
+                                    <span class="badge text-bg-dark fs-6">
+                                        {{ coin.year }}
+                                    </span>
+
+                                {% endif %}
+
+                            </div>
+
+
+                            <hr>
+
+
+                            {% if coin.mint %}
+
+                                <p class="mb-1">
+                                    <strong>Mint:</strong>
+                                    {{ coin.mint }}
+                                </p>
+
+                            {% endif %}
+
+
+                            {% if coin.mint_mark %}
+
+                                <p class="mb-1">
+                                    <strong>Mint Mark:</strong>
+                                    {{ coin.mint_mark }}
+                                </p>
+
+                            {% endif %}
+
+
+                            {% if coin.mintage %}
+
+                                <p class="mb-1">
+                                    <strong>Mintage:</strong>
+                                    {{ "{:,}".format(coin.mintage) }}
+                                </p>
+
+                            {% endif %}
+
+
+                            {% if coin.estimated_value is not none %}
+
+                                <p class="mb-1">
+                                    <strong>Estimated Value:</strong>
+                                    ${{ "%.2f"|format(coin.estimated_value) }}
+                                </p>
+
+                            {% endif %}
+
+
+                            <a
+                                href="{{ url_for('coin_detail', coin_id=coin.id) }}"
+                                class="btn btn-primary btn-sm mt-3">
+                                View Coin
+                            </a>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            {% endfor %}
+
+        </div>
+
+
+        <div
+            id="noTimelineResults"
+            class="alert alert-secondary text-center mt-4"
+            style="display: none;">
+
+            No coins match the selected timeline range or search.
+
+        </div>
+
+
+    {% else %}
+
+        <div class="alert alert-info">
+            Your collection does not have any coins yet.
+        </div>
+
+    {% endif %}
+
+</div>
+
+
+{% if coins %}
+
+<script>
+
+const coinCards =
+    Array.from(
+        document.querySelectorAll(
+            ".timeline-coin"
+        )
+    );
+
+
+const coinGridAnchor =
+    document.getElementById(
+        "coinGridAnchor"
+    );
+
+
+const timelineNodes =
+    Array.from(
+        document.querySelectorAll(
+            ".timeline-node"
+        )
+    );
+
+
+const timelineTicks =
+    document.getElementById(
+        "timelineTicks"
+    );
+
+
+const timelineEmptyNote =
+    document.getElementById(
+        "timelineEmptyNote"
+    );
+
+
+const timelineVisibleLabel =
+    document.getElementById(
+        "timelineVisibleLabel"
+    );
+
+
+const timelineIncrementLabel =
+    document.getElementById(
+        "timelineIncrementLabel"
+    );
+
+
+const timelineRangeLabel =
+    document.getElementById(
+        "timelineRangeLabel"
+    );
+
+
+const timelineVisualShell =
+    document.querySelector(
+        ".timeline-visual-shell"
+    );
+
+
+const timelineOverview =
+    document.getElementById(
+        "timelineOverview"
+    );
+
+
+const timelineOverviewDots =
+    document.getElementById(
+        "timelineOverviewDots"
+    );
+
+
+const timelineOverviewWindow =
+    document.getElementById(
+        "timelineOverviewWindow"
+    );
+
+
+const timelineOverviewStart =
+    document.getElementById(
+        "timelineOverviewStart"
+    );
+
+
+const timelineOverviewHandleLeft =
+    document.getElementById(
+        "timelineOverviewHandleLeft"
+    );
+
+
+const timelineOverviewHandleRight =
+    document.getElementById(
+        "timelineOverviewHandleRight"
+    );
+
+
+const searchInput =
+    document.getElementById(
+        "timelineSearch"
+    );
+
+
+const yearSlider =
+    document.getElementById(
+        "yearSlider"
+    );
+
+
+const selectedYearLabel =
+    document.getElementById(
+        "selectedYear"
+    );
+
+
+const showAllButton =
+    document.getElementById(
+        "showAllButton"
+    );
+
+
+const visibleCoinCount =
+    document.getElementById(
+        "visibleCoinCount"
+    );
+
+
+const yearRangeDisplay =
+    document.getElementById(
+        "yearRangeDisplay"
+    );
+
+
+const noTimelineResults =
+    document.getElementById(
+        "noTimelineResults"
+    );
+
+
+const coinYears =
+    coinCards
+        .map(
+            card => parseInt(
+                card.dataset.year
+            )
+        )
+        .filter(
+            year => !Number.isNaN(year)
+        );
+
+
+let yearFilterActive = false;
+let minimumYear = null;
+let maximumYear = null;
+
+const currentYear =
+    new Date().getFullYear();
+
+let visualMaximumYear =
+    currentYear;
+
+
+function formatHistoricalYear(year) {
+
+    if (year < 0) {
+        return Math.abs(year) + " BC";
+    }
+
+    return String(year);
+
+}
+
+
+if (coinYears.length > 0) {
+
+    minimumYear =
+        Math.min(...coinYears);
+
+    maximumYear =
+        Math.max(...coinYears);
+
+
+    yearSlider.min =
+        minimumYear;
+
+    yearSlider.max =
+        maximumYear;
+
+    yearSlider.value =
+        maximumYear;
+
+
+    yearRangeDisplay.textContent =
+        minimumYear === maximumYear
+            ? formatHistoricalYear(minimumYear)
+            : (
+                formatHistoricalYear(minimumYear)
+                + " – "
+                + formatHistoricalYear(maximumYear)
+            );
+
+
+    selectedYearLabel.textContent =
+        "All Years";
+
+}
+
+
+
+function getSelectedTimelineRange() {
+
+    const fullSpan =
+        Math.max(
+            1,
+            visualMaximumYear - minimumYear
+        );
+
+    const startYear =
+        minimumYear
+        +
+        fullSpan
+        *
+        overviewWindowLeftRatio;
+
+    const endYear =
+        minimumYear
+        +
+        fullSpan
+        *
+        (
+            overviewWindowLeftRatio
+            +
+            overviewWindowWidthRatio
+        );
+
+    return {
+        start:
+            startYear,
+        end:
+            endYear
+    };
+
+}
+
+
+function getTimelineIncrement(visibleSpan) {
+
+    if (visibleSpan <= 250) {
+        return 10;
+    }
+
+    if (visibleSpan <= 500) {
+        return 20;
+    }
+
+    if (visibleSpan <= 900) {
+        return 50;
+    }
+
+    if (visibleSpan <= 1800) {
+        return 100;
+    }
+
+    if (visibleSpan <= 3500) {
+        return 200;
+    }
+
+    return 500;
+
+}
+
+
+function buildTimelineTicks() {
+
+    timelineTicks.innerHTML = "";
+
+    if (
+        minimumYear === null
+        ||
+        visualMaximumYear === null
+    ) {
+        return;
+    }
+
+    const range =
+        getSelectedTimelineRange();
+
+    const visibleSpan =
+        Math.max(
+            1,
+            range.end - range.start
+        );
+
+    const increment =
+        getTimelineIncrement(
+            visibleSpan
+        );
+
+    const firstTick =
+        Math.ceil(
+            range.start / increment
+        )
+        *
+        increment;
+
+    const lastTick =
+        Math.floor(
+            range.end / increment
+        )
+        *
+        increment;
+
+    for (
+        let tickYear = firstTick;
+        tickYear <= lastTick;
+        tickYear += increment
+    ) {
+
+        const ratio =
+            (
+                tickYear - range.start
+            )
+            /
+            visibleSpan;
+
+        const percent =
+            5 + ratio * 90;
+
+        const tick =
+            document.createElement(
+                "div"
+            );
+
+        tick.className =
+            "timeline-tick";
+
+        tick.style.left =
+            percent + "%";
+
+        const label =
+            document.createElement(
+                "div"
+            );
+
+        label.className =
+            "timeline-tick-label";
+
+        label.style.left =
+            percent + "%";
+
+        label.textContent =
+            formatHistoricalYear(
+                tickYear
+            );
+
+        timelineTicks.appendChild(
+            tick
+        );
+
+        timelineTicks.appendChild(
+            label
+        );
+
+    }
+
+}
+
+
+function positionTimelineNodes() {
+
+    if (
+        minimumYear === null
+        ||
+        visualMaximumYear === null
+    ) {
+        return;
+    }
+
+    const range =
+        getSelectedTimelineRange();
+
+    const visibleSpan =
+        Math.max(
+            1,
+            range.end - range.start
+        );
+
+    const sameYearCounts = {};
+
+    for (
+        const node
+        of timelineNodes
+    ) {
+
+        const year =
+            parseInt(
+                node.dataset.year
+            );
+
+        if (
+            Number.isNaN(year)
+        ) {
+            continue;
+        }
+
+        const inSelectedRange =
+            year >= range.start
+            &&
+            year <= range.end;
+
+        node.dataset.inBubble =
+            inSelectedRange
+                ? "true"
+                : "false";
+
+        if (
+            !inSelectedRange
+        ) {
+            node.style.display =
+                "none";
+            continue;
+        }
+
+        const ratio =
+            (
+                year - range.start
+            ) / visibleSpan;
+
+        const percent =
+            5 + ratio * 90;
+
+        const countForYear =
+            sameYearCounts[year] || 0;
+
+        sameYearCounts[year] =
+            countForYear + 1;
+
+        const lane =
+            countForYear % 4;
+
+        const isAbove =
+            lane < 2;
+
+        node.classList.remove(
+            "above",
+            "below"
+        );
+
+        node.classList.add(
+            isAbove
+                ? "above"
+                : "below"
+        );
+
+        /*
+            The timeline axis is at 165px.
+
+            These positions keep the coin cards and dots
+            close to that axis so they stay visible inside
+            the smaller timeline box.
+        */
+        if (isAbove) {
+
+            node.style.bottom =
+                (
+                    165
+                    +
+                    lane * 58
+                )
+                +
+                "px";
+
+            node.style.top = "";
+
+        } else {
+
+            node.style.top =
+                (
+                    165
+                    +
+                    (lane - 2) * 58
+                )
+                +
+                "px";
+
+            node.style.bottom = "";
+
+        }
+
+        node.style.left =
+            percent + "%";
+
+    }
+
+}
+
+
+function buildTimelineOverview() {
+
+    timelineOverviewDots.innerHTML = "";
+
+    if (
+        minimumYear === null
+    ) {
+        return;
+    }
+
+    timelineOverviewStart.textContent =
+        formatHistoricalYear(
+            minimumYear
+        );
+
+    const yearSpan =
+        Math.max(
+            1,
+            visualMaximumYear - minimumYear
+        );
+
+    for (
+        const node
+        of timelineNodes
+    ) {
+
+        const year =
+            parseInt(
+                node.dataset.year
+            );
+
+        if (
+            Number.isNaN(year)
+        ) {
+            continue;
+        }
+
+        const ratio =
+            (
+                year - minimumYear
+            ) / yearSpan;
+
+        const dot =
+            document.createElement(
+                "div"
+            );
+
+        dot.className =
+            "timeline-overview-dot";
+
+        dot.style.left =
+            (
+                3 + ratio * 94
+            )
+            +
+            "%";
+
+        timelineOverviewDots.appendChild(
+            dot
+        );
+
+    }
+
+}
+
+
+let overviewWindowLeftRatio = 0;
+let overviewWindowWidthRatio = 0.14;
+
+let overviewDragging = false;
+let overviewResizing = null;
+let overviewPointerStartX = 0;
+let overviewStartLeftRatio = 0;
+let overviewStartWidthRatio = 0;
+
+
+function updateMainTimelineFromBubble() {
+
+    buildTimelineTicks();
+    positionTimelineNodes();
+    filterTimeline();
+
+    const range =
+        getSelectedTimelineRange();
+
+    const visibleSpan =
+        Math.max(
+            1,
+            range.end - range.start
+        );
+
+    const increment =
+        getTimelineIncrement(
+            visibleSpan
+        );
+
+    timelineIncrementLabel.textContent =
+        increment
+        +
+        "-year increments";
+
+
+    timelineRangeLabel.textContent =
+        formatHistoricalYear(
+            Math.ceil(
+                range.start
+            )
+        )
+        +
+        " – "
+        +
+        formatHistoricalYear(
+            Math.floor(
+                range.end
+            )
+        );
+
+}
+
+
+function renderOverviewWindow() {
+
+    const trackLeftPercent = 3;
+    const trackWidthPercent = 94;
+
+    overviewWindowWidthRatio =
+        Math.max(
+            0.04,
+            Math.min(
+                1,
+                overviewWindowWidthRatio
+            )
+        );
+
+    overviewWindowLeftRatio =
+        Math.max(
+            0,
+            Math.min(
+                1 - overviewWindowWidthRatio,
+                overviewWindowLeftRatio
+            )
+        );
+
+    const widthPercent =
+        trackWidthPercent
+        *
+        overviewWindowWidthRatio;
+
+    const leftPercent =
+        trackLeftPercent
+        +
+        trackWidthPercent
+        *
+        overviewWindowLeftRatio;
+
+    timelineOverviewWindow.style.left =
+        leftPercent + "%";
+
+    timelineOverviewWindow.style.width =
+        widthPercent + "%";
+
+}
+
+
+function updateTimelineOverviewWindow() {
+
+    renderOverviewWindow();
+    updateMainTimelineFromBubble();
+
+}
+
+
+function getOverviewPointerRatio(event) {
+
+    const rect =
+        timelineOverview.getBoundingClientRect();
+
+    return Math.min(
+        1,
+        Math.max(
+            0,
+            (
+                event.clientX - rect.left
+            )
+            /
+            rect.width
+        )
+    );
+
+}
+
+
+
+function filterTimeline() {
+
+    const anchorTopBefore =
+        coinGridAnchor
+            .getBoundingClientRect()
+            .top;
+
+
+
+    const searchText =
+        searchInput.value
+            .trim()
+            .toLowerCase();
+
+    const selectedYear =
+        parseInt(
+            yearSlider.value
+        );
+
+    let visibleCount = 0;
+
+
+    for (
+        const card
+        of coinCards
+    ) {
+
+        const cardSearch =
+            card.dataset.search
+                .toLowerCase();
+
+        const cardYear =
+            parseInt(
+                card.dataset.year
+            );
+
+        const matchesSearch =
+            !searchText
+            ||
+            cardSearch.includes(
+                searchText
+            );
+
+        const matchesYear =
+            !yearFilterActive
+            ||
+            cardYear === selectedYear;
+
+        const range =
+            getSelectedTimelineRange();
+
+        const inBubble =
+            !Number.isNaN(cardYear)
+            &&
+            cardYear >= range.start
+            &&
+            cardYear <= range.end;
+
+        const shouldShow =
+            matchesSearch
+            &&
+            matchesYear
+            &&
+            inBubble;
+
+        card.style.display =
+            shouldShow
+                ? ""
+                : "none";
+
+        if (shouldShow) {
+            visibleCount++;
+        }
+
+    }
+
+
+    let visibleTimelineCount = 0;
+
+
+    for (
+        const node
+        of timelineNodes
+    ) {
+
+        const nodeSearch =
+            node.dataset.search
+                .toLowerCase();
+
+        const nodeYear =
+            parseInt(
+                node.dataset.year
+            );
+
+        const matchesSearch =
+            !searchText
+            ||
+            nodeSearch.includes(
+                searchText
+            );
+
+        const matchesYear =
+            !yearFilterActive
+            ||
+            nodeYear === selectedYear;
+
+        const inBubble =
+            node.dataset.inBubble
+            ===
+            "true";
+
+        const shouldShow =
+            matchesSearch
+            &&
+            matchesYear
+            &&
+            inBubble;
+
+        node.style.display =
+            shouldShow
+                ? ""
+                : "none";
+
+        if (shouldShow) {
+            visibleTimelineCount++;
+        }
+
+    }
+
+
+    visibleCoinCount.textContent =
+        visibleCount;
+
+
+    timelineVisibleLabel.textContent =
+        visibleTimelineCount
+        +
+        (
+            visibleTimelineCount === 1
+                ? " coin"
+                : " coins"
+        );
+
+
+    noTimelineResults.style.display =
+        visibleCount === 0
+            ? ""
+            : "none";
+
+
+    timelineEmptyNote.style.display =
+        visibleTimelineCount === 0
+            ? "flex"
+            : "none";
+
+
+
+    const anchorTopAfter =
+        coinGridAnchor
+            .getBoundingClientRect()
+            .top;
+
+    const pageShift =
+        anchorTopAfter
+        -
+        anchorTopBefore;
+
+    if (
+        Math.abs(pageShift) > 0.5
+    ) {
+
+        window.scrollBy(
+            0,
+            pageShift
+        );
+
+    }
+
+}
+
+
+searchInput.addEventListener(
+    "input",
+    function() {
+        filterTimeline();
+    }
+);
+
+
+yearSlider.addEventListener(
+    "input",
+    function() {
+
+        yearFilterActive = true;
+
+        selectedYearLabel.textContent =
+            formatHistoricalYear(
+                parseInt(
+                    yearSlider.value
+                )
+            );
+
+        filterTimeline();
+
+    }
+);
+
+
+showAllButton.addEventListener(
+    "click",
+    function() {
+
+        yearFilterActive = false;
+
+        selectedYearLabel.textContent =
+            "All Years";
+
+        searchInput.value = "";
+
+        filterTimeline();
+
+    }
+);
+
+
+timelineOverviewWindow.addEventListener(
+    "pointerdown",
+    function(event) {
+
+        if (
+            event.target === timelineOverviewHandleLeft
+            ||
+            event.target === timelineOverviewHandleRight
+        ) {
+            return;
+        }
+
+        overviewDragging = true;
+
+        overviewPointerStartX =
+            getOverviewPointerRatio(
+                event
+            );
+
+        overviewStartLeftRatio =
+            overviewWindowLeftRatio;
+
+        timelineOverviewWindow.classList.add(
+            "dragging"
+        );
+
+        timelineOverviewWindow.setPointerCapture(
+            event.pointerId
+        );
+
+        event.preventDefault();
+
+    }
+);
+
+
+timelineOverviewHandleLeft.addEventListener(
+    "pointerdown",
+    function(event) {
+
+        overviewResizing =
+            "left";
+
+        overviewPointerStartX =
+            getOverviewPointerRatio(
+                event
+            );
+
+        overviewStartLeftRatio =
+            overviewWindowLeftRatio;
+
+        overviewStartWidthRatio =
+            overviewWindowWidthRatio;
+
+        timelineOverviewHandleLeft.setPointerCapture(
+            event.pointerId
+        );
+
+        event.preventDefault();
+        event.stopPropagation();
+
+    }
+);
+
+
+timelineOverviewHandleRight.addEventListener(
+    "pointerdown",
+    function(event) {
+
+        overviewResizing =
+            "right";
+
+        overviewPointerStartX =
+            getOverviewPointerRatio(
+                event
+            );
+
+        overviewStartLeftRatio =
+            overviewWindowLeftRatio;
+
+        overviewStartWidthRatio =
+            overviewWindowWidthRatio;
+
+        timelineOverviewHandleRight.setPointerCapture(
+            event.pointerId
+        );
+
+        event.preventDefault();
+        event.stopPropagation();
+
+    }
+);
+
+
+window.addEventListener(
+    "pointermove",
+    function(event) {
+
+        const currentRatio =
+            getOverviewPointerRatio(
+                event
+            );
+
+        const delta =
+            currentRatio
+            -
+            overviewPointerStartX;
+
+        if (overviewDragging) {
+
+            overviewWindowLeftRatio =
+                Math.min(
+                    1 - overviewWindowWidthRatio,
+                    Math.max(
+                        0,
+                        overviewStartLeftRatio
+                        +
+                        delta
+                    )
+                );
+
+            renderOverviewWindow();
+            updateMainTimelineFromBubble();
+
+        }
+
+
+        if (
+            overviewResizing === "left"
+        ) {
+
+            const rightEdge =
+                overviewStartLeftRatio
+                +
+                overviewStartWidthRatio;
+
+            const newLeft =
+                Math.min(
+                    rightEdge - 0.04,
+                    Math.max(
+                        0,
+                        overviewStartLeftRatio
+                        +
+                        delta
+                    )
+                );
+
+            overviewWindowLeftRatio =
+                newLeft;
+
+            overviewWindowWidthRatio =
+                rightEdge
+                -
+                newLeft;
+
+            renderOverviewWindow();
+            updateMainTimelineFromBubble();
+
+        }
+
+
+        if (
+            overviewResizing === "right"
+        ) {
+
+            overviewWindowWidthRatio =
+                Math.min(
+                    1 - overviewStartLeftRatio,
+                    Math.max(
+                        0.04,
+                        overviewStartWidthRatio
+                        +
+                        delta
+                    )
+                );
+
+            renderOverviewWindow();
+            updateMainTimelineFromBubble();
+
+        }
+
+    }
+);
+
+
+window.addEventListener(
+    "pointerup",
+    function() {
+
+        overviewDragging = false;
+        overviewResizing = null;
+
+        timelineOverviewWindow.classList.remove(
+            "dragging"
+        );
+
+    }
+);
+
+
+timelineOverview.addEventListener(
+    "click",
+    function(event) {
+
+        if (
+            event.target === timelineOverviewWindow
+            ||
+            event.target === timelineOverviewHandleLeft
+            ||
+            event.target === timelineOverviewHandleRight
+        ) {
+            return;
+        }
+
+        const ratio =
+            getOverviewPointerRatio(
+                event
+            );
+
+        overviewWindowLeftRatio =
+            Math.min(
+                1 - overviewWindowWidthRatio,
+                Math.max(
+                    0,
+                    ratio
+                    -
+                    overviewWindowWidthRatio / 2
+                )
+            );
+
+        renderOverviewWindow();
+        updateMainTimelineFromBubble();
+
+    }
+);
+
+
+buildTimelineOverview();
+
+overviewWindowWidthRatio = 0.14;
+overviewWindowLeftRatio = 0;
+
+renderOverviewWindow();
+updateMainTimelineFromBubble();
+
+</script>
+
+{% endif %}
+
+{% endblock %}

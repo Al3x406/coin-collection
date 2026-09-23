@@ -1,0 +1,626 @@
+{% extends "base.html" %}
+{% block title %}Cabinet of Curiosities{% endblock %}
+{% block content %}
+
+<style>
+.direct-cabinet-value-link{
+    color:inherit !important;
+    text-decoration:none !important;
+    cursor:pointer;
+    transition:border-color .18s ease, box-shadow .18s ease;
+}
+.direct-cabinet-value-link:hover{
+    color:inherit !important;
+    text-decoration:none !important;
+    border-color:#b98945 !important;
+    box-shadow:0 0 0 1px rgba(202,157,74,.15);
+}
+</style>
+
+
+<style>
+html,body{
+    background:
+        radial-gradient(circle at 50% -10%,rgba(140,90,35,.10),transparent 34rem),
+        #070605!important;
+    color:#eadfce;
+}
+.cabinet-page{
+    position:relative;left:50%;transform:translateX(-50%);
+    width:min(1540px,calc(100vw - 36px));
+    padding:24px 0 60px;
+}
+
+/* HERO */
+.cabinet-hero{
+    position:relative;overflow:hidden;min-height:410px;
+    border:1px solid #7e582b;border-radius:20px;
+    background:
+        linear-gradient(90deg,
+            rgba(5,4,3,.98) 0%,
+            rgba(5,4,3,.91) 30%,
+            rgba(5,4,3,.60) 48%,
+            rgba(5,4,3,.10) 72%,
+            rgba(5,4,3,.03) 100%),
+        url("/static/cabinet_art/cabinet_hero_study.png") center right/cover no-repeat;
+    box-shadow:inset 0 0 90px rgba(0,0,0,.50),0 24px 48px rgba(0,0,0,.38);
+}
+.hero-copy{position:relative;z-index:2;width:min(650px,54%);padding:54px 48px 44px}
+.eyebrow{color:#d8a85e;text-transform:uppercase;letter-spacing:.22em;font-size:.7rem;font-weight:900}
+.hero-copy h1{margin:10px 0 12px;color:#f0cc89;font:700 clamp(3.1rem,6vw,5.8rem)/.92 Georgia,serif;letter-spacing:-.035em}
+.hero-copy p{max-width:620px;color:#b8aa96;line-height:1.7;font-size:1rem}
+.hero-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:24px}
+.primary-btn,.secondary-btn{display:inline-block;padding:11px 15px;border-radius:8px;text-decoration:none;font-weight:900}
+.primary-btn{color:#1c1308;border:1px solid #d2a552;background:linear-gradient(#e5c17d,#b7833c)}
+.secondary-btn{color:#d9b979;border:1px solid #6d512f;background:#100d09cc}
+.hero-stats{display:flex;flex-wrap:wrap;gap:8px;margin-top:24px}
+.hero-stat{padding:7px 10px;border:1px solid #594326;border-radius:999px;background:#0a0907b8;color:#b99b69;font-size:.72rem}
+
+/* SEARCH */
+.browse-bar{display:grid;grid-template-columns:1fr auto;gap:10px;margin:18px 0 16px}
+.browse-bar input{width:100%;padding:12px 14px;border:1px solid #4b3822;border-radius:9px;background:#0b0c0b;color:#eee3d3}
+.browse-bar button{padding:10px 16px;border:1px solid #8e6534;border-radius:9px;background:#17110b;color:#dfb86d;font-weight:900}
+
+/* CABINET FRAME */
+.collection-cabinet{
+    overflow:hidden;border:1px solid #7b552b;border-radius:14px;
+    background:#0a0806;
+    box-shadow:inset 0 0 65px #000a,0 20px 42px #0005;
+}
+.cabinet-top{
+    display:flex;justify-content:space-between;align-items:center;gap:14px;
+    padding:14px 18px;
+    border-bottom:5px solid #3b210f;
+    background:
+        linear-gradient(rgba(255,255,255,.02),rgba(0,0,0,.12)),
+        linear-gradient(90deg,#351e0e,#5a3518 48%,#2a180c);
+    box-shadow:inset 0 0 28px #0007;
+}
+.cabinet-title h2{margin:0;color:#efc77c;font:700 1.8rem Georgia,serif}
+.cabinet-title small{color:#aa8f68;font-size:.72rem}
+.show-all{
+    display:inline-flex;align-items:center;justify-content:center;
+    min-width:150px;padding:11px 18px;
+    border:1px solid #b88a48;border-radius:4px;
+    background:linear-gradient(#4a2c14,#26160c);
+    color:#e4bd73;text-decoration:none;
+    font:700 .8rem Georgia,serif;
+    letter-spacing:.12em;text-transform:uppercase;
+    box-shadow:inset 0 0 14px #0007;
+}
+.show-all:hover{color:#ffe0a0;border-color:#d5a65e;background:linear-gradient(#63401f,#321d0e)}
+
+/* FIVE CLICKABLE DISPLAY SHELVES */
+.category-shelves{
+    display:grid;grid-template-columns:repeat(5,minmax(0,1fr));
+    border-top:1px solid #8a6337;
+    border-bottom:13px solid #4a2a14;
+    background:#130c07;
+}
+.category-shelf{
+    position:relative;display:block;min-height:315px;
+    padding:18px 14px 52px;
+    border-right:8px solid #3a200f;
+    background:
+        radial-gradient(circle at 50% 12%,rgba(233,171,78,.16),transparent 85px),
+        linear-gradient(180deg,#211309,#0d0906 80%);
+    text-decoration:none;color:inherit;overflow:hidden;
+    box-shadow:inset 0 0 34px #0008;
+}
+.category-shelf:last-child{border-right:none}
+.category-shelf::before{
+    content:"";position:absolute;top:10px;left:50%;transform:translateX(-50%);
+    width:58px;height:10px;border-radius:50%;
+    background:radial-gradient(ellipse,#ffd581 0%,#aa6b23 30%,transparent 70%);
+    filter:blur(1px);opacity:.85;
+}
+.category-shelf:hover{
+    background:
+        radial-gradient(circle at 50% 12%,rgba(255,193,97,.24),transparent 95px),
+        linear-gradient(180deg,#2b190c,#100a06 80%);
+}
+.category-shelf.active{box-shadow:inset 0 0 0 2px #c3914a,inset 0 0 38px #0008}
+.scene{position:relative;height:210px;margin:14px 0 8px;display:flex;align-items:flex-end;justify-content:center}
+.plaque{
+    position:absolute;left:10%;right:10%;bottom:12px;
+    padding:7px 8px;border:1px solid #8e6736;border-radius:3px;
+    background:linear-gradient(#c3a267,#8f6c36);
+    color:#201307;text-align:center;
+    font:700 .82rem Georgia,serif;
+    box-shadow:0 3px 8px #0007,inset 0 0 8px #fff2;
+}
+.plaque small{display:block;margin-top:2px;font:600 .6rem Arial,sans-serif;color:#47331d}
+
+
+.shelf-stock-image{
+    width:100%;
+    height:100%;
+    object-fit:cover;
+    object-position:center;
+    display:block;
+    border:1px solid #4f321a;
+    box-shadow:0 9px 18px #000a;
+    transition:transform .22s ease,filter .22s ease;
+}
+.category-shelf:hover .shelf-stock-image{
+    transform:scale(1.025);
+    filter:brightness(1.08);
+}
+.scene{overflow:hidden;}
+
+/* category mini scenes */
+.money-frame{width:78%;height:105px;border:3px solid #6f4b24;padding:8px;background:#1b120b;box-shadow:0 8px 16px #000b}
+.money-note{width:100%;height:100%;border:1px solid #95815b;background:linear-gradient(135deg,#9b956f,#5f6048);position:relative}
+.money-note::before{content:"$";position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font:700 3rem Georgia,serif;color:#353927}
+.book-scene{display:flex;align-items:flex-end;gap:7px}
+.book-spine{width:34px;border:1px solid #73502d;border-radius:3px 3px 0 0;box-shadow:inset 0 0 12px #0008}
+.bs1{height:128px;background:#4b2115}.bs2{height:150px;background:#28231d}.bs3{height:115px;background:#643718}.bs4{height:138px;background:#31231a}
+.medal-board{width:78%;height:142px;border:6px solid #4c2b16;background:#17110c;display:flex;align-items:center;justify-content:center;gap:18px;box-shadow:0 8px 18px #000a}
+.mini-medal{width:58px;height:58px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#d9b467,#8e5d24 55%,#3a220f);border:2px solid #d1a458;position:relative}
+.mini-medal::before{content:"";position:absolute;left:18px;top:-50px;width:22px;height:53px;background:linear-gradient(90deg,#6e2d20,#b98039,#352118);clip-path:polygon(0 0,100% 0,72% 100%,50% 82%,28% 100%)}
+.vase{width:78px;height:130px;border-radius:42% 42% 30% 30%/18% 18% 55% 55%;background:linear-gradient(90deg,#ddd0a2,#f4e7b6 45%,#bfae7f);border:2px solid #8d6e39;position:relative}
+.vase::before,.vase::after{content:"";position:absolute;left:8px;right:8px;height:8px;border-top:3px solid #355b79;border-bottom:2px solid #355b79}
+.vase::before{top:35px}.vase::after{top:72px}
+.other-chest{width:125px;height:88px;border:2px solid #76502c;border-radius:18px 18px 4px 4px;background:linear-gradient(#57351d,#2d190d);position:relative;box-shadow:0 8px 16px #000a}
+.other-chest::before{content:"";position:absolute;left:50%;top:40%;width:18px;height:24px;transform:translate(-50%,-50%);border:2px solid #c0954d;border-radius:3px;background:#33200f}
+
+/* ARTIFACT RESULTS AFTER CLICK */
+.results-wrap{padding:16px;background:linear-gradient(#110c08,#090706)}
+.results-heading{display:flex;justify-content:space-between;align-items:end;gap:10px;margin:0 0 12px}
+.results-heading h3{margin:0;color:#e8bd73;font:700 1.35rem Georgia,serif}
+.results-heading span{color:#877966;font-size:.7rem}
+.artifact-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px}
+.artifact-card{
+    display:block;overflow:hidden;border:1px solid #49331d;border-radius:8px;
+    background:#0d0b09;color:inherit;text-decoration:none;
+}
+.artifact-card:hover{border-color:#9b713e;transform:translateY(-2px)}
+.artifact-image{height:180px;display:grid;place-items:center;background:radial-gradient(circle,#261a0f,#090807 72%)}
+.artifact-image img{width:100%;height:100%;object-fit:contain}
+.artifact-placeholder{font-size:3rem;color:#af8142}
+.artifact-body{padding:11px}
+.artifact-cat{color:#8e6e3c;text-transform:uppercase;letter-spacing:.1em;font-size:.55rem;font-weight:900}
+.artifact-name{margin-top:3px;color:#e7c17b;font:700 .95rem Georgia,serif}
+.artifact-meta{margin-top:4px;color:#8e8477;font-size:.68rem}
+.artifact-value{margin-top:7px;color:#c69e58;font-size:.75rem;font-weight:800}
+.empty-results{padding:50px;text-align:center;color:#8f816e;border:1px dashed #4a341e;border-radius:8px}
+
+@media(max-width:1150px){
+    .category-shelves{grid-template-columns:repeat(3,1fr)}
+    .category-shelf:nth-child(3){border-right:none}
+    .category-shelf:nth-child(n+4){border-top:8px solid #3a200f}
+    .artifact-grid{grid-template-columns:repeat(3,1fr)}
+}
+@media(max-width:820px){
+    .hero-copy{width:100%;padding:40px 28px}
+    .cabinet-hero{background-position:65% center}
+    .cabinet-top{align-items:flex-start;flex-direction:column}
+    .category-shelves{grid-template-columns:repeat(2,1fr)}
+    .category-shelf{border-right:8px solid #3a200f!important;border-top:8px solid #3a200f}
+    .category-shelf:nth-child(2n){border-right:none!important}
+    .artifact-grid{grid-template-columns:repeat(2,1fr)}
+}
+@media(max-width:560px){
+    .cabinet-page{width:calc(100vw - 18px)}
+    .browse-bar{grid-template-columns:1fr}
+    .category-shelves,.artifact-grid{grid-template-columns:1fr}
+    .category-shelf{border-right:none!important}
+}
+
+/* --- CABINET POLISH: unified furniture frame + cleaner artifact cards --- */
+
+.collection-cabinet{
+    overflow:visible;
+    border:1px solid #7a542a;
+    border-radius:14px;
+    background:
+        linear-gradient(180deg,#3a2110 0,#241409 8px,#0c0805 8px);
+    box-shadow:
+        inset 0 0 55px rgba(0,0,0,.65),
+        0 18px 38px rgba(0,0,0,.35);
+    position:relative;
+}
+
+.collection-cabinet::before,
+.collection-cabinet::after{
+    content:"";
+    position:absolute;
+    left:-7px;
+    right:-7px;
+    height:12px;
+    border:1px solid #7d572d;
+    background:
+        linear-gradient(180deg,#76461f,#3a210f 55%,#1b0f08);
+    box-shadow:0 4px 10px rgba(0,0,0,.45);
+    z-index:4;
+}
+
+.collection-cabinet::before{ top:68px; }
+.collection-cabinet::after{ bottom:-8px; }
+
+.category-shelves{
+    display:grid;
+    grid-template-columns:repeat(5,minmax(0,1fr));
+    gap:0;
+    padding:0 8px;
+    border-top:none;
+    border-bottom:12px solid #3b210f;
+    background:
+        linear-gradient(90deg,#2e190c 0,#3f2411 1%,#1e1209 1% 99%,#3f2411 99%);
+    box-shadow:inset 0 0 28px rgba(0,0,0,.75);
+}
+
+.category-shelf{
+    min-height:285px;
+    padding:18px 12px 48px;
+    border-right:7px solid #3a210f !important;
+    border-left:1px solid #6a4423;
+    border-top:none !important;
+    border-bottom:none;
+    background:
+        radial-gradient(circle at 50% 7%,rgba(237,176,83,.13),transparent 72px),
+        linear-gradient(180deg,#1d1109 0,#0e0906 76%);
+    box-shadow:
+        inset 0 0 28px rgba(0,0,0,.72),
+        inset 0 -10px 14px rgba(65,35,14,.22);
+}
+
+.category-shelf:first-child{ border-left:none; }
+.category-shelf:last-child{ border-right:none !important; }
+
+.category-shelf::after{
+    content:"";
+    position:absolute;
+    left:0;
+    right:0;
+    bottom:0;
+    height:12px;
+    background:linear-gradient(#5c3518,#29170b);
+    border-top:1px solid #865b2c;
+    box-shadow:0 -3px 8px rgba(0,0,0,.35);
+}
+
+.scene{
+    height:205px;
+    margin:10px 0 8px;
+    padding:0;
+    overflow:hidden;
+    border:1px solid #402712;
+    background:#090705;
+}
+
+.shelf-stock-image{
+    width:100%;
+    height:100%;
+    object-fit:cover;
+    object-position:center;
+    display:block;
+    border:0;
+    box-shadow:none;
+}
+
+.plaque{
+    left:8%;
+    right:8%;
+    bottom:18px;
+    padding:7px 8px;
+    border:1px solid #9b713a;
+    background:
+        linear-gradient(180deg,#d0ad69,#9b7339);
+    color:#1f1207;
+    box-shadow:
+        0 3px 7px rgba(0,0,0,.55),
+        inset 0 1px 0 rgba(255,255,255,.25);
+}
+
+.results-wrap{
+    padding:18px 12px 20px;
+    background:linear-gradient(#100b07,#090706);
+    border-top:9px solid #4a2913;
+}
+
+.artifact-grid{
+    display:grid;
+    grid-template-columns:repeat(4,minmax(0,1fr));
+    gap:14px;
+}
+
+.artifact-card{
+    display:flex;
+    flex-direction:column;
+    min-width:0;
+    overflow:hidden;
+    border:1px solid #4b341d;
+    border-radius:10px;
+    background:linear-gradient(180deg,#12100d,#0b0a08);
+    color:inherit;
+    text-decoration:none;
+    box-shadow:0 8px 18px rgba(0,0,0,.28);
+}
+
+.artifact-card:hover{
+    border-color:#a8783e;
+    transform:translateY(-2px);
+}
+
+.artifact-image{
+    height:240px;
+    padding:10px;
+    display:grid;
+    place-items:center;
+    overflow:hidden;
+    background:
+        radial-gradient(circle at 50% 35%,#281a0e,#090806 72%);
+    border-bottom:1px solid #392718;
+}
+
+.artifact-image img{
+    width:100%;
+    height:100%;
+    object-fit:contain;
+    display:block;
+}
+
+.artifact-body{
+    padding:12px 13px 14px;
+    min-height:108px;
+}
+
+.artifact-cat{
+    color:#967444;
+    text-transform:uppercase;
+    letter-spacing:.11em;
+    font-size:.58rem;
+    font-weight:900;
+}
+
+.artifact-name{
+    margin-top:5px;
+    color:#e9c37d;
+    font:700 1rem/1.2 Georgia,serif;
+    overflow-wrap:anywhere;
+}
+
+.artifact-meta{
+    margin-top:5px;
+    color:#928779;
+    font-size:.72rem;
+    line-height:1.35;
+}
+
+.artifact-value{
+    margin-top:8px;
+    color:#d0a65d;
+    font-size:.78rem;
+    font-weight:800;
+}
+
+@media(max-width:1150px){
+    .artifact-grid{grid-template-columns:repeat(3,1fr)}
+}
+
+@media(max-width:820px){
+    .category-shelves{grid-template-columns:repeat(2,1fr)}
+    .category-shelf{border-top:7px solid #3a210f !important}
+    .artifact-grid{grid-template-columns:repeat(2,1fr)}
+}
+
+@media(max-width:560px){
+    .category-shelves,.artifact-grid{grid-template-columns:1fr}
+    .category-shelf{border-right:none !important}
+    .artifact-image{height:260px}
+}
+
+
+/* --- CABINET HEADER BEAM FIX --- */
+.collection-cabinet::before{
+    display:none !important;
+}
+
+.cabinet-top{
+    position:relative;
+    border-bottom:12px solid #3b210f !important;
+    box-shadow:
+        inset 0 0 28px #0007,
+        0 5px 10px rgba(0,0,0,.4);
+}
+
+.cabinet-top::after{
+    content:"";
+    position:absolute;
+    left:-7px;
+    right:-7px;
+    bottom:-12px;
+    height:12px;
+    border:1px solid #7d572d;
+    background:linear-gradient(180deg,#76461f,#3a210f 55%,#1b0f08);
+    box-shadow:0 4px 10px rgba(0,0,0,.45);
+    pointer-events:none;
+    z-index:5;
+}
+
+
+/* --- ARTIFACT PREVIEW FIX: show the full object cleanly --- */
+.artifact-image{
+    height:240px !important;
+    padding:12px !important;
+    display:grid !important;
+    place-items:center !important;
+    overflow:hidden !important;
+    background:#030303 !important;
+    box-sizing:border-box !important;
+}
+.artifact-image img{
+    width:100% !important;
+    height:100% !important;
+    max-width:100% !important;
+    max-height:100% !important;
+    object-fit:contain !important;
+    object-position:center !important;
+    display:block !important;
+    background:#030303 !important;
+}
+
+
+/* --- FULL ARTIFACT PREVIEW FIX --- */
+.artifact-card .artifact-image{
+    height:240px !important;
+    min-height:240px !important;
+    padding:12px !important;
+    display:flex !important;
+    align-items:center !important;
+    justify-content:center !important;
+    overflow:hidden !important;
+    background:#030303 !important;
+    box-sizing:border-box !important;
+}
+
+.artifact-card .artifact-image img{
+    display:block !important;
+    width:auto !important;
+    height:auto !important;
+    max-width:100% !important;
+    max-height:100% !important;
+    object-fit:contain !important;
+    object-position:center center !important;
+    margin:auto !important;
+    flex:0 0 auto !important;
+}
+
+</style>
+
+<div class="cabinet-page">
+
+<section class="cabinet-hero">
+    <div class="hero-copy">
+        <div class="eyebrow">Beyond the coin cabinet</div>
+        <h1>Cabinet of<br>Curiosities</h1>
+        <p>Paper money, books, medals, antiques, and other historical objects — presented like a collector's study rather than another coin page.</p>
+        <div class="hero-actions">
+            {% if is_owner %}<a class="primary-btn" href="{{ url_for('add_artifact') }}">+ Add Artifact</a>{% endif %}
+            <a class="secondary-btn" href="#cabinet-shelves">Explore the Cabinet ↓</a>
+        </div>
+        <div class="hero-stats">
+            <span class="hero-stat">{{ stats.total }} artifacts</span>
+            <span class="hero-stat">{{ stats.categories }} categories</span>
+            <!-- PRIVATE COLLECTION VALUE - CABINET -->
+{% if is_owner %}
+<a class="hero-stat direct-cabinet-value-link"
+   href="{{ url_for('collection_value') }}"
+   title="Open Collection Value">${{ "{:,.2f}".format(stats.estimated_value) }} estimated value</a>
+{% else %}
+<span class="hero-stat private-value-mask" title="For Al's Eyes Only">A whole bunch of money · For Al's Eyes Only</span>
+{% endif %}
+        </div>
+    </div>
+</section>
+
+<form class="browse-bar" method="get">
+    <input type="search" name="search" value="{{ search }}" placeholder="Search the cabinet by name, origin, year, or description...">
+    {% if selected_category %}<input type="hidden" name="category" value="{{ selected_category }}">{% endif %}
+    <button type="submit">Search</button>
+</form>
+
+<section class="collection-cabinet" id="cabinet-shelves">
+
+    <div class="cabinet-top">
+        <div class="cabinet-title">
+            <h2>The Collection Cabinet</h2>
+            <small>A curated collection of history, waiting to be explored.</small>
+        </div>
+        <a class="show-all" href="{{ url_for('artifacts', show_all='1') }}">Show All</a>
+    </div>
+
+    <div class="category-shelves">
+
+        <a class="category-shelf {% if selected_category=='Paper Money' %}active{% endif %}"
+           href="{{ url_for('artifacts', category='Paper Money') }}">
+            <div class="scene">
+                <img class="shelf-stock-image"
+                     src="{{ url_for('static', filename='cabinet_art/paper_money_shelf.png') }}"
+                     alt="Paper money display shelf">
+            </div>
+            <div class="plaque">Paper Money<small>{{ stats.paper_money }} items</small></div>
+        </a>
+
+        <a class="category-shelf {% if selected_category=='Books' %}active{% endif %}"
+           href="{{ url_for('artifacts', category='Books') }}">
+            <div class="scene">
+                <img class="shelf-stock-image"
+                     src="{{ url_for('static', filename='cabinet_art/books_shelf.png') }}"
+                     alt="Antique books display shelf">
+            </div>
+            <div class="plaque">Books<small>{{ stats.books }} items</small></div>
+        </a>
+
+        <a class="category-shelf {% if selected_category=='Medals & Tokens' %}active{% endif %}"
+           href="{{ url_for('artifacts', category='Medals & Tokens') }}">
+            <div class="scene">
+                <img class="shelf-stock-image"
+                     src="{{ url_for('static', filename='cabinet_art/medals_shelf.png') }}"
+                     alt="Medals and tokens display shelf">
+            </div>
+            <div class="plaque">Medals &amp; Tokens<small>{{ stats.medals }} items</small></div>
+        </a>
+
+        <a class="category-shelf {% if selected_category=='Antiques' %}active{% endif %}"
+           href="{{ url_for('artifacts', category='Antiques') }}">
+            <div class="scene">
+                <img class="shelf-stock-image"
+                     src="{{ url_for('static', filename='cabinet_art/antiques_shelf.png') }}"
+                     alt="Antiques display shelf">
+            </div>
+            <div class="plaque">Antiques<small>{{ stats.antiques }} items</small></div>
+        </a>
+
+        <a class="category-shelf {% if selected_category=='Other Collectibles' %}active{% endif %}"
+           href="{{ url_for('artifacts', category='Other Collectibles') }}">
+            <div class="scene">
+                <img class="shelf-stock-image"
+                     src="{{ url_for('static', filename='cabinet_art/other_shelf.png') }}"
+                     alt="Other collectibles display shelf">
+            </div>
+            <div class="plaque">Other<small>{{ stats.other }} items</small></div>
+        </a>
+
+    </div>
+
+    {% if selected_category or search or request.args.get('show_all') %}
+    <div class="results-wrap">
+        <div class="results-heading">
+            <h3>{% if selected_category %}{{ selected_category }}{% elif search %}Search Results{% else %}All Artifacts{% endif %}</h3>
+            <span>{{ artifacts|length }} displayed</span>
+        </div>
+
+        {% if artifacts %}
+        <div class="artifact-grid">
+            {% for artifact in artifacts %}
+            <a class="artifact-card" href="{{ url_for('artifact_detail',artifact_id=artifact.id) }}">
+                <div class="artifact-image">
+                    {% if artifact.image_filename %}
+                    <img src="{{ url_for('static',filename='uploads/artifacts/' ~ artifact.image_filename) }}" alt="{{ artifact.name }}">
+                    {% else %}
+                    <div class="artifact-placeholder">
+                        {% if artifact.category=='Paper Money' %}${% elif artifact.category=='Books' %}B{% elif artifact.category=='Medals & Tokens' %}✦{% else %}◆{% endif %}
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="artifact-body">
+                    <div class="artifact-cat">{{ artifact.category }}</div>
+                    <div class="artifact-name">{{ artifact.name }}</div>
+                    <div class="artifact-meta">{{ artifact.year_text or 'Date unknown' }}{% if artifact.country %} · {{ artifact.country }}{% endif %}</div>
+                    {% if artifact.estimated_value is not none %}<div class="artifact-value">Est. ${{ "{:,.2f}".format(artifact.estimated_value) }}</div>{% endif %}
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-results">No artifacts found here yet.</div>
+        {% endif %}
+    </div>
+    {% endif %}
+
+</section>
+</div>
+
+{% endblock %}

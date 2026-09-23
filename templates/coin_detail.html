@@ -1,0 +1,1340 @@
+{% extends "base.html" %}
+
+{% block title %}
+{{ coin.name }}
+
+
+
+{% endblock %}
+
+{% block content %}
+
+<style>
+.coin-photo-editor-link{display:inline-block;margin-left:4px;border:1px solid #8b642c!important;color:#d9ae5e!important}
+.coin-photo-editor-link:hover{border-color:#c08c3b!important;color:#f0c979!important}
+</style>
+
+
+<style>
+.featured-coin-control{margin:0 0 16px}
+.featured-button,.featured-current{
+    display:inline-block;
+    padding:9px 13px;
+    border-radius:8px;
+    font-weight:800;
+    font-size:.78rem
+}
+.featured-button{
+    border:1px solid #b68a46;
+    background:linear-gradient(#d8b269,#9c6f32);
+    color:#1b1208;
+    cursor:pointer
+}
+.featured-button:hover{filter:brightness(1.08)}
+.featured-current{
+    border:1px solid #8e6a35;
+    background:#171109;
+    color:#e0b76d
+}
+</style>
+
+{% if is_owner %}
+<div class="featured-coin-control">
+    {% if coin.featured %}
+        <div class="featured-current">★ Homepage Featured Coin</div>
+    {% else %}
+        <form method="post" action="{{ url_for('set_featured_coin', coin_id=coin.id) }}">
+            <button type="submit" class="featured-button">★ Set as Featured Coin</button>
+        </form>
+    {% endif %}
+</div>
+{% endif %}
+
+
+<div class="d-flex justify-content-between align-items-start mb-4">
+
+    <div>
+
+        <h1 class="mb-1">
+            {{ coin.name }}
+        </h1>
+
+        {% if coin.year %}
+        <div class="text-muted">
+            {{ coin.year }}
+        </div>
+        {% endif %}
+
+    </div>
+
+    <div>
+
+        {% if is_owner %}
+        <a
+            href="{{ url_for('edit_coin', coin_id=coin.id) }}"
+            class="btn btn-outline-primary">
+            Edit
+        </a>
+        {% endif %}
+
+        <a
+            href="{{ url_for('coins') }}"
+            class="btn btn-outline-secondary">
+            Back
+        </a>
+
+    </div>
+
+</div>
+
+
+<!-- ====================================================== -->
+<!-- IMAGE ROW -->
+<!-- ====================================================== -->
+
+<div class="row mb-4">
+
+
+  <!-- MY COIN PHOTOS -->
+
+<div class="col-md-6 mb-4 mb-md-0">
+
+    <div class="card h-100">
+
+        <div class="card-body">
+
+            <h4 class="card-title">
+                My Coin Photos
+            </h4>
+
+            <div class="row">
+
+                <!-- OBVERSE -->
+
+                <div class="col-6 text-center">
+
+                    <div class="small fw-bold mb-2">
+                        Obverse
+                    </div>
+
+                    {% if coin.personal_obverse_image %}
+
+                    <a
+                        href="{{ url_for(
+                            'static',
+                            filename='uploads/coins/' ~
+                            coin.personal_obverse_image
+                        ) }}"
+                        target="_blank"
+                        rel="noopener noreferrer">
+
+                        <img
+                            src="{{ url_for(
+                                'static',
+                                filename='uploads/coins/' ~
+                                coin.personal_obverse_image
+                            ) }}"
+                            alt="My obverse photo"
+                            class="img-fluid"
+                            style="
+                                max-height: 165px;
+                                max-width: 165px;
+                                object-fit: contain;
+                            ">
+
+                    </a>
+
+                    <div class="mt-3">
+
+                        <a
+                            href="{{ url_for(
+                                'static',
+                                filename='uploads/coins/' ~
+                                coin.personal_obverse_image
+                            ) }}"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            class="
+                                btn
+                                btn-sm
+                                btn-outline-secondary
+                                mb-2
+                            ">
+                            View Larger
+                        </a>
+
+                    </div>
+
+                    {% if is_owner %}
+                    <form
+                        method="POST"
+                        action="{{ url_for(
+                            'upload_coin_photos',
+                            coin_id=coin.id
+                        ) }}"
+                        enctype="multipart/form-data"
+                        class="mb-2">
+
+                        <input
+                            type="file"
+                            name="personal_obverse_image"
+                            id="detailObverseReplace"
+                            class="form-control form-control-sm mb-2"
+                            accept="image/*"
+                            required>
+                        <button
+                            type="button"
+                            class="btn btn-sm btn-outline-warning coin-camera-launch mb-2"
+                            data-coin-camera-target="detailObverseReplace">
+                            📷 Guided Camera
+                        </button>
+
+                        <button
+                            type="submit"
+                            class="btn btn-sm btn-outline-primary">
+                            Replace
+                        </button>
+
+                    </form>
+
+                    <form
+                        method="POST"
+                        action="{{ url_for(
+                            'remove_coin_photo',
+                            coin_id=coin.id,
+                            side='obverse'
+                        ) }}"
+                        onsubmit="
+                            return confirm(
+                                'Remove the obverse photo?'
+                            );
+                        ">
+
+                        <button
+                            type="submit"
+                            class="btn btn-sm btn-outline-danger">
+                            Remove
+                        </button>
+
+                    </form>
+                    {% endif %}
+
+                    {% else %}
+
+                    <div
+                        class="
+                            border
+                            rounded
+                            p-3
+                            text-muted
+                            mb-3
+                        "
+                        style="min-height: 165px;">
+
+                        No obverse photo
+
+                    </div>
+
+                    {% if is_owner %}
+                    <form
+                        method="POST"
+                        action="{{ url_for(
+                            'upload_coin_photos',
+                            coin_id=coin.id
+                        ) }}"
+                        enctype="multipart/form-data">
+
+                        <input
+                            type="file"
+                            name="personal_obverse_image"
+                            id="detailObverseUpload"
+                            class="form-control form-control-sm mb-2"
+                            accept="image/*"
+                            required>
+                        <button
+                            type="button"
+                            class="btn btn-sm btn-outline-warning coin-camera-launch mb-2"
+                            data-coin-camera-target="detailObverseUpload">
+                            📷 Guided Camera
+                        </button>
+
+                        <button
+                            type="submit"
+                            class="btn btn-sm btn-primary">
+                            Upload Obverse
+                        </button>
+
+                    </form>
+                    {% endif %}
+
+                    {% endif %}
+
+                </div>
+
+
+                <!-- REVERSE -->
+
+                <div class="col-6 text-center">
+
+                    <div class="small fw-bold mb-2">
+                        Reverse
+                    </div>
+
+                    {% if coin.personal_reverse_image %}
+
+                    <a
+                        href="{{ url_for(
+                            'static',
+                            filename='uploads/coins/' ~
+                            coin.personal_reverse_image
+                        ) }}"
+                        target="_blank"
+                        rel="noopener noreferrer">
+
+                        <img
+                            src="{{ url_for(
+                                'static',
+                                filename='uploads/coins/' ~
+                                coin.personal_reverse_image
+                            ) }}"
+                            alt="My reverse photo"
+                            class="img-fluid"
+                            style="
+                                max-height: 165px;
+                                max-width: 165px;
+                                object-fit: contain;
+                            ">
+
+                    </a>
+
+                    <div class="mt-3">
+
+                        <a
+                            href="{{ url_for(
+                                'static',
+                                filename='uploads/coins/' ~
+                                coin.personal_reverse_image
+                            ) }}"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            class="
+                                btn
+                                btn-sm
+                                btn-outline-secondary
+                                mb-2
+                            ">
+                            View Larger
+                        </a>
+
+                    </div>
+
+                    {% if is_owner %}
+                    <form
+                        method="POST"
+                        action="{{ url_for(
+                            'upload_coin_photos',
+                            coin_id=coin.id
+                        ) }}"
+                        enctype="multipart/form-data"
+                        class="mb-2">
+
+                        <input
+                            type="file"
+                            name="personal_reverse_image"
+                            id="detailReverseReplace"
+                            class="form-control form-control-sm mb-2"
+                            accept="image/*"
+                            required>
+                        <button
+                            type="button"
+                            class="btn btn-sm btn-outline-warning coin-camera-launch mb-2"
+                            data-coin-camera-target="detailReverseReplace">
+                            📷 Guided Camera
+                        </button>
+
+                        <button
+                            type="submit"
+                            class="btn btn-sm btn-outline-primary">
+                            Replace
+                        </button>
+
+                    </form>
+
+                    <form
+                        method="POST"
+                        action="{{ url_for(
+                            'remove_coin_photo',
+                            coin_id=coin.id,
+                            side='reverse'
+                        ) }}"
+                        onsubmit="
+                            return confirm(
+                                'Remove the reverse photo?'
+                            );
+                        ">
+
+                        <button
+                            type="submit"
+                            class="btn btn-sm btn-outline-danger">
+                            Remove
+                        </button>
+
+                    </form>
+                    {% endif %}
+
+                    {% else %}
+
+                    <div
+                        class="
+                            border
+                            rounded
+                            p-3
+                            text-muted
+                            mb-3
+                        "
+                        style="min-height: 165px;">
+
+                        No reverse photo
+
+                    </div>
+
+                    {% if is_owner %}
+                    <form
+                        method="POST"
+                        action="{{ url_for(
+                            'upload_coin_photos',
+                            coin_id=coin.id
+                        ) }}"
+                        enctype="multipart/form-data">
+
+                        <input
+                            type="file"
+                            name="personal_reverse_image"
+                            id="detailReverseUpload"
+                            class="form-control form-control-sm mb-2"
+                            accept="image/*"
+                            required>
+                        <button
+                            type="button"
+                            class="btn btn-sm btn-outline-warning coin-camera-launch mb-2"
+                            data-coin-camera-target="detailReverseUpload">
+                            📷 Guided Camera
+                        </button>
+
+                        <button
+                            type="submit"
+                            class="btn btn-sm btn-primary">
+                            Upload Reverse
+                        </button>
+
+                    </form>
+                    {% endif %}
+
+                    {% endif %}
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+    <!-- NUMISTA REFERENCE IMAGES -->
+
+    <div class="col-md-6">
+
+        <div class="card h-100">
+
+            <div class="card-body">
+
+                <div
+                    class="
+                        d-flex
+                        justify-content-between
+                        align-items-center
+                        mb-3
+                    ">
+
+                    <h4 class="card-title mb-0">
+                        Catalogue Reference
+                    </h4>
+
+                    {% if coin.numista_url %}
+
+                    <a
+                        href="{{ coin.numista_url }}"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="btn btn-sm btn-outline-secondary">
+                        View on Numista
+                    </a>
+
+                    {% endif %}
+
+                </div>
+
+
+                {% if coin.obverse_image or coin.reverse_image %}
+
+                <div class="row text-center">
+
+                    {% if coin.obverse_image %}
+
+                    <div class="col-6">
+
+                        <div class="small fw-bold mb-2">
+                            Obverse
+                        </div>
+
+                        <img
+                            src="{{ coin.obverse_image }}"
+                            alt="Obverse reference image for {{ coin.name }}"
+                            class="img-fluid"
+                            style="
+                                max-height: 165px;
+                                max-width: 165px;
+                                object-fit: contain;
+                            ">
+
+                        {% if
+                            coin.obverse_copyright
+                            or coin.obverse_license
+                        %}
+
+                        <div
+                            class="
+                                small
+                                text-muted
+                                mt-2
+                            ">
+
+                            {% if coin.obverse_copyright %}
+                                © {{ coin.obverse_copyright }}
+                            {% endif %}
+
+                            {% if
+                                coin.obverse_copyright
+                                and coin.obverse_license
+                            %}
+                                ·
+                            {% endif %}
+
+                            {% if coin.obverse_license %}
+                                {{ coin.obverse_license }}
+                            {% endif %}
+
+                        </div>
+
+                        {% endif %}
+
+                    </div>
+
+                    {% endif %}
+
+
+                    {% if coin.reverse_image %}
+
+                    <div class="col-6">
+
+                        <div class="small fw-bold mb-2">
+                            Reverse
+                        </div>
+
+                        <img
+                            src="{{ coin.reverse_image }}"
+                            alt="Reverse reference image for {{ coin.name }}"
+                            class="img-fluid"
+                            style="
+                                max-height: 165px;
+                                max-width: 165px;
+                                object-fit: contain;
+                            ">
+
+                        {% if
+                            coin.reverse_copyright
+                            or coin.reverse_license
+                        %}
+
+                        <div
+                            class="
+                                small
+                                text-muted
+                                mt-2
+                            ">
+
+                            {% if coin.reverse_copyright %}
+                                © {{ coin.reverse_copyright }}
+                            {% endif %}
+
+                            {% if
+                                coin.reverse_copyright
+                                and coin.reverse_license
+                            %}
+                                ·
+                            {% endif %}
+
+                            {% if coin.reverse_license %}
+                                {{ coin.reverse_license }}
+                            {% endif %}
+
+                        </div>
+
+                        {% endif %}
+
+                    </div>
+
+                    {% endif %}
+
+                </div>
+
+                <div class="small text-muted mt-3">
+                    Reference catalogue images supplied by Numista.
+                </div>
+
+                {% else %}
+
+                <div
+                    class="
+                        d-flex
+                        align-items-center
+                        justify-content-center
+                        text-muted
+                        text-center
+                    "
+                    style="min-height: 180px;">
+
+                    No catalogue reference images saved.
+
+                </div>
+
+                {% endif %}
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- ====================================================== -->
+<!-- INFORMATION ROW -->
+<!-- ====================================================== -->
+
+<div class="row">
+
+
+    <!-- COIN INFORMATION -->
+
+    <div class="col-md-6 mb-4">
+
+        <div class="card h-100">
+
+            <div class="card-body">
+
+                <h4 class="card-title">
+                    Coin Information
+                </h4>
+
+                <p>
+                    <strong>
+                        Country / Issuer:
+                    </strong>
+
+                    {{ coin.country or "Unknown" }}
+                </p>
+
+                <p>
+                    <strong>
+                        Year:
+                    </strong>
+
+                    {{ coin.year or "Unknown" }}
+                </p>
+
+                <p>
+                    <strong>
+                        Denomination:
+                    </strong>
+
+                    {{ coin.denomination or "Unknown" }}
+                </p>
+
+                <p>
+                    <strong>
+                        Material:
+                    </strong>
+
+                    {{ coin.material or "Unknown" }}
+                </p>
+
+                <p>
+                    <strong>
+                        Condition:
+                    </strong>
+
+                    {{ coin.condition or "Unknown" }}
+                </p>
+
+                <p class="mb-0">
+                    <strong>
+                        Quantity:
+                    </strong>
+
+                    {{ coin.quantity or 1 }}
+                </p>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- MINT INFORMATION -->
+
+    <div class="col-md-6 mb-4">
+
+        <div class="card h-100">
+
+            <div class="card-body">
+
+                <h4 class="card-title">
+                    Mint Information
+                </h4>
+
+                <p>
+                    <strong>
+                        Mint:
+                    </strong>
+
+                    {% if coin.mint_record %}
+
+                        <a
+                            href="{{ url_for(
+                                'mint_detail',
+                                mint_id=coin.mint_record.id
+                            ) }}">
+                            {{ coin.mint_record.name }}
+                        </a>
+
+                    {% elif coin.mint %}
+
+                        {{ coin.mint }}
+
+                    {% else %}
+
+                        Unknown
+
+                    {% endif %}
+                </p>
+
+                <p>
+                    <strong>
+                        Mint Mark:
+                    </strong>
+
+                    {% if coin.mint_mark %}
+                        {{ coin.mint_mark }}
+                    {% else %}
+                        None
+                    {% endif %}
+                </p>
+
+                <p class="mb-0">
+                    <strong>
+                        Location:
+                    </strong>
+
+                    {{ coin.location or "Unknown" }}
+                </p>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- ====================================================== -->
+<!-- NUMISTA ISSUE INFORMATION -->
+<!-- ====================================================== -->
+
+{% if
+    coin.numista_type_id
+    or coin.numista_issue_id
+    or coin.variant
+    or coin.mintage
+%}
+
+<div class="card mb-4">
+
+    <div class="card-body">
+
+        <h4 class="card-title">
+            Numista Issue Information
+        </h4>
+
+        <div class="row">
+
+            <div class="col-md-6">
+
+                <p>
+                    <strong>
+                        Variant:
+                    </strong>
+
+                    {{ coin.variant or "Regular issue" }}
+                </p>
+
+                <p>
+                    <strong>
+                        Mintage:
+                    </strong>
+
+                    {% if coin.mintage is not none %}
+                        {{ "{:,}".format(coin.mintage) }}
+                    {% else %}
+                        Unknown
+                    {% endif %}
+                </p>
+
+            </div>
+
+
+            <div class="col-md-6">
+
+                <p>
+                    <strong>
+                        Numista Type ID:
+                    </strong>
+
+                    {{ coin.numista_type_id or "Unknown" }}
+                </p>
+
+                <p>
+                    <strong>
+                        Numista Issue ID:
+                    </strong>
+
+                    {{ coin.numista_issue_id or "Unknown" }}
+                </p>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endif %}
+
+
+<!-- ====================================================== -->
+<!-- COLLECTION INFORMATION -->
+<!-- ====================================================== -->
+
+<div class="card mb-4">
+
+    <div class="card-body">
+
+        <h4 class="card-title">
+            Collection Information
+        </h4>
+
+        <p>
+            <strong>
+                Date Acquired:
+            </strong>
+
+            {{ coin.date_acquired or "Unknown" }}
+        </p>
+
+        <p class="mb-0">
+            <strong>
+                Notes:
+            </strong>
+        </p>
+
+        {% if coin.notes %}
+
+        <div class="mt-2">
+            {{ coin.notes }}
+        </div>
+
+        {% else %}
+
+        <div class="text-muted mt-2">
+            No notes.
+        </div>
+
+        {% endif %}
+
+    </div>
+
+</div>
+
+
+{% if is_owner %}
+<form
+    method="POST"
+    action="{{ url_for(
+        'delete_coin',
+        coin_id=coin.id
+    ) }}"
+    onsubmit="
+        return confirm(
+            'Are you sure you want to delete this coin?'
+        );
+    ">
+
+    <button
+        type="submit"
+        class="btn btn-outline-danger">
+        Delete Coin
+    </button>
+
+</form>
+{% endif %}
+
+<style>
+.coin-camera-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 2000;
+    display: none;
+    background: rgba(0,0,0,.94);
+    color: white;
+}
+.coin-camera-modal.open {
+    display: flex;
+    flex-direction: column;
+}
+.coin-camera-stage {
+    position: relative;
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: hidden;
+    background: #000;
+}
+.coin-camera-video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+.coin-camera-guide {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: min(78vw, 62vh);
+    aspect-ratio: 1 / 1;
+    transform: translate(-50%, -50%);
+    border: 4px solid rgba(255,215,90,.95);
+    border-radius: 50%;
+    box-shadow:
+        0 0 0 9999px rgba(0,0,0,.32),
+        0 0 22px rgba(255,215,90,.45);
+    pointer-events: none;
+}
+.coin-camera-guide::before,
+.coin-camera-guide::after {
+    content: "";
+    position: absolute;
+    background: rgba(255,255,255,.75);
+}
+.coin-camera-guide::before {
+    width: 1px;
+    height: 12%;
+    left: 50%;
+    top: 44%;
+}
+.coin-camera-guide::after {
+    height: 1px;
+    width: 12%;
+    top: 50%;
+    left: 44%;
+}
+.coin-camera-help {
+    position: absolute;
+    left: 1rem;
+    right: 1rem;
+    top: 1rem;
+    text-align: center;
+    text-shadow: 0 2px 5px #000;
+    font-weight: 600;
+    pointer-events: none;
+}
+.coin-camera-controls {
+    flex: 0 0 auto;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: .75rem;
+    padding: 1rem;
+    background: #0d1114;
+}
+.coin-camera-shutter {
+    width: 68px;
+    height: 68px;
+    border-radius: 50%;
+    border: 5px solid white;
+    background: #d8ad58;
+}
+.coin-camera-preview {
+    display: none;
+    position: absolute;
+    inset: 0;
+    background: #080b0d;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: .75rem;
+    padding: 1rem;
+}
+.coin-camera-preview.show {
+    display: flex;
+}
+.coin-camera-preview img {
+    width: min(88vw, 62vh);
+    height: min(88vw, 62vh);
+    object-fit: contain;
+    background: #050708;
+    border-radius: .75rem;
+}
+.coin-camera-preview-actions {
+    display: flex;
+    gap: .5rem;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+.coin-camera-launch {
+    margin-top: .5rem;
+}
+</style>
+
+<div id="coinCameraModal" class="coin-camera-modal" aria-hidden="true">
+    <div class="coin-camera-stage">
+        <video id="coinCameraVideo" class="coin-camera-video" autoplay playsinline muted></video>
+        <div class="coin-camera-guide"></div>
+        <div class="coin-camera-help">
+            Keep the whole coin just inside the gold circle, leaving a small even gap.
+        </div>
+        <div id="coinCameraPreviewBox" class="coin-camera-preview">
+            <img id="coinCameraPreviewImage" alt="Cropped coin preview">
+            <div class="coin-camera-preview-actions">
+                <button type="button" id="coinCameraRetake" class="btn btn-outline-light">Retake</button>
+                <button type="button" id="coinCameraRotateLeft" class="btn btn-outline-light">↶ Rotate</button>
+                <button type="button" id="coinCameraRotateRight" class="btn btn-outline-light">Rotate ↷</button>
+                <button type="button" id="coinCameraUse" class="btn btn-warning">Use Photo</button>
+            </div>
+        </div>
+    </div>
+    <div class="coin-camera-controls">
+        <button type="button" id="coinCameraClose" class="btn btn-outline-light">Cancel</button>
+        <button type="button" id="coinCameraShutter" class="coin-camera-shutter" aria-label="Take photo"></button>
+    </div>
+</div>
+
+<script>
+(function () {
+    const modal = document.getElementById("coinCameraModal");
+    const video = document.getElementById("coinCameraVideo");
+    const shutter = document.getElementById("coinCameraShutter");
+    const closeButton = document.getElementById("coinCameraClose");
+    const previewBox = document.getElementById("coinCameraPreviewBox");
+    const previewImage = document.getElementById("coinCameraPreviewImage");
+    const retakeButton = document.getElementById("coinCameraRetake");
+    const rotateLeftButton = document.getElementById("coinCameraRotateLeft");
+    const rotateRightButton = document.getElementById("coinCameraRotateRight");
+    const useButton = document.getElementById("coinCameraUse");
+
+    let stream = null;
+    let targetInput = null;
+    let currentCanvas = null;
+
+    async function openCamera(input) {
+        targetInput = input;
+        previewBox.classList.remove("show");
+
+        // Open the overlay BEFORE requesting camera permission.
+        // This makes the tap visibly respond even while the browser
+        // permission request is being handled.
+        modal.style.display = "flex";
+        modal.classList.add("open");
+        modal.setAttribute("aria-hidden", "false");
+
+        try {
+            if (!window.isSecureContext) {
+                throw new Error(
+                    "Camera access requires the HTTPS version of this site."
+                );
+            }
+
+            if (
+                !navigator.mediaDevices
+                || !navigator.mediaDevices.getUserMedia
+            ) {
+                throw new Error(
+                    "This browser does not provide camera access to this page."
+                );
+            }
+
+            stream = await navigator.mediaDevices.getUserMedia({
+                video: {
+                    facingMode: "environment"
+                },
+                audio: false
+            });
+
+            video.srcObject = stream;
+
+            try {
+                await video.play();
+            } catch (playError) {
+                console.warn(
+                    "Camera preview play warning:",
+                    playError
+                );
+            }
+
+        } catch (error) {
+            closeCamera();
+
+            alert(
+                "Could not open the guided camera.\n\n"
+                + (error && error.message
+                    ? error.message
+                    : String(error))
+                + "\n\nMake sure Camera is allowed for this site and open the HTTPS Tailscale address."
+            );
+        }
+    }
+
+    function stopStream() {
+        if (stream) {
+            stream.getTracks().forEach(track => track.stop());
+            stream = null;
+        }
+        video.srcObject = null;
+    }
+
+    function closeCamera() {
+        stopStream();
+        modal.classList.remove("open");
+        modal.style.display = "none";
+        modal.setAttribute("aria-hidden", "true");
+        previewBox.classList.remove("show");
+        currentCanvas = null;
+    }
+
+    function captureCoin() {
+        if (!video.videoWidth || !video.videoHeight) return;
+
+        const vw = video.videoWidth;
+        const vh = video.videoHeight;
+        const stage = video.getBoundingClientRect();
+        const guide = modal.querySelector(".coin-camera-guide").getBoundingClientRect();
+
+        // Translate the visible circular guide into source-video coordinates.
+        // object-fit: cover may crop either the sides or the top/bottom.
+        const scale = Math.max(stage.width / vw, stage.height / vh);
+        const shownW = vw * scale;
+        const shownH = vh * scale;
+        const offsetX = (shownW - stage.width) / 2;
+        const offsetY = (shownH - stage.height) / 2;
+
+        const gx = guide.left - stage.left;
+        const gy = guide.top - stage.top;
+        const gd = guide.width;
+
+        let sx = (gx + offsetX) / scale;
+        let sy = (gy + offsetY) / scale;
+        let sd = gd / scale;
+
+        // Keep a small safety margin outside the guide so the rim is not clipped.
+        const margin = sd * 0.03;
+        sx -= margin;
+        sy -= margin;
+        sd += margin * 2;
+
+        sx = Math.max(0, sx);
+        sy = Math.max(0, sy);
+        sd = Math.min(sd, vw - sx, vh - sy);
+
+        const outputSize = 1000;
+        const canvas = document.createElement("canvas");
+        canvas.width = outputSize;
+        canvas.height = outputSize;
+        const ctx = canvas.getContext("2d");
+
+        ctx.fillStyle = "#07090a";
+        ctx.fillRect(0, 0, outputSize, outputSize);
+        ctx.drawImage(video, sx, sy, sd, sd, 0, 0, outputSize, outputSize);
+
+        currentCanvas = canvas;
+        previewImage.src = canvas.toDataURL("image/jpeg", .95);
+        previewBox.classList.add("show");
+    }
+
+    function rotateCurrent(degrees) {
+        if (!currentCanvas) return;
+        const rotated = document.createElement("canvas");
+        rotated.width = currentCanvas.width;
+        rotated.height = currentCanvas.height;
+        const ctx = rotated.getContext("2d");
+        ctx.fillStyle = "#07090a";
+        ctx.fillRect(0, 0, rotated.width, rotated.height);
+        ctx.translate(rotated.width / 2, rotated.height / 2);
+        ctx.rotate(degrees * Math.PI / 180);
+        ctx.drawImage(currentCanvas, -currentCanvas.width / 2, -currentCanvas.height / 2);
+        currentCanvas = rotated;
+        previewImage.src = rotated.toDataURL("image/jpeg", .95);
+    }
+
+    function usePhoto() {
+        if (!currentCanvas || !targetInput) return;
+
+        currentCanvas.toBlob(function (blob) {
+            const side = targetInput.name.includes("reverse") ? "reverse" : "obverse";
+            const file = new File(
+                [blob],
+                "coin_" + side + "_" + Date.now() + ".jpg",
+                { type: "image/jpeg" }
+            );
+
+            const transfer = new DataTransfer();
+            transfer.items.add(file);
+            targetInput.files = transfer.files;
+
+            const form = targetInput.closest("form");
+            if (form) {
+                let flagName = side === "reverse"
+                    ? "guided_reverse"
+                    : "guided_obverse";
+
+                let flag = form.querySelector(
+                    'input[name="' + flagName + '"]'
+                );
+
+                if (!flag) {
+                    flag = document.createElement("input");
+                    flag.type = "hidden";
+                    flag.name = flagName;
+                    form.appendChild(flag);
+                }
+
+                flag.value = "1";
+            }
+            targetInput.dispatchEvent(new Event("change", { bubbles: true }));
+            closeCamera();
+        }, "image/jpeg", .95);
+    }
+
+    document.querySelectorAll("[data-coin-camera-target]").forEach(button => {
+        button.addEventListener("click", function () {
+            const input = document.getElementById(button.dataset.coinCameraTarget);
+            if (!input) return;
+
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                alert("This browser does not support the guided camera. Use Choose File instead.");
+                return;
+            }
+
+            openCamera(input);
+        });
+    });
+
+    shutter.addEventListener("click", captureCoin);
+    closeButton.addEventListener("click", closeCamera);
+    retakeButton.addEventListener("click", () => previewBox.classList.remove("show"));
+    rotateLeftButton.addEventListener("click", () => rotateCurrent(-90));
+    rotateRightButton.addEventListener("click", () => rotateCurrent(90));
+    useButton.addEventListener("click", usePhoto);
+})();
+</script>
+
+
+{% if is_owner %}
+<script id="coin-photo-editor-button-fix">
+document.addEventListener("DOMContentLoaded", function () {
+    const photoCard = Array.from(document.querySelectorAll(".card")).find(function(card) {
+        return (card.textContent || "").includes("My Coin Photos");
+    });
+
+    if (!photoCard) return;
+
+    const columns = Array.from(photoCard.querySelectorAll(".col-6"));
+
+    const sides = [
+        {
+            side: "obverse",
+            url: "{{ url_for('edit_coin_photo', coin_id=coin.id, side='obverse') }}"
+        },
+        {
+            side: "reverse",
+            url: "{{ url_for('edit_coin_photo', coin_id=coin.id, side='reverse') }}"
+        }
+    ];
+
+    sides.forEach(function(info, index) {
+        const column = columns[index];
+        if (!column) return;
+
+        const hasPhoto = column.querySelector('img[alt*="' + info.side + '" i]');
+        if (!hasPhoto) return;
+
+        if (column.querySelector(".coin-photo-editor-link")) return;
+
+        const viewLink = Array.from(column.querySelectorAll("a")).find(function(a) {
+            return (a.textContent || "").trim().toLowerCase() === "view larger";
+        });
+
+        if (!viewLink) return;
+
+        const edit = document.createElement("a");
+        edit.className = "btn btn-sm btn-outline-warning mb-2 coin-photo-editor-link";
+        edit.href = info.url;
+        edit.textContent = "Edit Photo";
+        edit.style.marginLeft = "6px";
+
+        viewLink.insertAdjacentElement("afterend", edit);
+    });
+});
+</script>
+{% endif %}
+
+
+{% if is_owner %}
+<script id="add-similar-coin-detail-button">
+document.addEventListener("DOMContentLoaded", function () {
+    if (document.querySelector(".add-similar-coin-link")) return;
+
+    const editLink = Array.from(document.querySelectorAll("a")).find(function (link) {
+        const text = (link.textContent || "").trim().toLowerCase();
+        const href = link.getAttribute("href") || "";
+        return text === "edit" || text === "edit coin" ||
+               href.includes("/coin/{{ coin.id }}/edit");
+    });
+
+    if (!editLink) return;
+
+    const similar = document.createElement("a");
+    similar.href = "{{ url_for('add_coin', copy_from=coin.id) }}";
+    similar.className = editLink.className || "btn btn-outline-warning";
+    similar.classList.add("add-similar-coin-link", "ms-2");
+    similar.textContent = "Add Similar Coin";
+    similar.title = "Create another coin of the same type with reusable details prefilled";
+    editLink.insertAdjacentElement("afterend", similar);
+});
+</script>
+{% endif %}
+
+{% endblock %}

@@ -1,0 +1,294 @@
+{
+  "version": 6,
+  "description": "Local historical boundary ranges for Collection Geography",
+  "maps": [
+    {
+      "name": "World country boundaries — 1600",
+      "date": "1600-01-01",
+      "start_year": 1600,
+      "end_year": 1600,
+      "file": "world_1600.geojson",
+      "kind": "overlay",
+      "source": "OpenHistoricalMap"
+    },
+    {
+      "name": "World country boundaries — 1650",
+      "date": "1650-01-01",
+      "start_year": 1650,
+      "end_year": 1650,
+      "file": "world_1650.geojson",
+      "kind": "overlay",
+      "source": "OpenHistoricalMap"
+    },
+    {
+      "name": "World country boundaries — 1700",
+      "date": "1700-01-01",
+      "start_year": 1700,
+      "end_year": 1700,
+      "file": "world_1700.geojson",
+      "kind": "overlay",
+      "source": "OpenHistoricalMap"
+    },
+    {
+      "name": "World country boundaries — 1725",
+      "date": "1725-01-01",
+      "start_year": 1725,
+      "end_year": 1725,
+      "file": "world_1725.geojson",
+      "kind": "overlay",
+      "source": "OpenHistoricalMap"
+    },
+    {
+      "name": "World country boundaries — 1750",
+      "date": "1750-01-01",
+      "start_year": 1750,
+      "end_year": 1750,
+      "file": "world_1750.geojson",
+      "kind": "overlay",
+      "source": "OpenHistoricalMap"
+    },
+    {
+      "name": "World country boundaries — 1776",
+      "date": "1776-01-01",
+      "start_year": 1776,
+      "end_year": 1776,
+      "file": "world_1776.geojson",
+      "kind": "overlay",
+      "source": "OpenHistoricalMap"
+    },
+    {
+      "name": "World country boundaries — 1789",
+      "date": "1789-01-01",
+      "start_year": 1789,
+      "end_year": 1789,
+      "file": "world_1789.geojson",
+      "kind": "overlay",
+      "source": "OpenHistoricalMap"
+    },
+    {
+      "name": "World country boundaries — 1799",
+      "date": "1799-01-01",
+      "start_year": 1799,
+      "end_year": 1799,
+      "file": "world_1799.geojson",
+      "kind": "overlay",
+      "source": "OpenHistoricalMap"
+    },
+    {
+      "name": "World country boundaries — 1800",
+      "date": "1800-01-01",
+      "start_year": 1800,
+      "end_year": 1800,
+      "file": "world_1800.geojson",
+      "kind": "overlay",
+      "source": "OpenHistoricalMap"
+    },
+    {
+      "name": "World country boundaries — 1815",
+      "date": "1815-01-01",
+      "start_year": 1815,
+      "end_year": 1815,
+      "file": "world_1815.geojson",
+      "kind": "overlay",
+      "source": "OpenHistoricalMap"
+    },
+    {
+      "name": "World country boundaries — 1825",
+      "date": "1825-01-01",
+      "start_year": 1825,
+      "end_year": 1825,
+      "file": "world_1825.geojson",
+      "kind": "overlay",
+      "source": "OpenHistoricalMap"
+    },
+    {
+      "name": "World country boundaries — 1830",
+      "date": "1830-01-01",
+      "start_year": 1830,
+      "end_year": 1830,
+      "file": "world_1830.geojson",
+      "kind": "overlay",
+      "source": "OpenHistoricalMap"
+    },
+    {
+      "name": "World country boundaries — 1840",
+      "date": "1840-01-01",
+      "start_year": 1840,
+      "end_year": 1840,
+      "file": "world_1840.geojson",
+      "kind": "overlay",
+      "source": "OpenHistoricalMap"
+    },
+    {
+      "name": "World country boundaries — 1848",
+      "date": "1848-01-01",
+      "start_year": 1848,
+      "end_year": 1848,
+      "file": "world_1848.geojson",
+      "kind": "overlay",
+      "source": "OpenHistoricalMap"
+    },
+    {
+      "name": "World country boundaries — 1850",
+      "date": "1850-01-01",
+      "start_year": 1850,
+      "end_year": 1850,
+      "file": "world_1850.geojson",
+      "kind": "overlay",
+      "source": "OpenHistoricalMap"
+    },
+    {
+      "name": "World country boundaries — 1860",
+      "date": "1860-01-01",
+      "start_year": 1860,
+      "end_year": 1860,
+      "file": "world_1860.geojson",
+      "kind": "overlay",
+      "source": "OpenHistoricalMap"
+    },
+    {
+      "name": "World country boundaries — 1871",
+      "date": "1871-01-01",
+      "start_year": 1871,
+      "end_year": 1871,
+      "file": "world_1871.geojson",
+      "kind": "overlay",
+      "source": "OpenHistoricalMap"
+    },
+    {
+      "name": "World country boundaries — 1875",
+      "date": "1875-01-01",
+      "start_year": 1875,
+      "end_year": 1875,
+      "file": "world_1875.geojson",
+      "kind": "overlay",
+      "source": "OpenHistoricalMap"
+    },
+    {
+      "name": "World country boundaries — 1880",
+      "date": "1880-01-01",
+      "start_year": 1880,
+      "end_year": 1880,
+      "file": "world_1880.geojson",
+      "kind": "overlay",
+      "source": "OpenHistoricalMap"
+    },
+    {
+      "name": "World country boundaries — 1890",
+      "date": "1890-01-01",
+      "start_year": 1890,
+      "end_year": 1890,
+      "file": "world_1890.geojson",
+      "kind": "overlay",
+      "source": "OpenHistoricalMap"
+    },
+    {
+      "name": "World country boundaries — 1900",
+      "date": "1900-01-01",
+      "start_year": 1900,
+      "end_year": 1900,
+      "file": "world_1900.geojson",
+      "kind": "overlay",
+      "source": "OpenHistoricalMap"
+    },
+    {
+      "name": "World country boundaries — 1914",
+      "date": "1914-01-01",
+      "start_year": 1914,
+      "end_year": 1914,
+      "file": "world_1914.geojson",
+      "kind": "overlay",
+      "source": "OpenHistoricalMap"
+    },
+    {
+      "name": "World country boundaries — 1919",
+      "date": "1919-01-01",
+      "start_year": 1919,
+      "end_year": 1919,
+      "file": "world_1919.geojson",
+      "kind": "overlay",
+      "source": "OpenHistoricalMap"
+    },
+    {
+      "name": "World country boundaries — 1923",
+      "date": "1923-01-01",
+      "start_year": 1923,
+      "end_year": 1923,
+      "file": "world_1923.geojson",
+      "kind": "overlay",
+      "source": "OpenHistoricalMap"
+    },
+    {
+      "name": "World country boundaries — 1930",
+      "date": "1930-01-01",
+      "start_year": 1930,
+      "end_year": 1930,
+      "file": "world_1930.geojson",
+      "kind": "overlay",
+      "source": "OpenHistoricalMap"
+    },
+    {
+      "name": "World country boundaries — 1939",
+      "date": "1939-01-01",
+      "start_year": 1939,
+      "end_year": 1939,
+      "file": "world_1939.geojson",
+      "kind": "overlay",
+      "source": "OpenHistoricalMap"
+    },
+    {
+      "name": "World country boundaries — 1942",
+      "date": "1942-01-01",
+      "start_year": 1942,
+      "end_year": 1942,
+      "file": "world_1942.geojson",
+      "kind": "overlay",
+      "source": "OpenHistoricalMap"
+    },
+    {
+      "name": "World country boundaries — 1945",
+      "date": "1945-01-01",
+      "start_year": 1945,
+      "end_year": 1945,
+      "file": "world_1945.geojson",
+      "kind": "overlay",
+      "source": "OpenHistoricalMap"
+    },
+    {
+      "name": "World country boundaries — 1950",
+      "date": "1950-01-01",
+      "start_year": 1950,
+      "end_year": 1950,
+      "file": "world_1950.geojson",
+      "kind": "overlay",
+      "source": "OpenHistoricalMap"
+    },
+    {
+      "name": "World country boundaries — 1960",
+      "date": "1960-01-01",
+      "start_year": 1960,
+      "end_year": 1960,
+      "file": "world_1960.geojson",
+      "kind": "overlay",
+      "source": "OpenHistoricalMap"
+    },
+    {
+      "name": "World country boundaries — 1990",
+      "date": "1990-01-01",
+      "start_year": 1990,
+      "end_year": 1990,
+      "file": "world_1990.geojson",
+      "kind": "overlay",
+      "source": "OpenHistoricalMap"
+    },
+    {
+      "name": "World country boundaries — 2000",
+      "date": "2000-01-01",
+      "start_year": 2000,
+      "end_year": 2000,
+      "file": "world_2000.geojson",
+      "kind": "overlay",
+      "source": "OpenHistoricalMap"
+    }
+  ]
+}

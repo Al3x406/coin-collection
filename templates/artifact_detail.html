@@ -1,0 +1,512 @@
+{% extends "base.html" %}
+{% block title %}{{ artifact.name }} · Cabinet{% endblock %}
+{% block content %}
+
+<style>
+html,body{
+    background:
+        radial-gradient(circle at 50% -12%,rgba(135,84,31,.10),transparent 36rem),
+        #070605!important;
+    color:#eee2cf;
+}
+
+.artifact-page{
+    position:relative;
+    left:50%;
+    transform:translateX(-50%);
+    width:min(1280px,calc(100vw - 36px));
+    padding:26px 0 64px;
+}
+
+.breadcrumbs{
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px;
+    align-items:center;
+    margin-bottom:14px;
+    color:#766c5d;
+    font-size:.72rem;
+}
+
+.breadcrumbs a{
+    color:#c99a51;
+    text-decoration:none;
+}
+
+.breadcrumbs a:hover{color:#efc879}
+
+.museum-card{
+    overflow:hidden;
+    border:1px solid #745028;
+    border-radius:18px;
+    background:
+        linear-gradient(145deg,rgba(20,14,9,.97),rgba(10,9,7,.99));
+    box-shadow:
+        inset 0 0 65px rgba(0,0,0,.45),
+        0 24px 50px rgba(0,0,0,.35);
+}
+
+.museum-header{
+    display:flex;
+    justify-content:space-between;
+    gap:20px;
+    align-items:flex-start;
+    padding:25px 28px 22px;
+    border-bottom:1px solid #563b20;
+    background:
+        linear-gradient(90deg,#2b190d,#171009 58%,#0d0b08);
+}
+
+.header-copy{min-width:0}
+
+.kicker{
+    color:#b88a48;
+    text-transform:uppercase;
+    letter-spacing:.18em;
+    font-size:.62rem;
+    font-weight:900;
+}
+
+.museum-header h1{
+    margin:6px 0 7px;
+    color:#efcc89;
+    font:700 clamp(2rem,4vw,3.7rem)/1 Georgia,serif;
+    overflow-wrap:anywhere;
+}
+
+.subtitle{
+    color:#9e9180;
+    font-size:.88rem;
+}
+
+.header-actions{
+    display:flex;
+    gap:8px;
+    flex-wrap:wrap;
+    justify-content:flex-end;
+}
+
+.header-actions a,
+.header-actions button{
+    padding:9px 12px;
+    border-radius:7px;
+    font-weight:800;
+    text-decoration:none;
+    font-size:.75rem;
+}
+
+.edit-btn{
+    color:#e2ba73;
+    border:1px solid #8c6638;
+    background:#171109;
+}
+
+.delete-btn{
+    color:#efaaa0;
+    border:1px solid #71362e;
+    background:#321713;
+}
+
+.content-grid{
+    display:grid;
+    grid-template-columns:minmax(0,1.08fr) minmax(360px,.92fr);
+    gap:0;
+}
+
+/* PHOTO GALLERY */
+.gallery{
+    padding:18px;
+    border-right:1px solid #4c351e;
+    background:
+        radial-gradient(circle at 50% 30%,rgba(92,57,24,.14),transparent 23rem),
+        #090806;
+}
+
+.main-photo{
+    height:570px;
+    display:grid;
+    place-items:center;
+    overflow:hidden;
+    border:1px solid #3f2d1c;
+    border-radius:12px;
+    background:
+        radial-gradient(circle,#1b130c,#070605 72%);
+}
+
+.main-photo img{
+    width:100%;
+    height:100%;
+    object-fit:contain;
+    display:block;
+}
+<a class="btn btn-outline-warning btn-sm"
+   href="{{ url_for('edit_artifact_photo', artifact_id=artifact.id) }}">
+  Edit Photo
+</a>
+.photo-placeholder{
+    color:#9c7743;
+    font:700 5rem Georgia,serif;
+}
+
+.photo-counter{
+    margin-top:7px;
+    color:#766d61;
+    font-size:.65rem;
+    text-align:right;
+}
+
+.thumbnails{
+    display:grid;
+    grid-template-columns:repeat(6,minmax(0,1fr));
+    gap:7px;
+    margin-top:9px;
+}
+
+.thumb{
+    height:82px;
+    padding:0;
+    overflow:hidden;
+    border:1px solid #44301c;
+    border-radius:7px;
+    background:#080706;
+    cursor:pointer;
+}
+
+.thumb:hover,
+.thumb.active{
+    border-color:#c39049;
+    box-shadow:0 0 0 1px #c390493d;
+}
+
+.thumb img{
+    width:100%;
+    height:100%;
+    object-fit:cover;
+    display:block;
+}
+
+/* INFORMATION */
+.info-panel{
+    padding:24px;
+    background:linear-gradient(180deg,#0e0c09,#0a0907);
+}
+
+.section-title{
+    margin:0 0 10px;
+    color:#dfb66c;
+    font:700 1rem Georgia,serif;
+    letter-spacing:.03em;
+}
+
+.facts{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:9px;
+    margin-bottom:22px;
+}
+
+.fact{
+    min-width:0;
+    padding:11px 12px;
+    border:1px solid #392d20;
+    border-radius:8px;
+    background:#11100d;
+}
+
+.fact span{
+    display:block;
+    margin-bottom:3px;
+    color:#786f64;
+    font-size:.58rem;
+    text-transform:uppercase;
+    letter-spacing:.1em;
+    font-weight:900;
+}
+
+.fact strong{
+    display:block;
+    color:#dfba74;
+    font-size:.85rem;
+    overflow-wrap:anywhere;
+}
+
+.value strong{color:#e6bd6b}
+
+.text-section{
+    margin-top:18px;
+    padding-top:17px;
+    border-top:1px solid #33271a;
+}
+
+.text-section p{
+    margin:0;
+    color:#c5b9a8;
+    line-height:1.72;
+    white-space:pre-line;
+}
+
+.collection-label{
+    margin-top:22px;
+    padding:13px 14px;
+    border:1px solid #654723;
+    border-radius:9px;
+    background:
+        linear-gradient(90deg,#2b190e,#151009);
+}
+
+.collection-label span{
+    display:block;
+    color:#806f58;
+    font-size:.58rem;
+    text-transform:uppercase;
+    letter-spacing:.12em;
+}
+
+.collection-label strong{
+    display:block;
+    margin-top:3px;
+    color:#e1b96f;
+    font:700 .92rem Georgia,serif;
+}
+
+/* LOWER MUSEUM LABEL */
+.museum-footer{
+    display:grid;
+    grid-template-columns:1fr auto;
+    gap:18px;
+    align-items:center;
+    padding:14px 20px;
+    border-top:8px solid #3d230f;
+    background:
+        linear-gradient(180deg,#5a3518,#28170c);
+    box-shadow:inset 0 0 22px rgba(0,0,0,.48);
+}
+
+.footer-label{
+    color:#c5a873;
+    font-size:.68rem;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+}
+
+.footer-category{
+    color:#f0c982;
+    font:700 1rem Georgia,serif;
+}
+
+@media(max-width:900px){
+    .content-grid{grid-template-columns:1fr}
+    .gallery{border-right:none;border-bottom:1px solid #4c351e}
+    .main-photo{height:460px}
+}
+
+@media(max-width:620px){
+    .artifact-page{width:calc(100vw - 18px)}
+    .museum-header{flex-direction:column}
+    .header-actions{justify-content:flex-start}
+    .main-photo{height:360px}
+    .thumbnails{grid-template-columns:repeat(4,1fr)}
+    .facts{grid-template-columns:1fr}
+}
+
+.photo-edit-btn{
+    color:#f0c978;
+    border:1px solid #9b7138;
+    background:#1b140b;
+}
+.photo-edit-btn:hover{
+    color:#ffe0a1;
+    border-color:#c89548;
+    background:#271b0d;
+}
+
+</style>
+
+<div class="artifact-page">
+
+<div class="breadcrumbs">
+    <a href="{{ url_for('artifacts') }}">Cabinet</a>
+    <span>›</span>
+    <a href="{{ url_for('artifacts', category=artifact.category) }}">{{ artifact.category }}</a>
+    <span>›</span>
+    <span>{{ artifact.name }}</span>
+</div>
+
+<section class="museum-card">
+
+<header class="museum-header">
+    <div class="header-copy">
+        <div class="kicker">{{ artifact.category }}</div>
+        <h1>{{ artifact.name }}</h1>
+        <div class="subtitle">
+            {{ artifact.year_text or 'Date unknown' }}
+            {% if artifact.country %} · {{ artifact.country }}{% endif %}
+        </div>
+    </div>
+
+    {% if is_owner %}
+    <div class="header-actions">
+        <a class="edit-btn" href="{{ url_for('edit_artifact', artifact_id=artifact.id) }}">Edit Artifact</a>
+        {% if artifact.image_filename %}
+        <a class="edit-btn photo-edit-btn"
+           id="artifactEditPhotoButton"
+           href="{{ url_for('edit_artifact_photo', artifact_id=artifact.id) }}">
+            Edit Photo
+        </a>
+        {% endif %}
+        <form method="post"
+              action="{{ url_for('delete_artifact', artifact_id=artifact.id) }}"
+              onsubmit="return confirm('Delete this artifact?')">
+            <button class="delete-btn" type="submit">Delete</button>
+        </form>
+    </div>
+    {% endif %}
+</header>
+
+<div class="content-grid">
+
+    <section class="gallery">
+        <div class="main-photo">
+            {% if artifact.image_filename %}
+            <img id="artifactMainPhoto"
+                 src="{{ url_for('static', filename='uploads/artifacts/' ~ artifact.image_filename) }}"
+                 alt="{{ artifact.name }}">
+            {% else %}
+            <div class="photo-placeholder">◆</div>
+            {% endif %}
+        </div>
+
+        {% if artifact.photos %}
+        <div class="photo-counter">
+            {{ artifact.photos|length }} photo{% if artifact.photos|length != 1 %}s{% endif %}
+        </div>
+        {% endif %}
+
+        {% if artifact.photos|length > 1 %}
+        <div class="thumbnails">
+            {% for photo in artifact.photos %}
+            <button class="thumb {% if artifact.image_filename == photo.filename %}active{% endif %}"
+                    type="button"
+                    data-edit-url="{{ url_for('edit_artifact_photo', artifact_id=artifact.id, photo_id=photo.id) }}"
+                    onclick="switchArtifactPhoto(this)">
+                <img src="{{ url_for('static', filename='uploads/artifacts/' ~ photo.filename) }}"
+                     alt="{{ artifact.name }} photo {{ loop.index }}">
+            </button>
+            {% endfor %}
+        </div>
+        {% endif %}
+    </section>
+
+    <aside class="info-panel">
+        <h2 class="section-title">Collection Record</h2>
+
+        <div class="facts">
+            {% if artifact.year_text %}
+            <div class="fact"><span>Date / Period</span><strong>{{ artifact.year_text }}</strong></div>
+            {% endif %}
+
+            {% if artifact.country %}
+            <div class="fact"><span>Origin</span><strong>{{ artifact.country }}</strong></div>
+            {% endif %}
+
+            {% if artifact.condition %}
+            <div class="fact"><span>Condition</span><strong>{{ artifact.condition }}</strong></div>
+            {% endif %}
+
+            {% if artifact.estimated_value is not none %}
+            <div class="fact value"><span>Estimated Value</span><strong>${{ "{:,.2f}".format(artifact.estimated_value) }}</strong></div>
+            {% endif %}
+
+            {% if is_owner and artifact.purchase_price is not none %}
+            <div class="fact"><span>Purchase Price</span><strong>${{ "{:,.2f}".format(artifact.purchase_price) }}</strong></div>
+            {% endif %}
+
+            {% if artifact.date_acquired %}
+            <div class="fact"><span>Date Acquired</span><strong>{{ artifact.date_acquired }}</strong></div>
+            {% endif %}
+
+            {% if artifact.source %}
+            <div class="fact"><span>Source</span><strong>{{ artifact.source }}</strong></div>
+            {% endif %}
+
+            {% if artifact.photos %}
+            <div class="fact"><span>Photographs</span><strong>{{ artifact.photos|length }}</strong></div>
+            {% endif %}
+        </div>
+
+        {% if artifact.description %}
+        <section class="text-section">
+            <h2 class="section-title">History & Description</h2>
+            <p>{{ artifact.description }}</p>
+        </section>
+        {% endif %}
+
+        {% if artifact.notes %}
+        <section class="text-section">
+            <h2 class="section-title">Collector Notes</h2>
+            <p>{{ artifact.notes }}</p>
+        </section>
+        {% endif %}
+
+        <div class="collection-label">
+            <span>Filed in</span>
+            <strong>{{ artifact.category }}</strong>
+        </div>
+    </aside>
+
+</div>
+
+<footer class="museum-footer">
+    <div>
+        <div class="footer-label">Cabinet of Curiosities</div>
+        <div class="footer-category">{{ artifact.category }}</div>
+    </div>
+    <a class="edit-btn" href="{{ url_for('artifacts', category=artifact.category) }}">
+        Back to {{ artifact.category }}
+    </a>
+</footer>
+
+</section>
+</div>
+
+<script>
+function switchArtifactPhoto(button){
+    const main = document.getElementById("artifactMainPhoto");
+    const img = button.querySelector("img");
+    if (!main || !img) return;
+
+    main.src = img.src;
+
+    document.querySelectorAll(".thumb").forEach(function(item){
+        item.classList.remove("active");
+    });
+
+    button.classList.add("active");
+
+    const editButton = document.getElementById("artifactEditPhotoButton");
+    if (editButton && button.dataset.editUrl) {
+        editButton.href = button.dataset.editUrl;
+    }
+}
+
+function initializeArtifactEditPhotoButton(){
+    const activeThumb = document.querySelector(".thumb.active");
+    const editButton = document.getElementById("artifactEditPhotoButton");
+
+    if (
+        activeThumb
+        && editButton
+        && activeThumb.dataset.editUrl
+    ){
+        editButton.href = activeThumb.dataset.editUrl;
+    }
+}
+
+document.addEventListener(
+    "DOMContentLoaded",
+    initializeArtifactEditPhotoButton
+);
+
+</script>
+
+{% endblock %}

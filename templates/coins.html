@@ -1,0 +1,980 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<style>
+.private-collection-joke{font-size:.88rem!important;line-height:1.2}
+.private-value-mask{cursor:default!important}
+</style>
+
+
+<style>
+.direct-collection-value-link{
+    color:inherit !important;
+    text-decoration:none !important;
+    cursor:pointer;
+    transition:border-color .18s ease, box-shadow .18s ease;
+}
+.direct-collection-value-link:hover{
+    color:inherit !important;
+    text-decoration:none !important;
+    border-color:rgba(216,173,88,.55) !important;
+    box-shadow:0 0 0 1px rgba(216,173,88,.12);
+}
+</style>
+
+<style>
+    html, body {
+        background: #07090a !important;
+        color: #f7f0df;
+    }
+
+    body::before {
+        content: "";
+        position: fixed;
+        inset: 0;
+        z-index: -1;
+        background:
+            radial-gradient(circle at 50% -10%, rgba(202,157,74,.07), transparent 36rem),
+            linear-gradient(180deg, #090b0c 0%, #07090a 55%, #060708 100%);
+    }
+
+    .collection-shell {
+        --collection-bg: rgba(8, 13, 16, 0.96);
+        --collection-panel: rgba(14, 21, 25, 0.95);
+        --collection-panel-soft: rgba(21, 29, 33, 0.92);
+        --collection-border: rgba(202, 157, 74, 0.42);
+        --collection-gold: #d8ad58;
+        --collection-gold-bright: #f2cc78;
+        --collection-text: #f7f0df;
+        --collection-muted: #aeb7ba;
+        color: var(--collection-text);
+        padding: 0 1rem 3rem;
+
+        /* Center the entire collection page in the browser viewport,
+           even though base.html already places content inside a Bootstrap container. */
+        position: relative;
+        left: 50%;
+        transform: translateX(-50%);
+        width: min(1520px, calc(100vw - 40px));
+        max-width: none;
+        margin: 0;
+    }
+
+    .collection-hero {
+        position: relative;
+        overflow: hidden;
+        border: 1px solid var(--collection-border);
+        border-radius: 18px;
+        padding: 1.15rem 1.35rem;
+        margin-bottom: 1rem;
+        background:
+            linear-gradient(90deg, rgba(8,13,16,.98) 0%, rgba(8,13,16,.94) 55%, rgba(8,13,16,.72) 100%),
+            radial-gradient(circle at 84% 30%, rgba(216,173,88,.18), transparent 26%),
+            var(--collection-bg);
+        box-shadow: 0 18px 55px rgba(0, 0, 0, 0.25);
+    }
+
+    .collection-hero h1 {
+        margin: 0;
+        color: var(--collection-gold-bright);
+        font-family: Georgia, "Times New Roman", serif;
+        font-size: clamp(2rem, 4vw, 3.15rem);
+        line-height: 1;
+    }
+
+    .collection-hero p {
+        margin: .55rem 0 0;
+        color: var(--collection-muted);
+    }
+
+    .collection-hero-quote {
+        color: var(--collection-gold);
+        font-family: Georgia, "Times New Roman", serif;
+        font-style: italic;
+        text-align: right;
+        opacity: .9;
+    }
+
+    .collection-add-button {
+        border: 1px solid #e2bc69;
+        background: linear-gradient(180deg, #f0ce82, #c9963b);
+        color: #17120a;
+        font-weight: 700;
+        border-radius: 9px;
+        padding: .68rem 1rem;
+        text-decoration: none;
+        white-space: nowrap;
+    }
+
+    .collection-add-button:hover {
+        color: #000;
+        filter: brightness(1.05);
+    }
+
+    .collection-stat-grid {
+        display: grid;
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        gap: .8rem;
+        margin-bottom: 1rem;
+    }
+
+    .collection-stat {
+        min-height: 76px;
+        background: linear-gradient(145deg, rgba(18,26,30,.98), rgba(9,15,18,.98));
+        border: 1px solid rgba(255,255,255,.09);
+        border-radius: 12px;
+        padding: .75rem .9rem;
+        display: flex;
+        align-items: center;
+        gap: .85rem;
+    }
+
+    .collection-stat-icon {
+        width: 42px;
+        height: 42px;
+        flex: 0 0 42px;
+        display: grid;
+        place-items: center;
+        border-radius: 50%;
+        border: 1px solid var(--collection-border);
+        color: var(--collection-gold-bright);
+        font-size: 1.25rem;
+    }
+
+    .collection-stat-value {
+        color: #fff;
+        font-weight: 700;
+        font-size: 1.2rem;
+        line-height: 1.05;
+    }
+
+    .collection-stat-label {
+        margin-top: .2rem;
+        color: var(--collection-muted);
+        font-size: .78rem;
+    }
+
+    .collection-controls {
+        padding: .8rem .9rem;
+        border: 1px solid rgba(255,255,255,.08);
+        border-radius: 14px;
+        background: var(--collection-panel);
+        margin-bottom: 1rem;
+    }
+
+    .collection-filter-grid {
+        display: grid;
+        grid-template-columns: minmax(320px, 1.8fr) repeat(3, minmax(160px, .8fr));
+        gap: .65rem;
+    }
+
+    .collection-controls input,
+    .collection-controls select {
+        width: 100%;
+        border-radius: 8px;
+        border: 1px solid rgba(216,173,88,.28);
+        background: #0c1215;
+        color: var(--collection-text);
+        padding: .65rem .75rem;
+        outline: none;
+    }
+
+    .collection-controls input:focus,
+    .collection-controls select:focus {
+        border-color: var(--collection-gold);
+        box-shadow: 0 0 0 2px rgba(216,173,88,.12);
+    }
+
+    .collection-control-bottom {
+        margin-top: .55rem;
+        display: flex;
+        gap: .65rem;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+    }
+
+    .collection-sort-group {
+        display: flex;
+        gap: .55rem;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+
+    @media (min-width: 921px) {
+        .collection-control-bottom {
+            flex-wrap: nowrap;
+        }
+
+        .collection-sort-group {
+            flex-wrap: nowrap;
+            flex: 1;
+        }
+
+        .collection-sort-group select {
+            width: auto;
+            min-width: 180px;
+        }
+
+        .collection-result-note {
+            margin-top: .5rem;
+        }
+    }
+
+    .collection-sort-label {
+        color: var(--collection-gold);
+        font-size: .9rem;
+    }
+
+    .collection-apply,
+    .collection-reset {
+        border-radius: 8px;
+        padding: .58rem .8rem;
+        text-decoration: none;
+        font-weight: 600;
+    }
+
+    .collection-apply {
+        border: 1px solid var(--collection-gold);
+        color: #17120a;
+        background: var(--collection-gold-bright);
+    }
+
+    .collection-reset {
+        border: 1px solid rgba(255,255,255,.16);
+        color: var(--collection-text);
+        background: #11191d;
+    }
+
+    .collection-view-toggle {
+        display: inline-flex;
+        border: 1px solid rgba(216,173,88,.35);
+        border-radius: 9px;
+        overflow: hidden;
+    }
+
+    .collection-view-toggle button {
+        border: 0;
+        background: #11191d;
+        color: var(--collection-muted);
+        padding: .6rem .9rem;
+        min-width: 108px;
+    }
+
+    .collection-view-toggle button.active {
+        background: linear-gradient(180deg, #ebc975, #c99538);
+        color: #17120a;
+        font-weight: 700;
+    }
+
+    .collection-result-note {
+        margin: .75rem 0 0;
+        color: var(--collection-muted);
+        font-size: .85rem;
+    }
+
+    .collection-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: .9rem;
+    }
+
+    .coin-card {
+        overflow: hidden;
+        border-radius: 14px;
+        border: 1px solid var(--collection-border);
+        background:
+            radial-gradient(circle at 50% 15%, rgba(216,173,88,.09), transparent 38%),
+            linear-gradient(165deg, #121a1e, #090e11);
+        box-shadow: 0 12px 30px rgba(0,0,0,.20);
+        transition: transform .16s ease, border-color .16s ease, box-shadow .16s ease;
+    }
+
+    .coin-card:hover {
+        transform: translateY(-3px);
+        border-color: rgba(242,204,120,.78);
+        box-shadow: 0 17px 34px rgba(0,0,0,.3);
+    }
+
+    .coin-card-link {
+        color: inherit;
+        text-decoration: none;
+        display: block;
+        height: 100%;
+    }
+
+    .coin-card-image-wrap {
+        aspect-ratio: 1 / 1;
+        display: grid;
+        place-items: center;
+        padding: .75rem .75rem .25rem;
+        background:
+            radial-gradient(circle at center, rgba(255,255,255,.04), transparent 55%);
+    }
+
+    .coin-card-image {
+        width: min(96%, 280px);
+        height: min(96%, 280px);
+        object-fit: contain;
+        filter: drop-shadow(0 8px 13px rgba(0,0,0,.45));
+    }
+
+    .coin-card-no-image {
+        width: 150px;
+        height: 150px;
+        display: grid;
+        place-items: center;
+        border-radius: 50%;
+        border: 1px dashed rgba(216,173,88,.35);
+        color: rgba(242,204,120,.7);
+        font-size: 3rem;
+        background: rgba(0,0,0,.22);
+    }
+
+    .coin-card-body {
+        padding: .7rem .85rem .9rem;
+    }
+
+    .coin-card-title {
+        margin: 0;
+        color: var(--collection-gold-bright);
+        font-size: 1.02rem;
+        font-weight: 700;
+    }
+
+    .coin-card-subtitle {
+        color: #f3f4f1;
+        font-size: .9rem;
+        margin-top: .15rem;
+    }
+
+    .coin-card-mint {
+        color: var(--collection-muted);
+        font-size: .82rem;
+        min-height: 1.2rem;
+        margin-top: .15rem;
+    }
+
+    .coin-card-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: .35rem;
+        margin: .55rem 0;
+    }
+
+    .coin-tag {
+        border: 1px solid rgba(255,255,255,.14);
+        background: rgba(255,255,255,.07);
+        color: #ddd;
+        border-radius: 999px;
+        padding: .18rem .42rem;
+        font-size: .7rem;
+    }
+
+    .coin-card-data {
+        display: grid;
+        gap: .2rem;
+        font-size: .82rem;
+        color: #e8e8e8;
+    }
+
+    .coin-card-value {
+        color: var(--collection-gold-bright);
+        font-weight: 700;
+    }
+
+    .collection-table-shell {
+        overflow-x: auto;
+        border: 1px solid rgba(255,255,255,.09);
+        border-radius: 13px;
+        background: #0b1114;
+    }
+
+    .collection-table {
+        margin: 0;
+        width: 100%;
+        color: #e9ecef;
+        border-collapse: collapse;
+        min-width: 980px;
+    }
+
+    .collection-table,
+    .collection-table thead,
+    .collection-table tbody,
+    .collection-table tr,
+    .collection-table th,
+    .collection-table td {
+        --bs-table-bg: transparent !important;
+        --bs-table-color: #e9ecef !important;
+    }
+
+    .collection-table th {
+        background: #172126;
+        color: #f6eddc;
+        font-size: .78rem;
+        font-weight: 700;
+        padding: .72rem .7rem;
+        border-bottom: 1px solid rgba(216,173,88,.22);
+        white-space: nowrap;
+    }
+
+    .collection-table td {
+        padding: .65rem .7rem;
+        border-bottom: 1px solid rgba(255,255,255,.065);
+        font-size: .84rem;
+        vertical-align: middle;
+        color: #e9ecef !important;
+        background: #0b1114 !important;
+    }
+
+    .collection-table tbody tr {
+        transition: background .12s ease;
+        cursor: pointer;
+        background: #0b1114 !important;
+    }
+
+    .collection-table tbody tr:nth-child(even) td {
+        background: #0d1417 !important;
+    }
+
+    .collection-table tbody tr:hover td {
+        background: #151b1d !important;
+    }
+
+    .collection-table tbody tr:last-child td {
+        border-bottom: 0;
+    }
+
+    .collection-table-photo {
+        width: 42px;
+        height: 42px;
+        object-fit: contain;
+        border-radius: 50%;
+        background: #0a0e10;
+    }
+
+    .collection-table-name {
+        color: var(--collection-gold-bright);
+        font-weight: 700;
+    }
+
+    .collection-table-action {
+        display: inline-block;
+        border: 1px solid rgba(216,173,88,.35);
+        color: var(--collection-gold-bright);
+        border-radius: 7px;
+        padding: .35rem .55rem;
+        text-decoration: none;
+        white-space: nowrap;
+    }
+
+    .collection-empty {
+        border: 1px dashed rgba(216,173,88,.35);
+        border-radius: 14px;
+        background: rgba(11,17,20,.85);
+        padding: 3rem 1rem;
+        text-align: center;
+        color: var(--collection-muted);
+    }
+
+    .collection-empty strong {
+        display: block;
+        color: var(--collection-gold-bright);
+        font-size: 1.2rem;
+        margin-bottom: .35rem;
+    }
+
+    [hidden] {
+        display: none !important;
+    }
+
+    @media (max-width: 1500px) {
+        .collection-grid {
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+        }
+    }
+
+    @media (max-width: 1180px) {
+        .collection-grid {
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+    }
+
+    @media (max-width: 920px) {
+        .collection-stat-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .collection-filter-grid {
+            grid-template-columns: 1fr 1fr;
+        }
+
+        .collection-shell {
+            left: 50%;
+            transform: translateX(-50%);
+            width: calc(100vw - 20px);
+            padding-left: .5rem;
+            padding-right: .5rem;
+        }
+
+        .collection-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .collection-hero-quote {
+            display: none;
+        }
+    }
+
+    @media (max-width: 620px) {
+        .collection-hero {
+            padding: 1.1rem;
+        }
+
+        .collection-stat-grid,
+        .collection-filter-grid,
+        .collection-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .collection-control-bottom {
+            align-items: stretch;
+        }
+
+        .collection-sort-group {
+            width: 100%;
+        }
+
+        .collection-sort-group select {
+            flex: 1;
+        }
+
+        .collection-view-toggle {
+            width: 100%;
+        }
+
+        .collection-view-toggle button {
+            flex: 1;
+        }
+    }
+</style>
+
+<div class="collection-shell">
+
+    <section class="collection-hero">
+        <div class="d-flex align-items-start justify-content-between gap-3 flex-wrap">
+            <div>
+                <h1>My Collection</h1>
+                <p>A personal record of the coins in your collection.</p>
+            </div>
+
+            <div class="d-flex align-items-center gap-4">
+                <div class="collection-hero-quote d-none d-lg-block">
+                    “Small pieces of history, a lifetime of stories.”
+                </div>
+
+                {% if is_owner %}
+                <a class="collection-add-button" href="{{ url_for('add_coin') }}">
+                    + Add Coin
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </section>
+
+    <section class="collection-stat-grid">
+        <div class="collection-stat">
+            <div class="collection-stat-icon">◉</div>
+            <div>
+                <div class="collection-stat-value">{{ collection_stats.total_coins }}</div>
+                <div class="collection-stat-label">Coins</div>
+            </div>
+        </div>
+
+        <div class="collection-stat">
+            <div class="collection-stat-icon">◍</div>
+            <div>
+                <div class="collection-stat-value">{{ collection_stats.countries }}</div>
+                <div class="collection-stat-label">Countries / Issuers</div>
+            </div>
+        </div>
+
+        <div class="collection-stat">
+            <div class="collection-stat-icon">▣</div>
+            <div>
+                <div class="collection-stat-value">{{ collection_stats.unique_types }}</div>
+                <div class="collection-stat-label">Coin Types</div>
+            </div>
+        </div>
+
+        <!-- PRIVATE COLLECTION VALUE - COLLECTION -->
+{% if is_owner %}
+<a class="collection-stat direct-collection-value-link"
+   href="{{ url_for('collection_value') }}"
+   title="Open Collection Value">
+    <div class="collection-stat-icon">$</div>
+    <div>
+        <div class="collection-stat-value">${{ "{:,.2f}".format(collection_stats.estimated_value) }}</div>
+        <div class="collection-stat-label">Estimated Total Value</div>
+    </div>
+</a>
+{% else %}
+<div class="collection-stat private-value-mask" title="For Al's Eyes Only">
+    <div class="collection-stat-icon">$</div>
+    <div>
+        <div class="collection-stat-value private-collection-joke">A whole bunch of money</div>
+        <div class="collection-stat-label">For Al's Eyes Only</div>
+    </div>
+</div>
+{% endif %}
+    </section>
+
+    <form class="collection-controls" method="get" action="{{ url_for('coins') }}">
+        <div class="collection-filter-grid">
+            <input
+                type="search"
+                name="search"
+                value="{{ search }}"
+                placeholder="Search your collection..."
+                aria-label="Search your collection"
+            >
+
+            <select name="country" aria-label="Filter by country">
+                <option value="">All Countries</option>
+                {% for item in filter_countries %}
+                <option value="{{ item }}" {% if country == item %}selected{% endif %}>
+                    {{ item }}
+                </option>
+                {% endfor %}
+            </select>
+
+            <select name="year" aria-label="Filter by year">
+                <option value="">All Years</option>
+                {% for item in filter_years %}
+                <option value="{{ item }}" {% if year|string == item|string %}selected{% endif %}>
+                    {{ item }}
+                </option>
+                {% endfor %}
+            </select>
+
+            <select name="mint" aria-label="Filter by mint">
+                <option value="">All Mints</option>
+                {% for item in filter_mints %}
+                <option value="{{ item }}" {% if mint == item %}selected{% endif %}>
+                    {{ item }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="collection-control-bottom">
+            <div class="collection-sort-group">
+                <span class="collection-sort-label">Sort by:</span>
+
+                <select name="sort" aria-label="Sort collection">
+                    <option value="alphabet" {% if sort_by == "alphabet" %}selected{% endif %}>
+                        Name
+                    </option>
+                    <option value="age" {% if sort_by == "age" %}selected{% endif %}>
+                        Year
+                    </option>
+                    <option value="mintage" {% if sort_by == "mintage" %}selected{% endif %}>
+                        Mintage
+                    </option>
+                    <option value="value" {% if sort_by == "value" %}selected{% endif %}>
+                        Estimated Value
+                    </option>
+                </select>
+
+                <select name="order" aria-label="Sort direction">
+                    <option value="asc" {% if order == "asc" %}selected{% endif %}>
+                        Ascending
+                    </option>
+                    <option value="desc" {% if order == "desc" %}selected{% endif %}>
+                        Descending
+                    </option>
+                </select>
+
+                <button type="submit" class="collection-apply">
+                    Apply
+                </button>
+
+                {% if search or country or year or mint %}
+                <a class="collection-reset" href="{{ url_for('coins') }}">
+                    Clear
+                </a>
+                {% endif %}
+            </div>
+
+            <div class="collection-view-toggle" aria-label="Choose collection view">
+                <button type="button" id="gridViewButton" class="active">
+                    ▦ Grid View
+                </button>
+                <button type="button" id="tableViewButton">
+                    ▤ Table View
+                </button>
+            </div>
+        </div>
+
+        <div class="collection-result-note">
+            Showing {{ collection_stats.displayed_records }} record{% if collection_stats.displayed_records != 1 %}s{% endif %}.
+        </div>
+    </form>
+
+    {% if coins %}
+
+    <section id="collectionGrid" class="collection-grid">
+        {% for coin in coins %}
+        <article class="coin-card">
+            <a class="coin-card-link" href="{{ url_for('coin_detail', coin_id=coin.id) }}">
+                <div class="coin-card-image-wrap">
+
+                    {% if coin.personal_obverse_image %}
+                    <img
+                        class="coin-card-image"
+                        src="{{ url_for('static', filename='uploads/coins/' ~ coin.personal_obverse_image) }}"
+                        alt="{{ coin.name }} obverse"
+                        loading="lazy"
+                    >
+
+                    {% elif coin.personal_reverse_image %}
+                    <img
+                        class="coin-card-image"
+                        src="{{ url_for('static', filename='uploads/coins/' ~ coin.personal_reverse_image) }}"
+                        alt="{{ coin.name }} reverse"
+                        loading="lazy"
+                    >
+
+                    {% elif coin.obverse_image %}
+                    <img
+                        class="coin-card-image"
+                        src="{{ coin.obverse_image }}"
+                        alt="{{ coin.name }} catalogue obverse"
+                        loading="lazy"
+                    >
+
+                    {% elif coin.reverse_image %}
+                    <img
+                        class="coin-card-image"
+                        src="{{ coin.reverse_image }}"
+                        alt="{{ coin.name }} catalogue reverse"
+                        loading="lazy"
+                    >
+
+                    {% else %}
+                    <div class="coin-card-no-image" aria-label="No coin photo">
+                        ◉
+                    </div>
+                    {% endif %}
+
+                </div>
+
+                <div class="coin-card-body">
+                    <h2 class="coin-card-title">{{ coin.name }}</h2>
+
+                    <div class="coin-card-subtitle">
+                        {% if coin.year is not none %}{{ coin.year }}{% else %}Unknown year{% endif %}
+                        {% if coin.country %} · {{ coin.country }}{% endif %}
+                    </div>
+
+                    <div class="coin-card-mint">
+                        {% if coin.mint %}
+                            {{ coin.mint }}
+                            {% if coin.mint_mark %} ({{ coin.mint_mark }}){% endif %}
+                        {% elif coin.mint_mark %}
+                            Mint mark {{ coin.mint_mark }}
+                        {% endif %}
+                    </div>
+
+                    <div class="coin-card-tags">
+                        {% if coin.denomination %}
+                        <span class="coin-tag">{{ coin.denomination }}</span>
+                        {% endif %}
+
+                        {% if coin.material %}
+                        <span class="coin-tag">{{ coin.material }}</span>
+                        {% endif %}
+
+                        {% if coin.condition %}
+                        <span class="coin-tag">{{ coin.condition }}</span>
+                        {% endif %}
+                    </div>
+
+                    <div class="coin-card-data">
+                        <div>
+                            Mintage:
+                            {% if coin.mintage %}
+                                {{ "{:,}".format(coin.mintage) }}
+                            {% else %}
+                                —
+                            {% endif %}
+                        </div>
+
+                        <div class="coin-card-value">
+                            Est. Value:
+                            {% if coin.estimated_value is not none %}
+                                ${{ "{:,.2f}".format(coin.estimated_value) }}
+                            {% else %}
+                                —
+                            {% endif %}
+                        </div>
+
+                        <div>
+                            Qty: {{ coin.quantity or 1 }}
+                        </div>
+                    </div>
+                </div>
+            </a>
+        </article>
+        {% endfor %}
+    </section>
+
+    <section id="collectionTable" hidden>
+        <div class="collection-table-shell">
+            <table class="collection-table">
+                <thead>
+                    <tr>
+                        <th>Photo</th>
+                        <th>Name</th>
+                        <th>Year</th>
+                        <th>Country</th>
+                        <th>Mint</th>
+                        <th>Mint Mark</th>
+                        <th>Mintage</th>
+                        <th>Est. Value</th>
+                        <th>Qty</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for coin in coins %}
+                    <tr data-href="{{ url_for('coin_detail', coin_id=coin.id) }}">
+                        <td>
+                            {% if coin.personal_obverse_image %}
+                            <img
+                                class="collection-table-photo"
+                                src="{{ url_for('static', filename='uploads/coins/' ~ coin.personal_obverse_image) }}"
+                                alt=""
+                                loading="lazy"
+                            >
+                            {% elif coin.personal_reverse_image %}
+                            <img
+                                class="collection-table-photo"
+                                src="{{ url_for('static', filename='uploads/coins/' ~ coin.personal_reverse_image) }}"
+                                alt=""
+                                loading="lazy"
+                            >
+                            {% elif coin.obverse_image %}
+                            <img
+                                class="collection-table-photo"
+                                src="{{ coin.obverse_image }}"
+                                alt=""
+                                loading="lazy"
+                            >
+                            {% else %}
+                            —
+                            {% endif %}
+                        </td>
+
+                        <td class="collection-table-name">{{ coin.name }}</td>
+                        <td>{{ coin.year if coin.year is not none else "—" }}</td>
+                        <td>{{ coin.country or "—" }}</td>
+                        <td>{{ coin.mint or "—" }}</td>
+                        <td>{{ coin.mint_mark or "—" }}</td>
+
+                        <td>
+                            {% if coin.mintage %}
+                                {{ "{:,}".format(coin.mintage) }}
+                            {% else %}
+                                —
+                            {% endif %}
+                        </td>
+
+                        <td>
+                            {% if coin.estimated_value is not none %}
+                                ${{ "{:,.2f}".format(coin.estimated_value) }}
+                            {% else %}
+                                —
+                            {% endif %}
+                        </td>
+
+                        <td>{{ coin.quantity or 1 }}</td>
+
+                        <td>
+                            <a
+                                class="collection-table-action"
+                                href="{{ url_for('coin_detail', coin_id=coin.id) }}"
+                            >
+                                View
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    {% else %}
+
+    <section class="collection-empty">
+        <strong>No coins matched.</strong>
+        Try changing your search or filters.
+    </section>
+
+    {% endif %}
+
+</div>
+
+<script>
+(function () {
+    const grid = document.getElementById("collectionGrid");
+    const table = document.getElementById("collectionTable");
+    const gridButton = document.getElementById("gridViewButton");
+    const tableButton = document.getElementById("tableViewButton");
+
+    if (!grid || !table || !gridButton || !tableButton) {
+        return;
+    }
+
+    function setView(view) {
+        const tableMode = view === "table";
+
+        grid.hidden = tableMode;
+        table.hidden = !tableMode;
+
+        gridButton.classList.toggle("active", !tableMode);
+        tableButton.classList.toggle("active", tableMode);
+
+        localStorage.setItem("coinCollectionView", tableMode ? "table" : "grid");
+    }
+
+    gridButton.addEventListener("click", function () {
+        setView("grid");
+    });
+
+    tableButton.addEventListener("click", function () {
+        setView("table");
+    });
+
+    const savedView = localStorage.getItem("coinCollectionView");
+
+    if (savedView === "table") {
+        setView("table");
+    } else {
+        setView("grid");
+    }
+
+    document.querySelectorAll(".collection-table tbody tr[data-href]").forEach(function (row) {
+        row.addEventListener("click", function (event) {
+            if (event.target.closest("a, button, input")) {
+                return;
+            }
+
+            window.location.href = row.dataset.href;
+        });
+    });
+})();
+</script>
+{% endblock %}

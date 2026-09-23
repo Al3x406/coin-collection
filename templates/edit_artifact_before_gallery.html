@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}Edit Artifact{% endblock %}
+{% block content %}
+<style>
+body{background:#080706!important;color:#eee2cf}.artifact-form{max-width:900px;margin:28px auto 60px;padding:24px;border:1px solid #70522c;border-radius:16px;background:#0d0d0c}.artifact-form h1{color:#eccb8b;font-family:Georgia,serif}.artifact-form label{display:block;margin:14px 0 6px;color:#caa668;font-weight:800}.artifact-form input,.artifact-form select,.artifact-form textarea{width:100%;padding:10px 11px;border:1px solid #4f3e27;border-radius:8px;background:#111210;color:#eee2cf}.two{display:grid;grid-template-columns:1fr 1fr;gap:14px}.artifact-form textarea{min-height:110px}.actions{display:flex;gap:10px;margin-top:20px}.save{border:1px solid #b98b45;border-radius:8px;background:#d9b36d;color:#1b1309;padding:10px 15px;font-weight:900}.cancel{border:1px solid #51412a;border-radius:8px;color:#c7ae84;padding:10px 15px;text-decoration:none}.error{padding:10px;border:1px solid #803c35;background:#2b1210;color:#f0b8ae;border-radius:8px}@media(max-width:650px){.two{grid-template-columns:1fr}}
+</style>
+<form class="artifact-form" method="post" enctype="multipart/form-data">
+<h1>Edit Artifact</h1>
+{% if error %}<div class="error">{{ error }}</div>{% endif %}
+<label>Name</label><input name="name" required value="{{ artifact.name }}">
+<div class="two">
+<div><label>Category</label><select name="category" required>{% for c in categories %}<option value="{{ c }}" {% if artifact.category==c %}selected{% endif %}>{{ c }}</option>{% endfor %}</select></div>
+<div><label>Year / Date</label><input name="year_text" placeholder="1890, c. 1920, Victorian era..." value="{{ artifact.year_text or '' }}"></div>
+</div>
+<div class="two"><div><label>Country / Origin</label><input name="country" value="{{ artifact.country or '' }}"></div><div><label>Condition</label><input name="condition" value="{{ artifact.condition or '' }}"></div></div>
+<div class="two"><div><label>Estimated Value</label><input name="estimated_value" type="number" step="0.01" value="{{ artifact.estimated_value if artifact.estimated_value is not none else '' }}"></div><div><label>Purchase Price</label><input name="purchase_price" type="number" step="0.01" value="{{ artifact.purchase_price if artifact.purchase_price is not none else '' }}"></div></div>
+<div class="two"><div><label>Date Acquired</label><input name="date_acquired" value="{{ artifact.date_acquired or '' }}"></div><div><label>Where You Got It</label><input name="source" value="{{ artifact.source or '' }}"></div></div>
+<label>Description / History</label><textarea name="description">{{ artifact.description or '' }}</textarea>
+<label>Notes</label><textarea name="notes">{{ artifact.notes or '' }}</textarea>
+<label>Photo</label><input name="image" type="file" accept="image/*">
+<div class="actions"><button class="save" type="submit">Save Artifact</button><a class="cancel" href="{{ url_for('artifacts') }}">Cancel</a></div>
+</form>
+{% endblock %}

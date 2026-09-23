@@ -1,0 +1,28 @@
+HUMAN STORY - CHAPTER II-VIII PHOTO REPLACEMENT GUIDE
+
+The current files are BASIC PLACEHOLDERS copied from each era's existing
+background art. Replace them with your own photos whenever you want.
+
+Chapter II:
+  static/human_story_art/chapter2_basic/1.jpg through 9.jpg
+
+Chapter III:
+  static/human_story_art/chapter3_basic/1.jpg through 11.jpg
+
+Chapter IV:
+  static/human_story_art/chapter4_basic/1.jpg through 16.jpg
+
+Chapter V:
+  static/human_story_art/chapter5_basic/1.jpg through 10.jpg
+
+Chapter VI:
+  static/human_story_art/chapter6_basic/1.jpg through 13.jpg
+
+Chapter VII:
+  static/human_story_art/chapter7_basic/1.jpg through 14.jpg
+
+Chapter VIII:
+  static/human_story_art/chapter8_basic/1.jpg through 10.jpg
+
+Keep the same filename when replacing a photo. JPG is recommended.
+Then Ctrl+F5 the Human Story page.

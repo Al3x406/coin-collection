@@ -1,0 +1,594 @@
+{% extends "base.html" %}
+{% block title %}Collection Gallery · My Coin Collection{% endblock %}
+{% block content %}
+
+<style>
+body{
+    background:#060808!important;
+    color:#eee8dc;
+}
+
+.sets-page{
+    width:min(1500px,calc(100vw - 30px));
+    margin:0 auto;
+    padding:34px 0 72px;
+}
+
+/* ---------- INTRO ---------- */
+.gallery-head{
+    display:grid;
+    grid-template-columns:minmax(0,1fr) auto;
+    gap:30px;
+    align-items:end;
+    margin-bottom:24px;
+}
+
+.gallery-kicker{
+    color:#d7a84e;
+    font-size:.72rem;
+    font-weight:900;
+    letter-spacing:.19em;
+    text-transform:uppercase;
+}
+
+.gallery-head h1{
+    margin:5px 0 7px;
+    color:#f2d18a;
+    font:700 clamp(2.35rem,4vw,3.7rem)/1 Georgia,serif;
+}
+
+.gallery-sub{
+    max-width:780px;
+    color:#aaa398;
+    font-size:.98rem;
+    line-height:1.55;
+}
+
+.gallery-count{
+    padding:9px 13px;
+    border:1px solid #5e4627;
+    border-radius:999px;
+    background:#0e100f;
+    color:#d7b46c;
+    font-size:.72rem;
+    font-weight:800;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+}
+
+/* ---------- SECTION ---------- */
+.gallery-section{
+    margin-top:31px;
+}
+
+.section-head{
+    display:flex;
+    justify-content:space-between;
+    align-items:end;
+    gap:20px;
+    margin-bottom:13px;
+}
+
+.section-head h2{
+    margin:0;
+    color:#efcb7e;
+    font:700 1.45rem Georgia,serif;
+}
+
+.section-head p{
+    margin:4px 0 0;
+    color:#8e887e;
+    font-size:.85rem;
+}
+
+/* ---------- FEATURED GRID ---------- */
+.featured-grid{
+    display:grid;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:18px;
+}
+
+.feature-card{
+    position:relative;
+    min-height:360px;
+    overflow:hidden;
+    display:flex;
+    align-items:flex-end;
+    border:1px solid #7c592c;
+    border-radius:16px;
+    color:inherit;
+    text-decoration:none;
+    background:#10110f;
+    box-shadow:
+        inset 0 0 40px rgba(0,0,0,.32),
+        0 14px 34px rgba(0,0,0,.18);
+    transition:transform .18s ease,border-color .18s ease,box-shadow .18s ease;
+}
+
+.feature-card:hover{
+    color:inherit;
+    transform:translateY(-3px);
+    border-color:#bb873b;
+    box-shadow:0 18px 40px rgba(0,0,0,.28);
+}
+
+.feature-card:before{
+    content:"";
+    position:absolute;
+    inset:0;
+    background-position:center;
+    background-size:cover;
+    filter:saturate(.88) contrast(1.03) brightness(.78);
+    transition:transform .28s ease,filter .28s ease;
+}
+
+.feature-card:hover:before{
+    transform:scale(1.02);
+    filter:saturate(.95) contrast(1.04) brightness(.84);
+}
+
+.feature-card:after{
+    content:"";
+    position:absolute;
+    inset:0;
+    background:
+        linear-gradient(180deg,rgba(5,6,6,.06) 18%,rgba(5,6,6,.40) 55%,rgba(5,6,6,.96) 100%),
+        linear-gradient(90deg,rgba(5,6,6,.20),transparent 50%);
+}
+
+.feature-card.ww1:before{
+    background-image: url("{{ url_for('static', filename='featured_collection_backgrounds/ww1.png') }}");
+}
+
+.feature-card.ww2:before{
+    background-image: url("{{ url_for('static', filename='featured_collection_backgrounds/ww2.png') }}");
+}
+
+.feature-content{
+    position:relative;
+    z-index:2;
+    width:100%;
+    padding:24px 26px 25px;
+}
+
+.feature-tag{
+    color:#ddb35f;
+    font-size:.64rem;
+    font-weight:900;
+    letter-spacing:.17em;
+    text-transform:uppercase;
+}
+
+.feature-title{
+    margin:7px 0 7px;
+    color:#f4d28a;
+    font:700 clamp(1.8rem,2.7vw,2.7rem)/1.05 Georgia,serif;
+    text-shadow:0 2px 12px rgba(0,0,0,.85);
+}
+
+.feature-desc{
+    max-width:650px;
+    min-height:42px;
+    color:#c2b8a7;
+    font-size:.89rem;
+    line-height:1.48;
+}
+
+.progress-row{
+    display:flex;
+    justify-content:space-between;
+    gap:14px;
+    margin-top:16px;
+    color:#d9ad5d;
+    font-size:.73rem;
+    font-weight:900;
+}
+
+.progress-track{
+    height:7px;
+    margin-top:8px;
+    overflow:hidden;
+    border:1px solid #58431f;
+    border-radius:999px;
+    background:#191711;
+}
+
+.progress-track span{
+    display:block;
+    height:100%;
+    background:linear-gradient(90deg,#a56d22,#e3ba60);
+}
+
+.feature-bottom{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:15px;
+    margin-top:16px;
+}
+
+.feature-pills{
+    display:flex;
+    flex-wrap:wrap;
+    gap:7px;
+}
+
+.pill{
+    padding:5px 8px;
+    border:1px solid rgba(188,143,62,.33);
+    border-radius:999px;
+    background:rgba(7,8,7,.72);
+    color:#d5b46d;
+    font-size:.66rem;
+}
+
+.open-copy{
+    flex:0 0 auto;
+    color:#efc66f;
+    font-size:.72rem;
+    font-weight:900;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+}
+
+/* ---------- CHALLENGE CARDS ---------- */
+.challenge-grid{
+    display:grid;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:18px;
+}
+
+.challenge-card{
+    overflow:hidden;
+    display:block;
+    border:1px solid #493922;
+    border-radius:15px;
+    background:#0b0d0d;
+    color:inherit;
+    text-decoration:none;
+    box-shadow:inset 0 0 24px rgba(0,0,0,.24);
+    transition:transform .18s ease,border-color .18s ease;
+}
+
+.challenge-card:hover{
+    color:inherit;
+    transform:translateY(-3px);
+    border-color:#9b7034;
+}
+
+.challenge-cover{
+    height:250px;
+    border-bottom:1px solid #382b1a;
+    background-position:center;
+    background-size:cover;
+    position:relative;
+}
+
+.challenge-cover:after{
+    content:"";
+    position:absolute;
+    inset:0;
+    background:linear-gradient(180deg,rgba(0,0,0,.04),rgba(0,0,0,.32));
+}
+
+.timeline-cover{
+    background-image:url("{{ url_for('static', filename='gallery_art/timeline_cover.png') }}");
+}
+
+.world-cover{
+    background-image:url("{{ url_for('static', filename='gallery_art/world_cover.png') }}");
+}
+
+.challenge-body{
+    padding:18px 19px 17px;
+}
+
+.challenge-title{
+    color:#f1cf85;
+    font:700 1.3rem Georgia,serif;
+    line-height:1.2;
+}
+
+.challenge-desc{
+    min-height:41px;
+    margin-top:7px;
+    color:#9f998f;
+    font-size:.86rem;
+    line-height:1.45;
+}
+
+.challenge-footer{
+    margin-top:15px;
+    padding-top:13px;
+    border-top:1px solid rgba(104,77,35,.30);
+}
+
+.challenge-footline{
+    display:flex;
+    justify-content:space-between;
+    gap:12px;
+    color:#d7aa55;
+    font-size:.72rem;
+    font-weight:900;
+}
+
+.challenge-link{
+    display:flex;
+    justify-content:space-between;
+    gap:10px;
+    margin-top:9px;
+    color:#858077;
+    font-size:.68rem;
+}
+
+.challenge-arrow{
+    color:#b9893c;
+}
+
+/* ---------- OTHER SETS ---------- */
+.other-grid{
+    display:grid;
+    grid-template-columns:repeat(3,minmax(0,1fr));
+    gap:13px;
+}
+
+.other-card{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:15px;
+    min-height:76px;
+    padding:15px 17px;
+    border:1px solid #3a3022;
+    border-radius:12px;
+    background:#0b0d0c;
+    color:inherit;
+    text-decoration:none;
+}
+
+.other-card:hover{
+    color:inherit;
+    border-color:#8d6631;
+}
+
+.other-name{
+    color:#e3c17b;
+    font:700 1rem Georgia,serif;
+}
+
+.other-meta{
+    margin-top:3px;
+    color:#817b72;
+    font-size:.68rem;
+}
+
+@media(max-width:1000px){
+    .featured-grid,
+    .challenge-grid{
+        grid-template-columns:1fr;
+    }
+    .other-grid{
+        grid-template-columns:repeat(2,minmax(0,1fr));
+    }
+}
+
+@media(max-width:700px){
+    .sets-page{
+        width:calc(100vw - 18px);
+        padding-top:24px;
+    }
+    .gallery-head{
+        grid-template-columns:1fr;
+    }
+    .gallery-count{
+        justify-self:start;
+    }
+    .feature-card{
+        min-height:320px;
+    }
+    .challenge-cover{
+        height:205px;
+    }
+    .other-grid{
+        grid-template-columns:1fr;
+    }
+}
+
+/* FEATURED WAR BACKGROUND FIX */
+.feature-card.ww1:before{
+    background-position:center 48% !important;
+    background-size:cover !important;
+}
+.feature-card.ww2:before{
+    background-position:center 48% !important;
+    background-size:cover !important;
+}
+.feature-card.ww1:after,
+.feature-card.ww2:after{
+    background:
+        linear-gradient(180deg,rgba(4,5,5,.12) 8%,rgba(4,5,5,.38) 48%,rgba(4,5,5,.96) 100%),
+        linear-gradient(90deg,rgba(4,5,5,.58) 0%,rgba(4,5,5,.18) 62%,rgba(4,5,5,.08) 100%) !important;
+}
+
+
+/* ---------- THE HUMAN STORY GALLERY CARD ---------- */
+.human-story-gallery-card{position:relative;display:block;min-height:310px;overflow:hidden;border:1px solid #6d5128;border-radius:16px;text-decoration:none!important;color:#efe6d5!important;background:radial-gradient(circle at 75% 28%,rgba(221,173,82,.22),transparent 24%),radial-gradient(circle at 54% 70%,rgba(44,106,126,.18),transparent 34%),linear-gradient(118deg,#080b0f 0%,#111a20 52%,#080b0f 100%);box-shadow:0 20px 55px rgba(0,0,0,.34)}
+.human-story-gallery-card:before{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(3,5,7,.9),rgba(3,5,7,.3) 65%,rgba(3,5,7,.7)),repeating-linear-gradient(0deg,rgba(255,255,255,.02) 0 1px,transparent 1px 5px)}
+.human-story-gallery-card:hover{transform:translateY(-2px);border-color:#c49848}.human-story-gallery-inner{position:relative;z-index:1;padding:40px;max-width:850px}.human-story-gallery-kicker{color:#d4aa5d;text-transform:uppercase;letter-spacing:.22em;font-size:.72rem;font-weight:800}.human-story-gallery-card h3{margin:10px 0 8px;color:#f4ecdf;font:2.6rem Georgia,serif}.human-story-gallery-card h3 span{display:block;color:#d6ad61;font-size:.42em;letter-spacing:.18em;text-transform:uppercase;margin-top:5px}.human-story-gallery-card p{max-width:690px;color:#c8c0b2;line-height:1.65;margin-bottom:20px}.human-story-gallery-open{color:#e7c77f;text-transform:uppercase;letter-spacing:.13em;font-size:.72rem;font-weight:800}
+
+</style>
+
+<div class="sets-page">
+
+    {% set ww1 = namespace(set=none) %}
+    {% set ww2 = namespace(set=none) %}
+    {% set timeline = namespace(set=none) %}
+    {% set world = namespace(set=none) %}
+    {% set other_sets = [] %}
+
+    {% for coin_set in coin_sets %}
+        {% if not ww1.set and coin_set.name.startswith("World War I") %}
+            {% set ww1.set = coin_set %}
+        {% elif not ww2.set and coin_set.ww2_slots %}
+            {% set ww2.set = coin_set %}
+        {% elif not timeline.set and coin_set.name.startswith("A Coin From Every Year") %}
+            {% set timeline.set = coin_set %}
+        {% elif not world.set and coin_set.name.startswith("Around the World") %}
+            {% set world.set = coin_set %}
+        {% else %}
+            {% set _ = other_sets.append(coin_set) %}
+        {% endif %}
+    {% endfor %}
+
+    <header class="gallery-head">
+        <div>
+            <div class="gallery-kicker">Curated collecting goals</div>
+            <h1>Collection Gallery</h1>
+            <div class="gallery-sub">
+                Explore historical eras and global challenges that automatically grow as coins are added to your collection.
+            </div>
+        </div>
+
+        <div class="gallery-count">{{ coin_sets|length }} active collections</div>
+    </header>
+
+    <section class="gallery-section" style="margin-top:0">
+        <div class="section-head">
+            <div>
+                <h2>Featured Collections</h2>
+                <p>The two major historical projects in your collection.</p>
+            </div>
+        </div>
+
+        <div class="featured-grid">
+
+            {% if ww1.set %}
+                {% set p = set_progress.get(ww1.set.id, {"completed":0,"total":0,"percent":0}) %}
+                <a class="feature-card ww1" href="{{ url_for('ww1_set') }}">
+                    <div class="feature-content">
+                        <div class="feature-tag">Interactive Collection Atlas</div>
+                        <div class="feature-title">World War I · 1914–1918</div>
+                        <div class="feature-desc">
+                            Explore the collection by country on the interactive atlas, with five yearly slots for each nation and region.
+                        </div>
+
+                        <div class="progress-row">
+                            <span>{{ p.completed }} / {{ p.total }} year slots</span>
+                            <span>{{ p.percent }}% complete</span>
+                        </div>
+                        <div class="progress-track"><span style="width:{{ p.percent }}%"></span></div>
+
+                        <div class="feature-bottom">
+                            <div class="feature-pills">
+                                <span class="pill">1914–1918</span>
+                                <span class="pill">Interactive map</span>
+                            </div>
+                            <span class="open-copy">Open Atlas →</span>
+                        </div>
+                    </div>
+                </a>
+            {% endif %}
+
+            {% if ww2.set %}
+                {% set p = set_progress.get(ww2.set.id, {"completed":0,"total":0,"percent":0}) %}
+                <a class="feature-card ww2" href="{{ url_for('set_detail', set_id=ww2.set.id) }}">
+                    <div class="feature-content">
+                        <div class="feature-tag">Featured Collection</div>
+                        <div class="feature-title">{{ ww2.set.name }}</div>
+                        <div class="feature-desc">
+                            One coin from each year of World War II, organized by country across the 1939–1945 wartime period.
+                        </div>
+
+                        <div class="progress-row">
+                            <span>{{ p.completed }} / {{ p.total }} year slots</span>
+                            <span>{{ p.percent }}% complete</span>
+                        </div>
+                        <div class="progress-track"><span style="width:{{ p.percent }}%"></span></div>
+
+                        <div class="feature-bottom">
+                            <div class="feature-pills">
+                                <span class="pill">1939–1945</span>
+                                <span class="pill">Country by country</span>
+                            </div>
+                            <span class="open-copy">Open Collection →</span>
+                        </div>
+                    </div>
+                </a>
+            {% endif %}
+
+        </div>
+    </section>
+
+    
+<section class="gallery-section human-story-gallery-section">
+<div class="section-head"><div><h2>The Human Story</h2><p>A single journey through history, told through the coins in your collection.</p></div></div>
+<a class="human-story-gallery-card" href="{{ url_for('human_story') }}"><div class="human-story-gallery-inner">
+<div class="human-story-gallery-kicker">Historical anchor years · 8 eras</div>
+<h3>The Human Story <span>History Through Coins</span></h3>
+<p>Begin with the first coinage and travel through empires, faith, exploration, revolutions, industry, world wars, the Cold War, and the connected world. Every era expands in place into its full historical story.</p>
+<div class="human-story-gallery-open">Enter the journey →</div>
+</div></a>
+</section>
+
+<section class="gallery-section">
+        <div class="section-head">
+            <div>
+                <h2>Collection Challenges</h2>
+                <p>Long-term goals that track the breadth of your collection.</p>
+            </div>
+        </div>
+
+        <div class="challenge-grid">
+
+            {% if timeline.set %}
+                {% set p = set_progress.get(timeline.set.id, {"completed":0,"total":0,"percent":0}) %}
+                <a class="challenge-card" href="{{ url_for('set_detail', set_id=timeline.set.id) }}">
+                    <div class="challenge-cover timeline-cover"></div>
+                    <div class="challenge-body">
+                        <div class="challenge-title">A Coin From Every Year · 1000–Present</div>
+                        <div class="challenge-desc">
+                            Build a continuous timeline from medieval coinage through the modern era.
+                        </div>
+                        <div class="challenge-footer">
+                            <div class="challenge-footline">
+                                <span>{{ p.completed }} / {{ p.total }}</span>
+                                <span>{{ p.percent }}% complete</span>
+                            </div>
+                            <div class="progress-track"><span style="width:{{ p.percent }}%"></span></div>
+                            <div class="challenge-link">
+                                <span>Timeline progress</span>
+                                <span class="challenge-arrow">Open →</span>
+                            </div>
+                        </div>
+                    </div>
+                </a>
+            {% endif %}
+
+            {% if world.set %}
+                {% set p = set_progress.get(world.set.id, {"completed":0,"total":0,"percent":0}) %}
+                <a class="challenge-card" href="{{ url_for('set_detail', set_id=world.set.id) }}">
+                    <div class="challenge-cover world-cover"></div>
+                    <div class="challenge-body">
+                        <div class="challenge-title">Around the World · One Coin Per Country</div>
+                        <div class="challenge-desc">
+                            Collect one representative coin from every country in the world.
+                        </div>
+                        <div class="challenge-footer">
+                            <div class="challenge-footline">
+                                <span>{{ p.completed }} / {{ p.total }}</span>
+                                <span>{{ p.percent }}% complete</span>
+                            </div>
+                            <div class="progress-track"><span style="width:{{ p.percent }}%"></span></div>
+                            <div class="challenge-link">
+                                <span>Countries represented</span>
+                                <span class="challenge-arrow">Open →</span>
+                            </div>
+                        </div>
+                    </div>
+                </a>
+            {% endif %}
+
+        </div>
+    </section>
+</div>
+{% endblock %}

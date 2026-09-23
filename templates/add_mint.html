@@ -1,0 +1,151 @@
+{% extends "base.html" %}
+
+{% block title %}
+Add Mint
+{% endblock %}
+
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="mb-1">Add Mint</h1>
+        <p class="text-muted mb-0">
+            Add a mint location for your coin collection.
+        </p>
+    </div>
+
+    <a href="/mints" class="btn btn-secondary">
+        Back to Mints
+    </a>
+</div>
+
+
+<div class="card shadow-sm">
+
+    <div class="card-body">
+
+        <form method="POST">
+
+            <div class="mb-3">
+                <label class="form-label">
+                    Mint Name
+                </label>
+
+                <input
+                    type="text"
+                    name="name"
+                    class="form-control"
+                    placeholder="Carson City Mint"
+                    required>
+            </div>
+
+
+            <div class="row">
+
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">
+                        City
+                    </label>
+
+                    <input
+                        type="text"
+                        name="city"
+                        class="form-control"
+                        placeholder="Carson City">
+                </div>
+
+
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">
+                        State / Region
+                    </label>
+
+                    <input
+                        type="text"
+                        name="state"
+                        class="form-control"
+                        placeholder="Nevada">
+                </div>
+
+
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">
+                        Country
+                    </label>
+
+                    <input
+                        type="text"
+                        name="country"
+                        class="form-control"
+                        placeholder="United States">
+                </div>
+
+            </div>
+
+
+            <hr>
+
+            <h4 class="mb-3">
+                Globe Coordinates
+            </h4>
+
+            <p class="text-muted">
+                These coordinates determine where the mint appears on the globe.
+            </p>
+
+
+            <div class="row">
+
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">
+                        Latitude
+                    </label>
+
+                    <input
+                        type="number"
+                        step="any"
+                        name="latitude"
+                        class="form-control"
+                        placeholder="39.1638">
+                </div>
+
+
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">
+                        Longitude
+                    </label>
+
+                    <input
+                        type="number"
+                        step="any"
+                        name="longitude"
+                        class="form-control"
+                        placeholder="-119.7674">
+                </div>
+
+            </div>
+
+
+            <button
+                type="submit"
+                class="btn btn-success">
+
+                Add Mint
+
+            </button>
+
+            <a
+                href="/mints"
+                class="btn btn-secondary">
+
+                Cancel
+
+            </a>
+
+        </form>
+
+    </div>
+
+</div>
+
+{% endblock %}
