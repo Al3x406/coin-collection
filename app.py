@@ -9,6 +9,7 @@ from flask import (
     abort,
 )
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy.orm import joinedload, selectinload
 from datetime import datetime
 from io import BytesIO
 import os
@@ -725,7 +726,12 @@ class Artifact(db.Model):
 # Home page / collection dashboard
 @app.route("/")
 def home():
-    all_coins = Coin.query.order_by(Coin.id.desc()).all()
+    all_coins = (
+        Coin.query
+        .options(joinedload(Coin.mint_record))
+        .order_by(Coin.id.desc())
+        .all()
+    )
 
     total_coins = sum(coin.quantity or 1 for coin in all_coins)
 
@@ -832,22 +838,30 @@ def home():
 
     home_sets = {}
 
-    coin_sets = CoinSet.query.order_by(CoinSet.name.asc()).all()
+    coin_sets = (
+        CoinSet.query
+        .options(
+            selectinload(CoinSet.ww2_slots),
+            selectinload(CoinSet.requirements),
+        )
+        .order_by(CoinSet.name.asc())
+        .all()
+    )
 
     for coin_set in coin_sets:
         key = None
 
         if hasattr(coin_set, "ww2_slots") and coin_set.ww2_slots:
             key = "ww2"
-            matches = _ww2_slot_matches(coin_set)
+            matches = _ww2_slot_matches(coin_set, all_coins)
 
         elif coin_set.name.startswith("A Coin From Every Year"):
             key = "timeline"
-            matches = _match_set_requirements(coin_set)
+            matches = _match_set_requirements(coin_set, all_coins)
 
         elif coin_set.name.startswith("Around the World"):
             key = "world"
-            matches = _match_set_requirements(coin_set)
+            matches = _match_set_requirements(coin_set, all_coins)
 
         else:
             continue
@@ -1723,8 +1737,9 @@ def _coin_matches_requirement(coin, requirement):
     return True
 
 
-def _match_set_requirements(coin_set):
-    all_coins = Coin.query.order_by(Coin.year.asc(), Coin.name.asc()).all()
+def _match_set_requirements(coin_set, all_coins=None):
+    if all_coins is None:
+        all_coins = Coin.query.order_by(Coin.year.asc(), Coin.name.asc()).all()
     used_ids = set()
     matches = []
 
@@ -1823,8 +1838,9 @@ def _ww2_coin_matches_slot(coin, slot):
     country = (coin.country or '').lower()
     return any(term in country for term in _ww2_terms(slot.country_terms))
 
-def _ww2_slot_matches(coin_set):
-    all_coins = Coin.query.order_by(Coin.year.asc(), Coin.name.asc()).all()
+def _ww2_slot_matches(coin_set, all_coins=None):
+    if all_coins is None:
+        all_coins = Coin.query.order_by(Coin.year.asc(), Coin.name.asc()).all()
     used_ids = set()
     matches = []
     slots = sorted(coin_set.ww2_slots, key=lambda s: (s.sort_order or 0, s.country_label.lower(), s.year))
@@ -2442,7 +2458,29 @@ def add_mint():
 @app.route("/globe")
 def globe():
     all_coins = Coin.query.order_by(Coin.year.asc(), Coin.id.asc()).all()
-    all_mints = Mint.query.all()
+
+    # Turso is remote, so never lazy-load mint.coins one mint at a time.
+    # Build every mint's collection record count in one grouped query.
+    mint_coin_counts = dict(
+        db.session.query(
+            Coin.mint_id,
+            db.func.count(Coin.id),
+        )
+        .filter(Coin.mint_id.isnot(None))
+        .group_by(Coin.mint_id)
+        .all()
+    )
+
+    # Mints without coordinates cannot be displayed on either map view.
+    all_mints = (
+        Mint.query
+        .filter(
+            Mint.latitude.isnot(None),
+            Mint.longitude.isnot(None),
+        )
+        .all()
+    )
+
     current_year = datetime.now().year
 
     # Historical geography now comes from the HistoricalEntity table.
@@ -2630,7 +2668,8 @@ def globe():
             "state": mint.state, "country": mint.country,
             "lat": mint.latitude, "lng": mint.longitude,
             "start_year": start_year, "end_year": end_year,
-            "is_present": is_present, "coin_count": len(mint.coins)
+            "is_present": is_present,
+            "coin_count": int(mint_coin_counts.get(mint.id, 0)),
         })
 
     return render_template(
