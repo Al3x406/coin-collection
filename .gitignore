@@ -6,3 +6,4 @@ venv/
 instance/backup_*/
 templates/*backup*/
 templates/*.bak_*
+static/uploads/
