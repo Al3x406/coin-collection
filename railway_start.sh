@@ -8,6 +8,12 @@ if [ -n "${R2_BUCKET_NAME:-}" ]; then
   python /app/migrate_r2.py
 fi
 
+# One-time guarded database migration. This never switches the live app to
+# Turso by itself; USE_TURSO controls the actual application connection.
+if [ "${MIGRATE_TURSO_ON_START:-0}" = "1" ]; then
+  python /app/migrate_turso.py
+fi
+
 if [ -d /data ]; then
   mkdir -p /data/uploads/coins /data/uploads/artifacts
   if [ ! -f /data/coins.db ]; then
