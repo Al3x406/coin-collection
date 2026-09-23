@@ -1,6 +1,13 @@
 #!/bin/sh
 set -eu
 PORT="${PORT:-8080}"
+
+# Copy the bundled upload library to Cloudflare R2 once. The migration
+# script stores a marker in R2, so later restarts return immediately.
+if [ -n "${R2_BUCKET_NAME:-}" ]; then
+  python /app/migrate_r2.py
+fi
+
 if [ -d /data ]; then
   mkdir -p /data/uploads/coins /data/uploads/artifacts
   if [ ! -f /data/coins.db ]; then
