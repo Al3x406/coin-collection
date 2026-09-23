@@ -841,11 +841,20 @@ def home():
     coin_sets = (
         CoinSet.query
         .options(
-            selectinload(CoinSet.ww2_slots),
-            selectinload(CoinSet.requirements),
+            joinedload(CoinSet.ww2_slots),
+            joinedload(CoinSet.requirements),
         )
         .order_by(CoinSet.name.asc())
         .all()
+    )
+
+    matching_coins = sorted(
+        all_coins,
+        key=lambda coin: (
+            coin.year is not None,
+            coin.year if coin.year is not None else 0,
+            (coin.name or "").lower(),
+        ),
     )
 
     for coin_set in coin_sets:
@@ -853,15 +862,15 @@ def home():
 
         if hasattr(coin_set, "ww2_slots") and coin_set.ww2_slots:
             key = "ww2"
-            matches = _ww2_slot_matches(coin_set, all_coins)
+            matches = _ww2_slot_matches(coin_set, matching_coins)
 
         elif coin_set.name.startswith("A Coin From Every Year"):
             key = "timeline"
-            matches = _match_set_requirements(coin_set, all_coins)
+            matches = _match_set_requirements(coin_set, matching_coins)
 
         elif coin_set.name.startswith("Around the World"):
             key = "world"
-            matches = _match_set_requirements(coin_set, all_coins)
+            matches = _match_set_requirements(coin_set, matching_coins)
 
         else:
             continue
@@ -1244,244 +1253,141 @@ def mint_detail(mint_id):
     )
 @app.route("/coins")
 def coins():
-
-    search = request.args.get(
-        "search",
-        ""
-    ).strip()
-
-    country = request.args.get(
-        "country",
-        ""
-    ).strip()
-
-    year = request.args.get(
-        "year",
-        ""
-    ).strip()
-
-    mint = request.args.get(
-        "mint",
-        ""
-    ).strip()
-
-    sort_by = request.args.get(
-        "sort",
-        "age"
-    )
-
-    order = request.args.get(
-        "order",
-        "desc"
-    )
-
-
-    query = Coin.query
-
-
-    # -------------------------
-    # FILTERS
-    # -------------------------
-
-    if search:
-
-        search_term = f"%{search}%"
-
-        query = query.filter(
-            db.or_(
-                Coin.name.ilike(
-                    search_term
-                ),
-                Coin.country.ilike(
-                    search_term
-                ),
-                Coin.mint.ilike(
-                    search_term
-                ),
-                Coin.mint_mark.ilike(
-                    search_term
-                ),
-                Coin.denomination.ilike(
-                    search_term
-                ),
-                Coin.material.ilike(
-                    search_term
-                )
-            )
-        )
-
-
-    if country:
-
-        query = query.filter(
-            Coin.country == country
-        )
-
-
-    if year:
-
-        try:
-            selected_year = int(
-                year
-            )
-
-            query = query.filter(
-                Coin.year == selected_year
-            )
-
-        except ValueError:
-            pass
-
-
-    if mint:
-
-        query = query.filter(
-            Coin.mint == mint
-        )
-
-
-    # -------------------------
-    # SORTING
-    # -------------------------
-
-    if sort_by == "alphabet":
-
-        sort_column = Coin.name
-
-    elif sort_by == "mintage":
-
-        sort_column = Coin.mintage
-
-    elif sort_by == "value":
-
-        sort_column = Coin.estimated_value
-
-    else:
-
-        sort_column = Coin.year
-
-
-    if order == "asc":
-
-        query = query.order_by(
-            sort_column.asc(),
-            Coin.id.asc()
-        )
-
-    else:
-
-        query = query.order_by(
-            sort_column.desc(),
-            Coin.id.desc()
-        )
-
-
-    all_coins = query.all()
-
-
-    # -------------------------
-    # COLLECTION PAGE SUMMARY
-    # -------------------------
+    search = request.args.get("search", "").strip()
+    country = request.args.get("country", "").strip()
+    year = request.args.get("year", "").strip()
+    mint = request.args.get("mint", "").strip()
+    sort_by = request.args.get("sort", "age")
+    order = request.args.get("order", "desc")
 
     complete_collection = Coin.query.all()
+    all_coins = list(complete_collection)
+
+    if search:
+        needle = search.casefold()
+        all_coins = [
+            coin for coin in all_coins
+            if needle in " ".join([
+                coin.name or "",
+                coin.country or "",
+                coin.mint or "",
+                coin.mint_mark or "",
+                coin.denomination or "",
+                coin.material or "",
+            ]).casefold()
+        ]
+
+    if country:
+        all_coins = [
+            coin for coin in all_coins
+            if coin.country == country
+        ]
+
+    if year:
+        try:
+            selected_year = int(year)
+        except ValueError:
+            selected_year = None
+
+        if selected_year is not None:
+            all_coins = [
+                coin for coin in all_coins
+                if coin.year == selected_year
+            ]
+
+    if mint:
+        all_coins = [
+            coin for coin in all_coins
+            if coin.mint == mint
+        ]
+
+    def coin_sort_value(coin):
+        if sort_by == "alphabet":
+            return coin.name or ""
+        if sort_by == "mintage":
+            return (
+                coin.mintage
+                if coin.mintage is not None
+                else float("-inf")
+            )
+        if sort_by == "value":
+            return (
+                coin.estimated_value
+                if coin.estimated_value is not None
+                else float("-inf")
+            )
+        return (
+            coin.year
+            if coin.year is not None
+            else float("-inf")
+        )
+
+    reverse = order != "asc"
+
+    all_coins.sort(
+        key=lambda coin: (
+            coin_sort_value(coin),
+            coin.id,
+        ),
+        reverse=reverse,
+    )
 
     total_coins = sum(
         coin.quantity or 1
         for coin in complete_collection
     )
 
-    countries = sorted(
-        {
-            coin.country.strip()
-            for coin in complete_collection
-            if coin.country
-            and coin.country.strip()
-        }
-    )
+    countries = sorted({
+        coin.country.strip()
+        for coin in complete_collection
+        if coin.country and coin.country.strip()
+    })
 
-    # --- SAFE YEAR FILTER LIST ---
     year_values = set()
-
     for coin in complete_collection:
         if coin.year is None:
             continue
         try:
-            normalized_year = int(str(coin.year).strip())
+            year_values.add(int(str(coin.year).strip()))
         except (TypeError, ValueError):
             continue
-        year_values.add(normalized_year)
 
-    years = sorted(
-        year_values,
-        reverse=True
-    )
+    years = sorted(year_values, reverse=True)
 
-    mints = sorted(
-        {
-            coin.mint.strip()
-            for coin in complete_collection
-            if coin.mint
-            and coin.mint.strip()
-        }
-    )
+    mints = sorted({
+        coin.mint.strip()
+        for coin in complete_collection
+        if coin.mint and coin.mint.strip()
+    })
 
     unique_types = set()
 
     for coin in complete_collection:
-
         if coin.numista_type_id:
-
             unique_types.add(
-                (
-                    "numista",
-                    coin.numista_type_id
-                )
+                ("numista", coin.numista_type_id)
             )
-
         else:
-
-            unique_types.add(
-                (
-                    "local",
-                    (
-                        coin.name or ""
-                    ).strip().lower(),
-                    (
-                        coin.country or ""
-                    ).strip().lower(),
-                    (
-                        coin.denomination or ""
-                    ).strip().lower()
-                )
-            )
-
+            unique_types.add((
+                "local",
+                (coin.name or "").strip().lower(),
+                (coin.country or "").strip().lower(),
+                (coin.denomination or "").strip().lower(),
+            ))
 
     estimated_value = sum(
-        (
-            coin.estimated_value or 0
-        )
-        *
-        (
-            coin.quantity or 1
-        )
+        (coin.estimated_value or 0)
+        * (coin.quantity or 1)
         for coin in complete_collection
     )
 
-
     collection_stats = {
         "total_coins": total_coins,
-        "countries": len(
-            countries
-        ),
-        "unique_types": len(
-            unique_types
-        ),
+        "countries": len(countries),
+        "unique_types": len(unique_types),
         "estimated_value": estimated_value,
-        "displayed_records": len(
-            all_coins
-        )
+        "displayed_records": len(all_coins),
     }
-
 
     return render_template(
         "coins.html",
@@ -1495,10 +1401,8 @@ def coins():
         filter_countries=countries,
         filter_years=years,
         filter_mints=mints,
-        collection_stats=collection_stats
+        collection_stats=collection_stats,
     )
-
-
 
 
 # --- COLLECTION VALUE DASHBOARD ---
@@ -1860,21 +1764,42 @@ def _ww2_slot_matches(coin_set, all_coins=None):
 
 @app.route("/sets")
 def sets():
-    coin_sets = CoinSet.query.order_by(CoinSet.name.asc()).all()
+    coin_sets = (
+        CoinSet.query
+        .options(
+            joinedload(CoinSet.ww2_slots),
+            joinedload(CoinSet.requirements),
+            joinedload(CoinSet.coins),
+        )
+        .order_by(CoinSet.name.asc())
+        .all()
+    )
+
+    all_coins = Coin.query.order_by(
+        Coin.year.asc(),
+        Coin.name.asc(),
+    ).all()
+
     set_progress = {}
 
     for coin_set in coin_sets:
         completed = 0
         total = 0
 
-        if hasattr(coin_set, "ww2_slots") and coin_set.ww2_slots:
-            matches = _ww2_slot_matches(coin_set)
+        if coin_set.ww2_slots:
+            matches = _ww2_slot_matches(coin_set, all_coins)
             total = len(matches)
-            completed = sum(1 for item in matches if item["coin"] is not None)
-        elif hasattr(coin_set, "requirements") and coin_set.requirements:
-            matches = _match_set_requirements(coin_set)
+            completed = sum(
+                1 for item in matches
+                if item["coin"] is not None
+            )
+        elif coin_set.requirements:
+            matches = _match_set_requirements(coin_set, all_coins)
             total = len(matches)
-            completed = sum(1 for item in matches if item["coin"] is not None)
+            completed = sum(
+                1 for item in matches
+                if item["coin"] is not None
+            )
         else:
             total = len(coin_set.coins)
             completed = total
@@ -1885,7 +1810,11 @@ def sets():
             "percent": round((completed / total * 100) if total else 0),
         }
 
-    return render_template("sets.html", coin_sets=coin_sets, set_progress=set_progress)
+    return render_template(
+        "sets.html",
+        coin_sets=coin_sets,
+        set_progress=set_progress,
+    )
 
 
 @app.route("/sets/create", methods=["GET", "POST"])
@@ -2047,26 +1976,70 @@ def human_story():
 
 @app.route("/sets/<int:set_id>")
 def set_detail(set_id):
-    coin_set = CoinSet.query.get_or_404(set_id)
-    coins = sorted(coin_set.coins, key=lambda coin: (coin.year is None, coin.year if coin.year is not None else 999999, (coin.name or "").lower()))
-    ww2_matches = _ww2_slot_matches(coin_set) if hasattr(coin_set, "ww2_slots") and coin_set.ww2_slots else []
-    ww2_complete = sum(1 for item in ww2_matches if item["coin"] is not None)
-    grouped_ww2 = {}
-    for item in ww2_matches:
-        grouped_ww2.setdefault(item["slot"].country_label, []).append(item)
-
-    # Generic requirement-based sets, including the historical timeline set.
-    requirement_matches = []
-    if hasattr(coin_set, "requirements") and coin_set.requirements:
-        requirement_matches = _match_set_requirements(coin_set)
-
-    completed_requirements = sum(
-        1 for item in requirement_matches if item["coin"] is not None
+    coin_set = (
+        CoinSet.query
+        .options(
+            joinedload(CoinSet.coins),
+            joinedload(CoinSet.ww2_slots),
+            joinedload(CoinSet.requirements),
+        )
+        .filter(CoinSet.id == set_id)
+        .first_or_404()
     )
 
-    return render_template("set_detail.html", coin_set=coin_set, coins=coins, ww2_matches=ww2_matches, grouped_ww2=grouped_ww2, ww2_complete=ww2_complete,
+    coins = sorted(
+        coin_set.coins,
+        key=lambda coin: (
+            coin.year is None,
+            coin.year if coin.year is not None else 999999,
+            (coin.name or "").lower(),
+        ),
+    )
+
+    all_coins = Coin.query.order_by(
+        Coin.year.asc(),
+        Coin.name.asc(),
+    ).all()
+
+    ww2_matches = (
+        _ww2_slot_matches(coin_set, all_coins)
+        if coin_set.ww2_slots
+        else []
+    )
+
+    ww2_complete = sum(
+        1 for item in ww2_matches
+        if item["coin"] is not None
+    )
+
+    grouped_ww2 = {}
+    for item in ww2_matches:
+        grouped_ww2.setdefault(
+            item["slot"].country_label,
+            [],
+        ).append(item)
+
+    requirement_matches = (
+        _match_set_requirements(coin_set, all_coins)
+        if coin_set.requirements
+        else []
+    )
+
+    completed_requirements = sum(
+        1 for item in requirement_matches
+        if item["coin"] is not None
+    )
+
+    return render_template(
+        "set_detail.html",
+        coin_set=coin_set,
+        coins=coins,
+        ww2_matches=ww2_matches,
+        grouped_ww2=grouped_ww2,
+        ww2_complete=ww2_complete,
         requirement_matches=requirement_matches,
-        completed_requirements=completed_requirements)
+        completed_requirements=completed_requirements,
+    )
 
 @app.route("/sets/<int:set_id>/edit", methods=["GET", "POST"])
 def edit_set(set_id):
@@ -2341,25 +2314,69 @@ def save_artifact_image(file_storage, artifact_id):
 def artifacts():
     category = request.args.get("category", "").strip()
     search = request.args.get("search", "").strip()
-    query = Artifact.query
+
+    all_items = Artifact.query.order_by(Artifact.id.desc()).all()
+    items = all_items
+
     if category and category in ARTIFACT_CATEGORIES:
-        query = query.filter(Artifact.category == category)
+        items = [
+            artifact for artifact in items
+            if artifact.category == category
+        ]
+
     if search:
-        term = f"%{search}%"
-        query = query.filter(db.or_(Artifact.name.ilike(term), Artifact.country.ilike(term), Artifact.year_text.ilike(term), Artifact.description.ilike(term)))
-    items = query.order_by(Artifact.id.desc()).all()
-    all_items = Artifact.query.all()
+        needle = search.casefold()
+        items = [
+            artifact for artifact in items
+            if needle in " ".join([
+                artifact.name or "",
+                artifact.country or "",
+                artifact.year_text or "",
+                artifact.description or "",
+            ]).casefold()
+        ]
+
     stats = {
         "total": len(all_items),
-        "categories": len({a.category for a in all_items if a.category}),
-        "estimated_value": sum(a.estimated_value or 0 for a in all_items),
-        "paper_money": sum(1 for a in all_items if a.category == "Paper Money"),
-        "books": sum(1 for a in all_items if a.category == "Books"),
-        "medals": sum(1 for a in all_items if a.category == "Medals & Tokens"),
-        "antiques": sum(1 for a in all_items if a.category == "Antiques"),
-        "other": sum(1 for a in all_items if a.category == "Other Collectibles"),
+        "categories": len({
+            artifact.category
+            for artifact in all_items
+            if artifact.category
+        }),
+        "estimated_value": sum(
+            artifact.estimated_value or 0
+            for artifact in all_items
+        ),
+        "paper_money": sum(
+            1 for artifact in all_items
+            if artifact.category == "Paper Money"
+        ),
+        "books": sum(
+            1 for artifact in all_items
+            if artifact.category == "Books"
+        ),
+        "medals": sum(
+            1 for artifact in all_items
+            if artifact.category == "Medals & Tokens"
+        ),
+        "antiques": sum(
+            1 for artifact in all_items
+            if artifact.category == "Antiques"
+        ),
+        "other": sum(
+            1 for artifact in all_items
+            if artifact.category == "Other Collectibles"
+        ),
     }
-    return render_template("artifacts.html", artifacts=items, categories=ARTIFACT_CATEGORIES, selected_category=category, search=search, stats=stats)
+
+    return render_template(
+        "artifacts.html",
+        artifacts=items,
+        categories=ARTIFACT_CATEGORIES,
+        selected_category=category,
+        search=search,
+        stats=stats,
+    )
 
 @app.route("/artifacts/add", methods=["GET", "POST"])
 def add_artifact():
