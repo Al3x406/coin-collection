@@ -90,53 +90,22 @@ def has_view_access():
     )
 
 
-# @app.before_request
-# Password protection is currently disabled, but keep this function valid Python.
+@app.before_request
 def protect_private_collection():
     """
-    Require a visitor/owner password for the collection, protect personal
-    uploaded photos, and keep all modifying/private-service routes owner-only.
+    Keep the collection publicly viewable, but require owner authentication
+    for any route that can add, edit, delete, upload, identify, or otherwise
+    modify private collection data.
     """
-
-    # Flask's normal static files (CSS, dashboard background, map, etc.)
-    # can load without a session. Personal uploaded coin photos cannot.
-    if request.endpoint == "static":
-        if (
-            ((request.path.startswith("/static/uploads/coins/") or request.path.startswith("/static/uploads/artifacts/")))
-            and not has_view_access()
-        ):
-            return redirect(
-                url_for(
-                    "access_login",
-                    next=request.path
-                )
-            )
-
-        return None
-
-    # These pages must remain reachable before authentication.
     if request.endpoint in {
-        "access_login",
         "owner_login",
-        "access_logout",
         "owner_logout",
+        "access_login",
+        "access_logout",
+        "static",
     }:
         return None
 
-    # Everything else in the collection requires at least visitor access.
-    if not has_view_access():
-        if request.method in {"GET", "HEAD"}:
-            return redirect(
-                url_for(
-                    "access_login",
-                    next=request.full_path
-                )
-            )
-
-        # Never redirect a POST request and risk replaying a data-changing action.
-        abort(403)
-
-    # Visitors may browse, but owner-only endpoints remain blocked.
     if (
         request.endpoint in OWNER_ONLY_ENDPOINTS
         and not session.get("is_owner")
@@ -150,6 +119,8 @@ def protect_private_collection():
             )
 
         abort(403)
+
+    return None
 
 
 @app.context_processor
