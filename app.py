@@ -25,10 +25,10 @@ from werkzeug.utils import secure_filename
 from dotenv import load_dotenv
 load_dotenv()
 
-# Local Tesseract OCR installation.
-# Using the full path means Windows PATH does not need to be fixed first.
-pytesseract.pytesseract.tesseract_cmd = (
-    r"C:\Program Files\Tesseract-OCR\tesseract.exe"
+# Tesseract OCR path: use the normal Windows install locally and PATH on Linux/Railway.
+pytesseract.pytesseract.tesseract_cmd = os.getenv(
+    "TESSERACT_CMD",
+    r"C:\Program Files\Tesseract-OCR\tesseract.exe" if os.name == "nt" else "tesseract",
 )
 
 app = Flask(__name__)
@@ -36,7 +36,7 @@ app = Flask(__name__)
 # Security settings.
 # OWNER_KEY stays private. VISITOR_KEY is the password you can share
 # with friends/family. The owner key also signs the Flask session cookie.
-app.config["SECRET_KEY"] = os.getenv("OWNER_KEY")
+app.config["SECRET_KEY"] = os.getenv("SECRET_KEY") or os.getenv("OWNER_KEY")
 app.config["SESSION_COOKIE_HTTPONLY"] = True
 app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
 
@@ -90,8 +90,9 @@ def has_view_access():
     )
 
 
-#@app.before_request
-#def protect_private_collection():
+# @app.before_request
+# Password protection is currently disabled, but keep this function valid Python.
+def protect_private_collection():
     """
     Require a visitor/owner password for the collection, protect personal
     uploaded photos, and keep all modifying/private-service routes owner-only.
@@ -435,7 +436,10 @@ def owner_logout():
 
 
 # Tell Flask where our SQLite database is
-app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///coins.db"
+app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv(
+    "DATABASE_URL",
+    "sqlite:///coins.db",
+)
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 UPLOAD_FOLDER = os.path.join(
     app.root_path,
