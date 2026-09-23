@@ -1,0 +1,16 @@
+# Media is stored permanently in Cloudflare R2.
+static/uploads/
+
+# Local/dev environments and caches.
+.git/
+.venv/
+venv/
+__pycache__/
+*.pyc
+.env
+
+# Local backups and archives are not needed in production images.
+instance/backup_*/
+templates/*backup*/
+templates/*.bak_*
+*.zip
