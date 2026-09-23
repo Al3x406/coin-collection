@@ -23,6 +23,14 @@ import pytesseract
 from PIL import Image, ImageOps, ImageEnhance, ImageDraw
 from werkzeug.utils import secure_filename
 from dotenv import load_dotenv
+from r2_storage import (
+    r2_delete_key,
+    r2_delete_prefix,
+    r2_download_file,
+    r2_is_configured,
+    r2_presigned_url,
+    r2_upload_file,
+)
 load_dotenv()
 
 # Tesseract OCR path: use the normal Windows install locally and PATH on Linux/Railway.
@@ -93,16 +101,30 @@ def has_view_access():
 @app.before_request
 def protect_private_collection():
     """
-    Keep the collection publicly viewable, but require owner authentication
-    for any route that can add, edit, delete, upload, identify, or otherwise
-    modify private collection data.
+    Keep the collection publicly viewable, require owner authentication for
+    modifying routes, and let R2 transparently serve uploaded media when the
+    local Railway copy is not present.
     """
+
+    if request.endpoint == "static":
+        uploads_prefix = "/static/uploads/"
+
+        if request.path.startswith(uploads_prefix) and r2_is_configured():
+            relative_key = request.path[len("/static/"):]
+            local_path = Path(app.static_folder) / relative_key
+
+            if not local_path.exists():
+                signed_url = r2_presigned_url(relative_key)
+                if signed_url:
+                    return redirect(signed_url)
+
+        return None
+
     if request.endpoint in {
         "owner_login",
         "owner_logout",
         "access_login",
         "access_logout",
-        "static",
     }:
         return None
 
@@ -2164,6 +2186,13 @@ def get_artifact_photo_target(artifact, photo_id=None):
         abort(404)
 
     source_path = Path(ARTIFACT_UPLOAD_FOLDER) / image_filename
+
+    if not source_path.exists():
+        r2_download_file(
+            source_path,
+            f"uploads/artifacts/{image_filename}"
+        )
+
     if not source_path.exists():
         abort(404)
 
@@ -2212,6 +2241,11 @@ def save_artifact_edited_photo(source_path, crop_x, crop_y, crop_size, guide_sha
         output = cropped
 
     output.save(source_path, quality=95)
+
+    r2_upload_file(
+        source_path,
+        f"uploads/artifacts/{source_path.name}"
+    )
 
 
 @app.route("/artifacts/<int:artifact_id>/photos/edit", methods=["GET", "POST"], defaults={"photo_id": None})
@@ -2266,7 +2300,14 @@ def save_artifact_image(file_storage, artifact_id):
     if suffix not in {".jpg", ".jpeg", ".png", ".webp"}:
         suffix = ".jpg"
     filename = f"artifact_{artifact_id}{suffix}"
-    file_storage.save(os.path.join(ARTIFACT_UPLOAD_FOLDER, filename))
+    local_path = Path(ARTIFACT_UPLOAD_FOLDER) / filename
+    file_storage.save(local_path)
+
+    r2_upload_file(
+        local_path,
+        f"uploads/artifacts/{filename}"
+    )
+
     return filename
 
 @app.route("/artifacts")
@@ -2353,6 +2394,11 @@ def delete_artifact(artifact_id):
         path = os.path.join(ARTIFACT_UPLOAD_FOLDER, artifact.image_filename)
         if os.path.isfile(path):
             os.remove(path)
+
+        r2_delete_key(
+            f"uploads/artifacts/{artifact.image_filename}"
+        )
+
     db.session.delete(artifact)
     db.session.commit()
     return redirect(url_for("artifacts"))
@@ -3339,6 +3385,11 @@ def process_coin_photo(file_storage, coin_id, side, guided_capture=False):
         quality=95
     )
 
+    r2_upload_file(
+        original_path,
+        f"uploads/coins/{original_filename}"
+    )
+
     # Guided Camera already performs the crop in the browser.
     # Do NOT run circle detection/Hough cropping a second time.
     if guided_capture:
@@ -3447,6 +3498,11 @@ def process_coin_photo(file_storage, coin_id, side, guided_capture=False):
             format="JPEG",
             quality=95,
             optimize=True
+        )
+
+        r2_upload_file(
+            processed_path,
+            f"uploads/coins/{processed_filename}"
         )
 
         return {
@@ -4052,6 +4108,11 @@ def process_coin_photo(file_storage, coin_id, side, guided_capture=False):
         quality=95
     )
 
+    r2_upload_file(
+        processed_path,
+        f"uploads/coins/{processed_filename}"
+    )
+
     return {
         "original_filename":
             original_filename,
@@ -4160,6 +4221,12 @@ def edit_coin_photo(coin_id, side):
     )
 
     if not source_path.exists():
+        r2_download_file(
+            source_path,
+            f"uploads/coins/{current_filename}"
+        )
+
+    if not source_path.exists():
         abort(404)
 
     if request.method == "POST":
@@ -4240,6 +4307,11 @@ def edit_coin_photo(coin_id, side):
             quality=95
         )
 
+        r2_upload_file(
+            processed_path,
+            f"uploads/coins/{processed_filename}"
+        )
+
         if side == "obverse":
             coin.personal_obverse_image = processed_filename
         else:
@@ -4308,6 +4380,14 @@ def remove_coin_photo(coin_id, side):
 
         if os.path.isfile(file_path):
             os.remove(file_path)
+
+        r2_delete_key(
+            f"uploads/coins/{filename}"
+        )
+
+        r2_delete_prefix(
+            f"uploads/coins/coin_{coin.id}_{side}_original_"
+        )
 
 
     db.session.commit()
