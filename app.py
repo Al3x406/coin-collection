@@ -18,10 +18,6 @@ import hmac
 from urllib.parse import urlsplit
 import requests
 import re
-import cv2
-import numpy as np
-import pytesseract
-from PIL import Image, ImageOps, ImageEnhance, ImageDraw
 from werkzeug.utils import secure_filename
 from dotenv import load_dotenv
 from r2_storage import (
@@ -34,11 +30,34 @@ from r2_storage import (
 )
 load_dotenv()
 
-# Tesseract OCR path: use the normal Windows install locally and PATH on Linux/Railway.
-pytesseract.pytesseract.tesseract_cmd = os.getenv(
-    "TESSERACT_CMD",
-    r"C:\Program Files\Tesseract-OCR\tesseract.exe" if os.name == "nt" else "tesseract",
-)
+# Heavy image/OCR libraries are loaded only when an image feature is used.
+# Keeping them out of normal Flask startup lowers idle RAM on Railway.
+cv2 = None
+np = None
+pytesseract = None
+Image = None
+ImageOps = None
+ImageEnhance = None
+ImageDraw = None
+
+
+def _load_image_tools():
+    global cv2, np, pytesseract, Image, ImageOps, ImageEnhance, ImageDraw
+    if cv2 is not None:
+        return
+
+    import cv2 as _cv2
+    import numpy as _np
+    import pytesseract as _pytesseract
+    from PIL import Image as _Image, ImageOps as _ImageOps, ImageEnhance as _ImageEnhance, ImageDraw as _ImageDraw
+
+    _pytesseract.pytesseract.tesseract_cmd = os.getenv(
+        "TESSERACT_CMD",
+        r"C:\Program Files\Tesseract-OCR\tesseract.exe" if os.name == "nt" else "tesseract",
+    )
+    cv2, np, pytesseract = _cv2, _np, _pytesseract
+    Image, ImageOps = _Image, _ImageOps
+    ImageEnhance, ImageDraw = _ImageEnhance, _ImageDraw
 
 app = Flask(__name__)
 
@@ -2200,6 +2219,7 @@ def get_artifact_photo_target(artifact, photo_id=None):
 
 
 def save_artifact_edited_photo(source_path, crop_x, crop_y, crop_size, guide_shape):
+    _load_image_tools()
     """
     Saves edited artifact photo in-place.
     guide_shape:
@@ -3414,6 +3434,7 @@ def numista_type_issues(type_id):
     return response.json()
 
 def process_coin_photo(file_storage, coin_id, side, guided_capture=False):
+    _load_image_tools()
     """
     Save the original upload and create a cleaned display copy.
 
@@ -4259,6 +4280,7 @@ def upload_coin_photos(coin_id):
     methods=["GET", "POST"]
 )
 def edit_coin_photo(coin_id, side):
+    _load_image_tools()
     coin = Coin.query.get_or_404(coin_id)
 
     if side not in {"obverse", "reverse"}:
@@ -4469,6 +4491,7 @@ def remove_coin_photo(coin_id, side):
 
 
 def crop_coin_region(image):
+    _load_image_tools()
     """
     Try to isolate the coin from the surrounding photo.
     If circle detection fails, use a centered square crop.
@@ -4582,6 +4605,7 @@ def crop_coin_region(image):
 
 
 def prepare_coin_base_image(file_storage):
+    _load_image_tools()
     """
     Load, rotate correctly, crop around the coin, and resize to a
     predictable working size.
@@ -4628,6 +4652,7 @@ def prepare_coin_base_image(file_storage):
 
 
 def detect_text_regions(image):
+    _load_image_tools()
     """
     Look for text-like horizontal groups of edges inside the coin crop.
     This is intentionally conservative: it is better to return a few
@@ -4971,6 +4996,7 @@ def detect_text_regions(image):
 
 
 def build_region_variants(region_image):
+    _load_image_tools()
     """
     Create OCR-friendly versions of a detected text region.
     """
@@ -5346,6 +5372,7 @@ def find_possible_year(text):
 
 
 def run_region_ocr(region_image):
+    _load_image_tools()
     variants = build_region_variants(
         region_image
     )
@@ -5476,6 +5503,7 @@ def run_coin_ocr(file_storage):
     methods=["POST"]
 )
 def identify_coin_ocr():
+    _load_image_tools()
 
     obverse_file = request.files.get(
         "obverse"
