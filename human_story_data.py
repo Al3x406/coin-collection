@@ -67,6 +67,40 @@ def _year_in_range(year, start, end):
     lo, hi = sorted((start, end))
     return lo <= year <= hi
 
+COUNTRY_ALIASES = {
+    "united states": ("united states", "usa", "u.s.a", "us", "u.s."),
+    "china": ("china", "people's republic of china", "prc"),
+    "germany": ("germany", "german", "west germany", "east germany", "ddr"),
+    "france": ("france", "french"),
+    "japan": ("japan", "japanese"),
+    "canada": ("canada", "canadian"),
+    "russia": ("russia", "russian", "soviet union", "ussr"),
+    "united kingdom": ("united kingdom", "great britain", "britain", "british", "england"),
+    "ukraine": ("ukraine", "ukrainian"),
+}
+
+STRICT_EVENT_COUNTRIES = {
+    "The People's Republic of China": ("china",),
+    "The Civil Rights Act": ("united states",),
+    "Apollo 11 Lands on the Moon": ("united states",),
+    "September 11": ("united states",),
+    "The Great Depression Begins": ("united states",),
+    "The First Powered Flight": ("united states",),
+    "The Model T": ("united states",),
+    "The American Civil War Begins": ("united states",),
+    "Emancipation": ("united states",),
+}
+
+
+def _country_matches(coin, required_countries):
+    country_hay = _text(coin, attrs=["country"])
+    for canonical in required_countries:
+        aliases = COUNTRY_ALIASES.get(canonical, (canonical,))
+        if any(_keyword_matches(alias, country_hay) for alias in aliases):
+            return True
+    return False
+
+
 def _score_coin(coin, moment):
     year = _safe_int(getattr(coin, "year", None))
     hay = _text(coin)
@@ -85,6 +119,12 @@ def _score_coin(coin, moment):
     # one of the U.S. denomination keywords.
     if target_year is not None:
         if year != target_year:
+            return -1
+
+        # Some moments are specifically tied to one nation. For those, a
+        # same-year foreign coin is not a substitute.
+        required_countries = STRICT_EVENT_COUNTRIES.get(moment["title"])
+        if required_countries and not _country_matches(coin, required_countries):
             return -1
 
         identity_hay = _text(
