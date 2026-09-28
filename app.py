@@ -3127,11 +3127,13 @@ NUMISTA_CACHE_TTL = 60 * 60 * 24
 NUMISTA_MIN_REQUEST_INTERVAL = 1.25
 _numista_cache = {}
 _numista_last_request_at = 0.0
+_numista_cooldown_until = 0.0
+NUMISTA_DEFAULT_COOLDOWN = 15 * 60
 
 
 def _numista_get(path, headers, params=None):
     """GET Numista data with caching, gentle throttling, and friendly 429s."""
-    global _numista_last_request_at
+    global _numista_last_request_at, _numista_cooldown_until
 
     normalized_params = tuple(sorted((params or {}).items()))
     cache_key = (path, normalized_params)
@@ -3140,6 +3142,13 @@ def _numista_get(path, headers, params=None):
 
     if cached and now - cached[0] < NUMISTA_CACHE_TTL:
         return cached[1], None
+
+    if now < _numista_cooldown_until:
+        remaining = max(1, int(_numista_cooldown_until - now))
+        minutes = max(1, (remaining + 59) // 60)
+        return None, ({
+            "error": f"Numista is temporarily limiting searches. Search is paused for about {minutes} more minute{'s' if minutes != 1 else ''} to avoid sending more requests."
+        }, 429)
 
     elapsed = time.monotonic() - _numista_last_request_at
     if elapsed < NUMISTA_MIN_REQUEST_INTERVAL:
@@ -3156,10 +3165,15 @@ def _numista_get(path, headers, params=None):
 
         if response.status_code == 429:
             retry_after = response.headers.get("Retry-After")
-            message = "Numista is temporarily limiting searches. Please try again shortly."
-            if retry_after:
-                message += f" Numista suggests waiting about {retry_after} seconds."
-            return None, ({"error": message}, 429)
+            try:
+                cooldown_seconds = max(NUMISTA_DEFAULT_COOLDOWN, int(retry_after or 0))
+            except (TypeError, ValueError):
+                cooldown_seconds = NUMISTA_DEFAULT_COOLDOWN
+            _numista_cooldown_until = time.time() + cooldown_seconds
+            minutes = max(1, (cooldown_seconds + 59) // 60)
+            return None, ({
+                "error": f"Numista is temporarily limiting searches. Search has been paused for about {minutes} minutes so repeated taps do not send more requests."
+            }, 429)
 
         response.raise_for_status()
         data = response.json()
