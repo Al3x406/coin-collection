@@ -18,6 +18,7 @@ import hmac
 from urllib.parse import urlsplit
 import requests
 import re
+import time
 from werkzeug.utils import secure_filename
 from dotenv import load_dotenv
 from r2_storage import (
@@ -3119,6 +3120,61 @@ def delete_coin(coin_id):
 
 NUMISTA_BASE_URL = "https://api.numista.com/api/v3"
 
+# Cache successful Numista responses in memory so repeated searches/details
+# do not consume API quota. Railway may restart the process, so this cache is
+# intentionally best-effort rather than persistent.
+NUMISTA_CACHE_TTL = 60 * 60 * 24
+NUMISTA_MIN_REQUEST_INTERVAL = 1.25
+_numista_cache = {}
+_numista_last_request_at = 0.0
+
+
+def _numista_get(path, headers, params=None):
+    """GET Numista data with caching, gentle throttling, and friendly 429s."""
+    global _numista_last_request_at
+
+    normalized_params = tuple(sorted((params or {}).items()))
+    cache_key = (path, normalized_params)
+    now = time.time()
+    cached = _numista_cache.get(cache_key)
+
+    if cached and now - cached[0] < NUMISTA_CACHE_TTL:
+        return cached[1], None
+
+    elapsed = time.monotonic() - _numista_last_request_at
+    if elapsed < NUMISTA_MIN_REQUEST_INTERVAL:
+        time.sleep(NUMISTA_MIN_REQUEST_INTERVAL - elapsed)
+
+    try:
+        response = requests.get(
+            f"{NUMISTA_BASE_URL}{path}",
+            headers=headers,
+            params=params,
+            timeout=30,
+        )
+        _numista_last_request_at = time.monotonic()
+
+        if response.status_code == 429:
+            retry_after = response.headers.get("Retry-After")
+            message = "Numista is temporarily limiting searches. Please try again shortly."
+            if retry_after:
+                message += f" Numista suggests waiting about {retry_after} seconds."
+            return None, ({"error": message}, 429)
+
+        response.raise_for_status()
+        data = response.json()
+        _numista_cache[cache_key] = (time.time(), data)
+        return data, None
+
+    except requests.RequestException:
+        return None, ({
+            "error": "Numista is temporarily unavailable. Please try again shortly."
+        }, 502)
+    except ValueError:
+        return None, ({
+            "error": "Numista returned an unexpected response. Please try again shortly."
+        }, 502)
+
 
 def get_numista_headers():
     api_key = os.getenv("NUMISTA_API_KEY")
@@ -3167,25 +3223,9 @@ def numista_search():
     if year:
         params["year"] = year
 
-    try:
-
-        response = requests.get(
-            f"{NUMISTA_BASE_URL}/types",
-            headers=headers,
-            params=params,
-            timeout=30
-        )
-
-        response.raise_for_status()
-
-    except requests.RequestException as error:
-
-        return {
-            "error": "Numista search failed.",
-            "details": str(error)
-        }, 502
-
-    data = response.json()
+    data, api_error = _numista_get("/types", headers, params)
+    if api_error:
+        return api_error
 
     results = []
 
@@ -3227,29 +3267,13 @@ def numista_type_details(type_id):
             "NUMISTA_API_KEY was not found."
         }, 500
 
-    try:
-
-        response = requests.get(
-            f"{NUMISTA_BASE_URL}/types/{type_id}",
-            headers=headers,
-            params={"lang": "en"},
-            timeout=30
-        )
-
-        response.raise_for_status()
-
-    except requests.RequestException as error:
-
-        return {
-            "error":
-            "Could not load Numista coin details.",
-
-            "details":
-            str(error)
-        }, 502
-
-
-    coin = response.json()
+    coin, api_error = _numista_get(
+        f"/types/{type_id}",
+        headers,
+        {"lang": "en"},
+    )
+    if api_error:
+        return api_error
 
     issuer = (
         coin.get("issuer")
@@ -3457,27 +3481,15 @@ def numista_type_issues(type_id):
             "error": "NUMISTA_API_KEY was not found."
         }, 500
 
-    try:
+    data, api_error = _numista_get(
+        f"/types/{type_id}/issues",
+        headers,
+        {"lang": "en"},
+    )
+    if api_error:
+        return api_error
 
-        response = requests.get(
-            f"{NUMISTA_BASE_URL}/types/{type_id}/issues",
-            headers=headers,
-            params={
-                "lang": "en"
-            },
-            timeout=30
-        )
-
-        response.raise_for_status()
-
-    except requests.RequestException as error:
-
-        return {
-            "error": "Could not load Numista issues.",
-            "details": str(error)
-        }, 502
-
-    return response.json()
+    return data
 
 def process_coin_photo(file_storage, coin_id, side, guided_capture=False):
     _load_image_tools()
