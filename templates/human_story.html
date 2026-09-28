@@ -27,12 +27,44 @@
                 {% if c.mint %}<br>Mint: {{ c.mint }}{% endif %}
             </div>
             <a class="coin-owned" href="{{ url_for('coin_detail', coin_id=c.id) }}">From your collection →</a>
+            {% if is_owner %}
+                <details class="hs-coin-picker">
+                    <summary>{% if moment.manual %}Change chosen coin{% else %}Choose coin{% endif %}</summary>
+                    <form method="post" action="{{ url_for('human_story_choose_coin') }}">
+                        <input type="hidden" name="moment_key" value="{{ moment.key }}">
+                        <select name="coin_id" aria-label="Choose coin for {{ moment.title }}">
+                            <option value="">Automatic match</option>
+                            {% for option in all_story_coins %}
+                                <option value="{{ option.id }}"{% if c and option.id == c.id %} selected{% endif %}>
+                                    {{ option.year or '?' }} · {{ option.country or 'Unknown' }} · {{ option.name }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                        <button type="submit">Save</button>
+                    </form>
+                </details>
+            {% endif %}
         {% else %}
             <div class="coin-disc empty"></div>
             <div class="coin-label">Coin still needed</div>
             <div class="coin-date">{{ moment.dates }}</div>
             <div class="coin-about">{{ moment.coin_rule }}</div>
             <div class="coin-owned">Open slot</div>
+            {% if is_owner %}
+                <details class="hs-coin-picker">
+                    <summary>Choose coin</summary>
+                    <form method="post" action="{{ url_for('human_story_choose_coin') }}">
+                        <input type="hidden" name="moment_key" value="{{ moment.key }}">
+                        <select name="coin_id" aria-label="Choose coin for {{ moment.title }}">
+                            <option value="">Automatic match</option>
+                            {% for option in all_story_coins %}
+                                <option value="{{ option.id }}">{{ option.year or '?' }} · {{ option.country or 'Unknown' }} · {{ option.name }}</option>
+                            {% endfor %}
+                        </select>
+                        <button type="submit">Save</button>
+                    </form>
+                </details>
+            {% endif %}
         {% endif %}
     </div>
 {% endmacro %}
@@ -1208,6 +1240,13 @@ body{background:var(--hs-bg);}
     }
 }
 /* === END COIN IMAGE SIZE FIX === */
+
+
+.hs-coin-picker{margin-top:8px;font-size:.65rem;color:#e7c875}
+.hs-coin-picker summary{cursor:pointer;text-decoration:underline;text-underline-offset:3px}
+.hs-coin-picker form{margin-top:7px;display:flex;gap:5px;align-items:center;max-width:230px}
+.hs-coin-picker select{min-width:0;flex:1;background:#0c1115;color:#eee0c5;border:1px solid rgba(198,154,72,.55);padding:6px;font-size:.62rem}
+.hs-coin-picker button{background:#9a712f;color:#fff5df;border:0;padding:7px 9px;font-size:.61rem;cursor:pointer}
 
 </style>
 
