@@ -93,6 +93,7 @@ OWNER_ONLY_ENDPOINTS = {
     "edit_coin_photo",
     "edit_artifact_photo",
     "collection_value",
+    "human_story_choose_coin",
 }
 
 
@@ -655,6 +656,14 @@ class Coin(db.Model):
         default=False,
         nullable=False
     )
+
+class HumanStorySelection(db.Model):
+    __tablename__ = "human_story_selection"
+    id = db.Column(db.Integer, primary_key=True)
+    moment_key = db.Column(db.String(220), nullable=False, unique=True)
+    coin_id = db.Column(db.Integer, db.ForeignKey("coin.id"), nullable=False)
+    coin = db.relationship("Coin")
+
 
 # --- SETS FEATURE MODELS ---
 
@@ -1982,7 +1991,14 @@ def human_story():
         Coin.id.asc()
     ).all()
 
-    eras, completed, total, percent = build_human_story(coins)
+    # Create the small override table automatically on existing databases.
+    HumanStorySelection.__table__.create(bind=db.engine, checkfirst=True)
+    selections = {
+        row.moment_key: row.coin_id
+        for row in HumanStorySelection.query.all()
+    }
+
+    eras, completed, total, percent = build_human_story(coins, selections)
 
     return render_template(
         "human_story.html",
@@ -1990,7 +2006,37 @@ def human_story():
         completed=completed,
         total=total,
         percent=percent,
+        all_story_coins=coins,
     )
+
+
+@app.route("/human-story/choose-coin", methods=["POST"])
+def human_story_choose_coin():
+    if not session.get("is_owner"):
+        abort(403)
+
+    moment_key = (request.form.get("moment_key") or "").strip()
+    coin_id = request.form.get("coin_id", type=int)
+    if not moment_key:
+        abort(400)
+
+    HumanStorySelection.__table__.create(bind=db.engine, checkfirst=True)
+    selection = HumanStorySelection.query.filter_by(moment_key=moment_key).first()
+
+    if coin_id:
+        coin = db.session.get(Coin, coin_id)
+        if coin is None:
+            abort(404)
+        if selection is None:
+            selection = HumanStorySelection(moment_key=moment_key, coin_id=coin.id)
+            db.session.add(selection)
+        else:
+            selection.coin_id = coin.id
+    elif selection is not None:
+        db.session.delete(selection)
+
+    db.session.commit()
+    return redirect(url_for("human_story"))
 
 
 @app.route("/sets/<int:set_id>")
