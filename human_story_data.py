@@ -158,7 +158,8 @@ def _score_coin(coin, moment):
     score += max(0, 5 - min(5, abs(year - midpoint) / span))
     return score
 
-def build_human_story(coins):
+def build_human_story(coins, manual_selections=None):
+    manual_selections = manual_selections or {}
     eras_out = []
     used_ids = set()
     total = 0
@@ -189,6 +190,12 @@ def build_human_story(coins):
 
             total += 1
             ranked = []
+            moment_key = f"{era['id']}:{title}"
+            manual_coin_id = manual_selections.get(moment_key)
+            manual_match = next(
+                (coin for coin in coins if getattr(coin, "id", None) == manual_coin_id),
+                None,
+            ) if manual_coin_id else None
 
             for coin in coins:
                 cid = getattr(coin, "id", None)
@@ -207,7 +214,7 @@ def build_human_story(coins):
                 reverse=True,
             )
 
-            matched = ranked[0][1] if ranked else None
+            matched = manual_match or (ranked[0][1] if ranked else None)
 
             if matched is not None:
                 cid = getattr(matched, "id", None)
@@ -223,6 +230,8 @@ def build_human_story(coins):
                 "coin_rule": coin_rule,
                 "target_year": target_year,
                 "coin": matched,
+                "key": moment_key,
+                "manual": manual_match is not None,
             })
 
         era_copy["moments"] = rows
