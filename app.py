@@ -3186,6 +3186,17 @@ def _numista_get(path, headers, params=None):
                 rate_headers,
                 response.text[:500],
             )
+            # A monthly quota exhaustion is different from a short-term rate limit.
+            # Do not start a misleading cooldown; fail fast with a clear message.
+            if "quota exceeded" in response.text.lower():
+                return None, ({
+                    "error": (
+                        "Numista monthly API quota has been reached. "
+                        "You can still add the coin manually; Numista search will be available again when the quota resets."
+                    ),
+                    "quota_exceeded": True,
+                }, 429)
+
             _numista_cooldown_until = time.time() + cooldown_seconds
             minutes = max(1, (cooldown_seconds + 59) // 60)
             return None, ({
