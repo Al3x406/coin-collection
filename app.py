@@ -3169,6 +3169,23 @@ def _numista_get(path, headers, params=None):
                 cooldown_seconds = max(NUMISTA_DEFAULT_COOLDOWN, int(retry_after or 0))
             except (TypeError, ValueError):
                 cooldown_seconds = NUMISTA_DEFAULT_COOLDOWN
+            rate_headers = {
+                key: value
+                for key, value in response.headers.items()
+                if key.lower() in {
+                    "retry-after",
+                    "x-ratelimit-limit",
+                    "x-ratelimit-remaining",
+                    "x-ratelimit-reset",
+                }
+            }
+            app.logger.warning(
+                "Numista 429 path=%s params=%r rate_headers=%r body=%r",
+                path,
+                params,
+                rate_headers,
+                response.text[:500],
+            )
             _numista_cooldown_until = time.time() + cooldown_seconds
             minutes = max(1, (cooldown_seconds + 59) // 60)
             return None, ({
