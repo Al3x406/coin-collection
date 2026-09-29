@@ -3128,7 +3128,7 @@ NUMISTA_MIN_REQUEST_INTERVAL = 1.25
 _numista_cache = {}
 _numista_last_request_at = 0.0
 _numista_cooldown_until = 0.0
-NUMISTA_DEFAULT_COOLDOWN = 15 * 60
+NUMISTA_DEFAULT_COOLDOWN = 60
 
 
 def _numista_get(path, headers, params=None):
@@ -5800,16 +5800,18 @@ def identify_coin():
                         if clues["year"]:
                             params["year"] = clues["year"]
 
-                        response = requests.get(
-                            f"{NUMISTA_BASE_URL}/types",
-                            headers=headers,
-                            params=params,
-                            timeout=30
+                        data, api_error = _numista_get(
+                            "/types",
+                            headers,
+                            params
                         )
 
-                        response.raise_for_status()
-
-                        data = response.json()
+                        if api_error:
+                            error = api_error[0].get_json().get(
+                                "error",
+                                "Numista search failed."
+                            )
+                            break
 
                         for item in data.get(
                             "types",
@@ -5860,16 +5862,18 @@ def identify_coin():
                                 "count": 50
                             }
 
-                            response = requests.get(
-                                f"{NUMISTA_BASE_URL}/types",
-                                headers=headers,
-                                params=params,
-                                timeout=30
+                            data, api_error = _numista_get(
+                                "/types",
+                                headers,
+                                params
                             )
 
-                            response.raise_for_status()
-
-                            data = response.json()
+                            if api_error:
+                                error = api_error[0].get_json().get(
+                                    "error",
+                                    "Numista search failed."
+                                )
+                                break
 
                             for item in data.get(
                                 "types",
