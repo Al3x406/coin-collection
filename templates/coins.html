@@ -794,7 +794,7 @@
                     {% endif %}
 
                     <div class="coin-card-subtitle">
-                        {% if coin.year is not none %}{{ coin.year }}{% else %}Unknown year{% endif %}
+                        {{ coin.date_display }}
                         {% if coin.country %} · {{ coin.country }}{% endif %}
                     </div>
 
@@ -898,7 +898,7 @@
                         </td>
 
                         <td class="collection-table-name">{{ coin.name }}</td>
-                        <td>{{ coin.year if coin.year is not none else "—" }}</td>
+                        <td>{{ coin.date_display }}</td>
                         <td>{{ coin.country or "—" }}</td>
                         <td>{{ coin.mint or "—" }}</td>
                         <td>{{ coin.mint_mark or "—" }}</td>
