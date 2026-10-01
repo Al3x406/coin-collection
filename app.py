@@ -7,6 +7,7 @@ from flask import (
     url_for,
     session,
     abort,
+    flash,
 )
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import joinedload, selectinload
