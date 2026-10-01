@@ -75,6 +75,7 @@ OWNER_ONLY_ENDPOINTS = {
     "add_mint",
     "edit_coin",
     "update_reference_images",
+    "remove_reference_image",
     "delete_coin",
     "upload_coin_photos",
     "remove_coin_photo",
@@ -2783,14 +2784,36 @@ def globe():
 def coin_detail(coin_id):
     coin = Coin.query.get_or_404(coin_id)
     return render_template("coin_detail.html", coin=coin)
+def save_reference_image_upload(file_storage, coin_id, side):
+    """Save a user-supplied catalogue reference image locally and to R2."""
+    _load_image_tools()
+    file_storage.stream.seek(0)
+    image = ImageOps.exif_transpose(Image.open(file_storage.stream)).convert("RGB")
+    image.thumbnail((1600, 1600), Image.Resampling.LANCZOS)
+
+    filename = f"coin_{coin_id}_reference_{side}.jpg"
+    path = os.path.join(UPLOAD_FOLDER, filename)
+    image.save(path, "JPEG", quality=92, optimize=True)
+    r2_upload_file(path, f"uploads/coins/{filename}")
+
+    # Store the same static URL shape already used for uploaded coin media.
+    return url_for("static", filename=f"uploads/coins/{filename}")
+
+
 @app.route("/coin/<int:coin_id>/reference-images", methods=["POST"])
 def update_reference_images(coin_id):
     coin = Coin.query.get_or_404(coin_id)
 
-    coin.obverse_image = (request.form.get("obverse_image") or "").strip() or None
-    coin.reverse_image = (request.form.get("reverse_image") or "").strip() or None
-    coin.numista_url = (request.form.get("numista_url") or "").strip() or None
+    obverse_file = request.files.get("reference_obverse_image")
+    reverse_file = request.files.get("reference_reverse_image")
 
+    if obverse_file and obverse_file.filename:
+        coin.obverse_image = save_reference_image_upload(obverse_file, coin.id, "obverse")
+
+    if reverse_file and reverse_file.filename:
+        coin.reverse_image = save_reference_image_upload(reverse_file, coin.id, "reverse")
+
+    coin.numista_url = (request.form.get("numista_url") or "").strip() or coin.numista_url
     db.session.commit()
     flash("Catalogue reference images updated.", "success")
 
@@ -2798,6 +2821,33 @@ def update_reference_images(coin_id):
     if is_safe_local_path(next_url):
         return redirect(next_url)
     return redirect(url_for("coin_detail", coin_id=coin.id))
+
+
+@app.route("/coin/<int:coin_id>/reference-images/<side>/remove", methods=["POST"])
+def remove_reference_image(coin_id, side):
+    coin = Coin.query.get_or_404(coin_id)
+    if side not in {"obverse", "reverse"}:
+        abort(404)
+
+    current = coin.obverse_image if side == "obverse" else coin.reverse_image
+    if current and current.startswith("/static/uploads/coins/"):
+        filename = current.rsplit("/", 1)[-1]
+        local_path = os.path.join(UPLOAD_FOLDER, filename)
+        try:
+            if os.path.exists(local_path):
+                os.remove(local_path)
+        except OSError:
+            pass
+        r2_delete_key(f"uploads/coins/{filename}")
+
+    if side == "obverse":
+        coin.obverse_image = None
+    else:
+        coin.reverse_image = None
+
+    db.session.commit()
+    flash(f"{side.title()} reference image removed.", "success")
+    return redirect(url_for("coin_detail", coin_id=coin.id) + "#catalogue-reference")
 
 
 @app.route(
