@@ -74,6 +74,7 @@ OWNER_ONLY_ENDPOINTS = {
     "add_coin",
     "add_mint",
     "edit_coin",
+    "update_reference_images",
     "delete_coin",
     "upload_coin_photos",
     "remove_coin_photo",
@@ -2782,6 +2783,23 @@ def globe():
 def coin_detail(coin_id):
     coin = Coin.query.get_or_404(coin_id)
     return render_template("coin_detail.html", coin=coin)
+@app.route("/coin/<int:coin_id>/reference-images", methods=["POST"])
+def update_reference_images(coin_id):
+    coin = Coin.query.get_or_404(coin_id)
+
+    coin.obverse_image = (request.form.get("obverse_image") or "").strip() or None
+    coin.reverse_image = (request.form.get("reverse_image") or "").strip() or None
+    coin.numista_url = (request.form.get("numista_url") or "").strip() or None
+
+    db.session.commit()
+    flash("Catalogue reference images updated.", "success")
+
+    next_url = (request.form.get("next") or "").strip()
+    if is_safe_local_path(next_url):
+        return redirect(next_url)
+    return redirect(url_for("coin_detail", coin_id=coin.id))
+
+
 @app.route(
     "/coin/<int:coin_id>/edit",
     methods=["GET", "POST"]
