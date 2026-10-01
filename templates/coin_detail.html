@@ -59,11 +59,9 @@
             {{ coin.name }}
         </h1>
 
-        {% if coin.year %}
         <div class="text-muted">
-            {{ coin.year }}
+            {{ coin.date_display }}
         </div>
-        {% endif %}
 
     </div>
 
@@ -695,7 +693,7 @@
                         Year:
                     </strong>
 
-                    {{ coin.year or "Unknown" }}
+                    {{ coin.date_display }}
                 </p>
 
                 <p>
