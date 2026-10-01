@@ -783,6 +783,16 @@
                 <div class="coin-card-body">
                     <h2 class="coin-card-title">{{ coin.name }}</h2>
 
+                    {% if is_owner and not coin.obverse_image and not coin.reverse_image %}
+                    <a
+                        href="{{ url_for('coin_detail', coin_id=coin.id) }}#catalogue-reference"
+                        class="btn btn-sm btn-outline-warning mt-2"
+                        onclick="event.stopPropagation();"
+                    >
+                        + Add Reference Image
+                    </a>
+                    {% endif %}
+
                     <div class="coin-card-subtitle">
                         {% if coin.year is not none %}{{ coin.year }}{% else %}Unknown year{% endif %}
                         {% if coin.country %} · {{ coin.country }}{% endif %}
