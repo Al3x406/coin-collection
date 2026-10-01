@@ -243,16 +243,30 @@ Edit {{ coin.name }}
                 </div>
 
                 <div class="col-md-3 mb-3">
-                    <label class="form-label">
-                        Year
-                    </label>
+                    <label class="form-label">Exact Year</label>
+                    <input type="number" name="year" id="coinYear"
+                           value="{{ coin.year if coin.year is not none and coin.date_start_year is none and coin.date_end_year is none else '' }}"
+                           class="form-control" placeholder="1917">
+                    <div class="form-text">Use this when the exact year is known.</div>
+                </div>
 
-                    <input
-                        type="number"
-                        name="year"
-                        id="coinYear"
-                        value="{{ coin.year if coin.year is not none else '' }}"
-                        class="form-control">
+                <div class="col-md-3 mb-3">
+                    <label class="form-label">Date Range</label>
+                    <div class="input-group">
+                        <input type="number" name="date_start_year" class="form-control"
+                               value="{{ coin.date_start_year if coin.date_start_year is not none else '' }}"
+                               placeholder="161" aria-label="Start year">
+                        <span class="input-group-text">to</span>
+                        <input type="number" name="date_end_year" class="form-control"
+                               value="{{ coin.date_end_year if coin.date_end_year is not none else '' }}"
+                               placeholder="180" aria-label="End year">
+                    </div>
+                    <div class="form-text">Use negative years for BC (example: -350 to -300).</div>
+                    <div class="form-check mt-2">
+                        <input class="form-check-input" type="checkbox" name="date_is_approx" value="1"
+                               id="dateIsApprox" {% if coin.date_is_approx %}checked{% endif %}>
+                        <label class="form-check-label" for="dateIsApprox">Approximate (c.)</label>
+                    </div>
                 </div>
 
             </div>
