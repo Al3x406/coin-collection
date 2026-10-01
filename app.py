@@ -1286,6 +1286,7 @@ def coins():
     country = request.args.get("country", "").strip()
     year = request.args.get("year", "").strip()
     mint = request.args.get("mint", "").strip()
+    reference_image = request.args.get("reference_image", "").strip()
     sort_by = request.args.get("sort", "age")
     order = request.args.get("order", "desc")
 
@@ -1328,6 +1329,19 @@ def coins():
         all_coins = [
             coin for coin in all_coins
             if coin.mint == mint
+        ]
+
+    # Catalogue/reference image filter. A coin counts as having a
+    # reference image when either catalogue side is populated.
+    if reference_image == "missing":
+        all_coins = [
+            coin for coin in all_coins
+            if not (coin.obverse_image or coin.reverse_image)
+        ]
+    elif reference_image == "has":
+        all_coins = [
+            coin for coin in all_coins
+            if coin.obverse_image or coin.reverse_image
         ]
 
     def coin_sort_value(coin):
@@ -1425,6 +1439,7 @@ def coins():
         country=country,
         year=year,
         mint=mint,
+        reference_image=reference_image,
         sort_by=sort_by,
         order=order,
         filter_countries=countries,
