@@ -592,7 +592,7 @@
                 </div>
 
                 <div class="small text-muted mt-3">
-                    Reference catalogue images supplied by Numista.
+                    Catalogue reference images.
                 </div>
 
                 {% else %}
@@ -622,16 +622,35 @@
                             + Add Reference Images
                         {% endif %}
                     </div>
-                    <form method="POST" action="{{ url_for('update_reference_images', coin_id=coin.id) }}">
-                        <input type="hidden" name="next" value="{{ request.path }}">
-                        <label class="form-label small mb-1">Obverse image URL</label>
-                        <input class="form-control form-control-sm mb-2" type="url" name="obverse_image" value="{{ coin.obverse_image or '' }}" placeholder="https://...">
-                        <label class="form-label small mb-1">Reverse image URL</label>
-                        <input class="form-control form-control-sm mb-2" type="url" name="reverse_image" value="{{ coin.reverse_image or '' }}" placeholder="https://...">
-                        <label class="form-label small mb-1">Reference / Numista page URL</label>
-                        <input class="form-control form-control-sm mb-2" type="url" name="numista_url" value="{{ coin.numista_url or '' }}" placeholder="https://...">
-                        <button class="btn btn-sm btn-warning" type="submit">Save Reference Images</button>
+                    <form method="POST" action="{{ url_for('update_reference_images', coin_id=coin.id) }}" enctype="multipart/form-data">
+                        <input type="hidden" name="next" value="{{ request.path }}#catalogue-reference">
+
+                        <label class="form-label small fw-bold mb-1">Obverse Reference</label>
+                        <input class="form-control mb-3" type="file" name="reference_obverse_image" accept="image/*">
+
+                        <label class="form-label small fw-bold mb-1">Reverse Reference</label>
+                        <input class="form-control mb-3" type="file" name="reference_reverse_image" accept="image/*">
+
+                        <label class="form-label small mb-1">Reference / Numista page URL <span class="text-muted">(optional)</span></label>
+                        <input class="form-control form-control-sm mb-3" type="url" name="numista_url" value="{{ coin.numista_url or '' }}" placeholder="https://...">
+
+                        <button class="btn btn-warning" type="submit">📷 Upload Reference Images</button>
                     </form>
+
+                    {% if coin.obverse_image or coin.reverse_image %}
+                    <div class="d-flex gap-2 flex-wrap mt-3">
+                        {% if coin.obverse_image %}
+                        <form method="POST" action="{{ url_for('remove_reference_image', coin_id=coin.id, side='obverse') }}">
+                            <button class="btn btn-sm btn-outline-danger" type="submit">Remove Obverse</button>
+                        </form>
+                        {% endif %}
+                        {% if coin.reverse_image %}
+                        <form method="POST" action="{{ url_for('remove_reference_image', coin_id=coin.id, side='reverse') }}">
+                            <button class="btn btn-sm btn-outline-danger" type="submit">Remove Reverse</button>
+                        </form>
+                        {% endif %}
+                    </div>
+                    {% endif %}
                 </div>
                 {% endif %}
 
