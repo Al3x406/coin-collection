@@ -459,7 +459,7 @@
                         mb-3
                     ">
 
-                    <h4 class="card-title mb-0">
+                    <h4 class="card-title mb-0" id="catalogue-reference">
                         Catalogue Reference
                     </h4>
 
@@ -611,6 +611,28 @@
 
                 </div>
 
+                {% endif %}
+
+                {% if is_owner %}
+                <div class="mt-3 p-3 border rounded bg-light">
+                    <div class="fw-bold mb-2">
+                        {% if coin.obverse_image or coin.reverse_image %}
+                            Edit Reference Images
+                        {% else %}
+                            + Add Reference Images
+                        {% endif %}
+                    </div>
+                    <form method="POST" action="{{ url_for('update_reference_images', coin_id=coin.id) }}">
+                        <input type="hidden" name="next" value="{{ request.path }}">
+                        <label class="form-label small mb-1">Obverse image URL</label>
+                        <input class="form-control form-control-sm mb-2" type="url" name="obverse_image" value="{{ coin.obverse_image or '' }}" placeholder="https://...">
+                        <label class="form-label small mb-1">Reverse image URL</label>
+                        <input class="form-control form-control-sm mb-2" type="url" name="reverse_image" value="{{ coin.reverse_image or '' }}" placeholder="https://...">
+                        <label class="form-label small mb-1">Reference / Numista page URL</label>
+                        <input class="form-control form-control-sm mb-2" type="url" name="numista_url" value="{{ coin.numista_url or '' }}" placeholder="https://...">
+                        <button class="btn btn-sm btn-warning" type="submit">Save Reference Images</button>
+                    </form>
+                </div>
                 {% endif %}
 
             </div>
