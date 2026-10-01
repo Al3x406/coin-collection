@@ -74,6 +74,7 @@ OWNER_ONLY_ENDPOINTS = {
     "add_coin",
     "add_mint",
     "edit_coin",
+    "update_reference_images",
     "delete_coin",
     "upload_coin_photos",
     "remove_coin_photo",
@@ -1286,6 +1287,7 @@ def coins():
     country = request.args.get("country", "").strip()
     year = request.args.get("year", "").strip()
     mint = request.args.get("mint", "").strip()
+    reference_image = request.args.get("reference_image", "").strip()
     sort_by = request.args.get("sort", "age")
     order = request.args.get("order", "desc")
 
@@ -1328,6 +1330,19 @@ def coins():
         all_coins = [
             coin for coin in all_coins
             if coin.mint == mint
+        ]
+
+    # Catalogue/reference image filter. A coin counts as having a
+    # reference image when either catalogue side is populated.
+    if reference_image == "missing":
+        all_coins = [
+            coin for coin in all_coins
+            if not (coin.obverse_image or coin.reverse_image)
+        ]
+    elif reference_image == "has":
+        all_coins = [
+            coin for coin in all_coins
+            if coin.obverse_image or coin.reverse_image
         ]
 
     def coin_sort_value(coin):
@@ -1425,6 +1440,7 @@ def coins():
         country=country,
         year=year,
         mint=mint,
+        reference_image=reference_image,
         sort_by=sort_by,
         order=order,
         filter_countries=countries,
@@ -2767,6 +2783,23 @@ def globe():
 def coin_detail(coin_id):
     coin = Coin.query.get_or_404(coin_id)
     return render_template("coin_detail.html", coin=coin)
+@app.route("/coin/<int:coin_id>/reference-images", methods=["POST"])
+def update_reference_images(coin_id):
+    coin = Coin.query.get_or_404(coin_id)
+
+    coin.obverse_image = (request.form.get("obverse_image") or "").strip() or None
+    coin.reverse_image = (request.form.get("reverse_image") or "").strip() or None
+    coin.numista_url = (request.form.get("numista_url") or "").strip() or None
+
+    db.session.commit()
+    flash("Catalogue reference images updated.", "success")
+
+    next_url = (request.form.get("next") or "").strip()
+    if is_safe_local_path(next_url):
+        return redirect(next_url)
+    return redirect(url_for("coin_detail", coin_id=coin.id))
+
+
 @app.route(
     "/coin/<int:coin_id>/edit",
     methods=["GET", "POST"]

@@ -666,6 +666,16 @@
                 </option>
                 {% endfor %}
             </select>
+
+            <select name="reference_image" aria-label="Filter by catalogue reference image">
+                <option value="">All Reference Images</option>
+                <option value="has" {% if reference_image == "has" %}selected{% endif %}>
+                    Has Reference Image
+                </option>
+                <option value="missing" {% if reference_image == "missing" %}selected{% endif %}>
+                    Missing Reference Image
+                </option>
+            </select>
         </div>
 
         <div class="collection-control-bottom">
@@ -700,7 +710,7 @@
                     Apply
                 </button>
 
-                {% if search or country or year or mint %}
+                {% if search or country or year or mint or reference_image %}
                 <a class="collection-reset" href="{{ url_for('coins') }}">
                     Clear
                 </a>
@@ -772,6 +782,16 @@
 
                 <div class="coin-card-body">
                     <h2 class="coin-card-title">{{ coin.name }}</h2>
+
+                    {% if is_owner and not coin.obverse_image and not coin.reverse_image %}
+                    <a
+                        href="{{ url_for('coin_detail', coin_id=coin.id) }}#catalogue-reference"
+                        class="btn btn-sm btn-outline-warning mt-2"
+                        onclick="event.stopPropagation();"
+                    >
+                        + Add Reference Image
+                    </a>
+                    {% endif %}
 
                     <div class="coin-card-subtitle">
                         {% if coin.year is not none %}{{ coin.year }}{% else %}Unknown year{% endif %}
