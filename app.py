@@ -11,6 +11,7 @@ from flask import (
 )
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import joinedload, selectinload
+from sqlalchemy import text
 from datetime import datetime
 from io import BytesIO
 import os
@@ -543,6 +544,34 @@ class Coin(db.Model):
         db.Integer
     )
 
+    # Flexible dating. Existing exact dates continue to use year.
+    date_start_year = db.Column(db.Integer)
+    date_end_year = db.Column(db.Integer)
+    date_is_approx = db.Column(db.Boolean, default=False)
+
+    @property
+    def date_display(self):
+        start = self.date_start_year
+        end = self.date_end_year
+        if start is None and end is None:
+            start = self.year
+            end = self.year
+        if start is None and end is None:
+            return "Unknown"
+
+        def fmt(value):
+            if value is None:
+                return "?"
+            return f"{abs(value)} BC" if value < 0 else str(value)
+
+        if start == end or end is None:
+            label = fmt(start)
+        elif start is None:
+            label = fmt(end)
+        else:
+            label = f"{fmt(start)}–{fmt(end)}"
+        return f"c. {label}" if self.date_is_approx else label
+
     # Old text fields kept for compatibility
     mint = db.Column(
         db.String(100)
@@ -938,6 +967,31 @@ def home():
     )
 
 
+_coin_date_schema_checked = False
+
+@app.before_request
+def ensure_coin_date_schema():
+    """Add flexible coin-date columns to older SQLite databases without losing data."""
+    global _coin_date_schema_checked
+    if _coin_date_schema_checked:
+        return
+    try:
+        columns = {row[1] for row in db.session.execute(text("PRAGMA table_info(coin)")).fetchall()}
+        additions = {
+            "date_start_year": "INTEGER",
+            "date_end_year": "INTEGER",
+            "date_is_approx": "BOOLEAN DEFAULT 0",
+        }
+        for column, sql_type in additions.items():
+            if column not in columns:
+                db.session.execute(text(f"ALTER TABLE coin ADD COLUMN {column} {sql_type}"))
+        db.session.commit()
+        _coin_date_schema_checked = True
+    except Exception:
+        db.session.rollback()
+        raise
+
+
 @app.route("/add", methods=["GET", "POST"])
 def add_coin():
 
@@ -974,6 +1028,9 @@ def add_coin():
                 "reverse_copyright": source_coin.reverse_copyright or "",
                 "reverse_license": source_coin.reverse_license or "",
                 "year": "",
+                "date_start_year": "",
+                "date_end_year": "",
+                "date_is_approx": False,
                 "mint_mark": "",
                 "numista_issue_id": "",
                 "variant": "",
@@ -1026,6 +1083,28 @@ def add_coin():
             normalized_year = int(year_raw) if year_raw else None
         except (TypeError, ValueError):
             normalized_year = None
+
+        def parse_optional_year(field):
+            raw = request.form.get(field, "").strip()
+            try:
+                return int(raw) if raw else None
+            except (TypeError, ValueError):
+                return None
+
+        normalized_date_start = parse_optional_year("date_start_year")
+        normalized_date_end = parse_optional_year("date_end_year")
+        normalized_date_approx = request.form.get("date_is_approx") == "1"
+
+        # A single Year remains the canonical exact date. If a range is supplied,
+        # year uses its start so older sorting/timeline features keep working.
+        if normalized_date_start is not None or normalized_date_end is not None:
+            if normalized_date_start is None:
+                normalized_date_start = normalized_date_end
+            if normalized_date_end is None:
+                normalized_date_end = normalized_date_start
+            if normalized_date_start > normalized_date_end:
+                normalized_date_start, normalized_date_end = normalized_date_end, normalized_date_start
+            normalized_year = normalized_date_start
 
         quantity_raw = request.form.get("quantity", "").strip()
         try:
@@ -1086,6 +1165,9 @@ def add_coin():
             country=request.form["country"],
 
             year=normalized_year,
+            date_start_year=normalized_date_start,
+            date_end_year=normalized_date_end,
+            date_is_approx=normalized_date_approx,
 
 
             mint_id=(
@@ -1325,7 +1407,14 @@ def coins():
         if selected_year is not None:
             all_coins = [
                 coin for coin in all_coins
-                if coin.year == selected_year
+                if (
+                    coin.year == selected_year
+                    or (
+                        coin.date_start_year is not None
+                        and coin.date_end_year is not None
+                        and coin.date_start_year <= selected_year <= coin.date_end_year
+                    )
+                )
             ]
 
     if mint:
@@ -2927,11 +3016,29 @@ def edit_coin(coin_id):
         )
 
         if year_value:
-            coin.year = int(
-                year_value
-            )
+            coin.year = int(year_value)
         else:
             coin.year = None
+
+        def parse_edit_year(field):
+            raw = request.form.get(field, "").strip()
+            try:
+                return int(raw) if raw else None
+            except (TypeError, ValueError):
+                return None
+
+        coin.date_start_year = parse_edit_year("date_start_year")
+        coin.date_end_year = parse_edit_year("date_end_year")
+        coin.date_is_approx = request.form.get("date_is_approx") == "1"
+
+        if coin.date_start_year is not None or coin.date_end_year is not None:
+            if coin.date_start_year is None:
+                coin.date_start_year = coin.date_end_year
+            if coin.date_end_year is None:
+                coin.date_end_year = coin.date_start_year
+            if coin.date_start_year > coin.date_end_year:
+                coin.date_start_year, coin.date_end_year = coin.date_end_year, coin.date_start_year
+            coin.year = coin.date_start_year
 
 
         coin.denomination = request.form.get(
