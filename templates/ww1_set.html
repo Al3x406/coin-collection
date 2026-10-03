@@ -1252,6 +1252,12 @@ body{
                                     {% else %}
                                         <div class="ww1-mini-empty">Open</div>
                                     {% endif %}
+                                    {% if is_owner and item %}
+                                    <button type="button" class="ww1-assign-btn"
+                                            data-slot-id="{{ item.requirement.id }}"
+                                            data-slot-label="{{ country }} · {{ year }}"
+                                            data-coin-id="{{ item.coin.id if item.manual and item.coin else '' }}">Assign</button>
+                                    {% endif %}
                                 </div>
                             {% endfor %}
                         </div>
@@ -1317,6 +1323,12 @@ body{
                                 </div>
                             </div>
                         {% endif %}
+                        {% if is_owner and item %}
+                        <button type="button" class="ww1-assign-btn drawer-assign"
+                                data-slot-id="{{ item.requirement.id }}"
+                                data-slot-label="{{ country }} · {{ year }}"
+                                data-coin-id="{{ item.coin.id if item.manual and item.coin else '' }}">Assign / change coin</button>
+                        {% endif %}
                     {% endfor %}
                 </div>
 
@@ -1325,6 +1337,39 @@ body{
         {% endfor %}
     </div>
 </aside>
+
+{% if is_owner %}
+<style>
+.ww1-assign-btn{margin-top:5px;padding:4px 6px;border:1px solid #76552b;border-radius:4px;background:#2a1d0e;color:#f0d99c;font:700 9px Arial,sans-serif;cursor:pointer}.drawer-assign{width:100%;padding:8px;font-size:11px}
+.ww1-picker[hidden]{display:none}.ww1-picker{position:fixed;inset:0;z-index:11000;display:grid;place-items:center;padding:14px;background:rgba(0,0,0,.75)}
+.ww1-picker-card{width:min(94vw,540px);max-height:88vh;overflow:hidden;padding:18px;border:2px solid #8b6733;border-radius:12px;background:#171109;color:#f2dfad;box-shadow:0 20px 60px rgba(0,0,0,.6)}
+.ww1-picker-card h3{margin:0;font:700 25px Georgia,serif}.ww1-picker-label{margin:4px 0 12px;color:#c4a76c}.ww1-picker-search{width:100%;box-sizing:border-box;padding:11px;border:1px solid #8b6733;border-radius:7px;background:#f2e4c0;color:#201508;font-size:16px}
+.ww1-picker-list{max-height:48vh;overflow:auto;margin-top:9px;border:1px solid #6e522b;background:#21180d}.ww1-picker-row{width:100%;display:grid;grid-template-columns:48px 1fr;gap:9px;align-items:center;padding:8px;border:0;border-bottom:1px solid #4b381e;background:transparent;color:#f0dfb0;text-align:left}.ww1-picker-row.selected{background:#61461f}.ww1-picker-row[hidden]{display:none}.ww1-picker-img{width:44px;height:44px;border-radius:50%;object-fit:contain;background:#111}.ww1-picker-main{font-weight:800}.ww1-picker-sub{color:#b99b63;font-size:11px}.ww1-picker-actions{display:flex;gap:8px;margin-top:10px}.ww1-picker-actions button{flex:1;padding:10px;border:1px solid #9b7439;border-radius:6px;background:#d5ad60;color:#201508;font-weight:900}.ww1-picker-actions .cancel{background:#2a1e10;color:#e7cf96}
+</style>
+<div class="ww1-picker" id="ww1Picker" hidden><div class="ww1-picker-card">
+<h3>Assign a coin</h3><div class="ww1-picker-label" id="ww1PickerLabel"></div>
+<form method="post" action="{{ url_for('assign_set_slot_coin', set_id=coin_set.id) }}">
+<input type="hidden" name="slot_type" value="requirement"><input type="hidden" name="slot_id" id="ww1PickerSlot"><input type="hidden" name="coin_id" id="ww1PickerCoin"><input type="hidden" name="next" value="{{ request.path }}">
+<input class="ww1-picker-search" id="ww1PickerSearch" type="search" placeholder="Search country, year, denomination, or coin name…" autocomplete="off">
+<div class="ww1-picker-list">
+<button type="button" class="ww1-picker-row" data-coin-id="" data-search="automatic remove assignment"><span class="ww1-picker-img"></span><span><span class="ww1-picker-main">Use automatic matching</span><span class="ww1-picker-sub">Remove manual assignment</span></span></button>
+{% for choice in all_coins %}
+{% set pimg = choice.personal_obverse_image or choice.personal_reverse_image %}
+<button type="button" class="ww1-picker-row" data-coin-id="{{ choice.id }}" data-search="{{ choice.date_display }} {{ choice.country or '' }} {{ choice.denomination or '' }} {{ choice.name or '' }}">
+{% if pimg %}<img class="ww1-picker-img" src="{{ url_for('static',filename='uploads/coins/' ~ pimg) }}" alt="">{% elif choice.obverse_image or choice.reverse_image %}<img class="ww1-picker-img" src="{{ choice.obverse_image or choice.reverse_image }}" alt="">{% else %}<span class="ww1-picker-img"></span>{% endif %}
+<span><span class="ww1-picker-main">{{ choice.date_display }} · {{ choice.country or 'Unknown country' }}</span><span class="ww1-picker-sub">{{ choice.denomination or choice.name }}</span></span></button>
+{% endfor %}
+</div><div class="ww1-picker-actions"><button type="button" class="cancel" id="ww1PickerCancel">Cancel</button><button type="submit">Save assignment</button></div>
+</form></div></div>
+<script>
+(()=>{const modal=document.getElementById('ww1Picker'),search=document.getElementById('ww1PickerSearch'),coin=document.getElementById('ww1PickerCoin'),slot=document.getElementById('ww1PickerSlot'),label=document.getElementById('ww1PickerLabel'),rows=Array.from(document.querySelectorAll('.ww1-picker-row'));
+const select=v=>{coin.value=v||'';rows.forEach(r=>r.classList.toggle('selected',(r.dataset.coinId||'')===coin.value));};
+rows.forEach(r=>r.addEventListener('click',()=>select(r.dataset.coinId)));
+search.addEventListener('input',()=>{const q=search.value.toLowerCase().trim();rows.forEach(r=>r.hidden=!!q&&!(r.dataset.search||'').toLowerCase().includes(q));});
+document.querySelectorAll('.ww1-assign-btn').forEach(b=>b.addEventListener('click',()=>{slot.value=b.dataset.slotId;label.textContent=b.dataset.slotLabel;search.value='';rows.forEach(r=>r.hidden=false);select(b.dataset.coinId);modal.hidden=false;setTimeout(()=>search.focus(),50);}));
+const close=()=>modal.hidden=true;document.getElementById('ww1PickerCancel').addEventListener('click',close);modal.addEventListener('click',e=>{if(e.target===modal)close();});})();
+</script>
+{% endif %}
 
 <script>
 (function(){
