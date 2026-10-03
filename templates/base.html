@@ -57,6 +57,10 @@
                     Add Coin
                 </a>
 
+                <a class="nav-link" href="{{ url_for('download_database') }}">
+                    Download DB
+                </a>
+
                 <form
                     method="POST"
                     action="{{ url_for('owner_logout') }}"
