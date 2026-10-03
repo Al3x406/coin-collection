@@ -2391,54 +2391,46 @@ def get_artifact_photo_target(artifact, photo_id=None):
     return source_path, image_filename, photo_record
 
 
-def save_artifact_edited_photo(source_path, crop_x, crop_y, crop_size, guide_shape):
+def save_artifact_edited_photo(source_path, crop_x, crop_y, crop_width, crop_height, guide_shape):
     _load_image_tools()
-    """
-    Saves edited artifact photo in-place.
-    guide_shape:
-        - 'circle' => circular crop on black background
-        - 'square' => square crop
-    """
     image = Image.open(source_path).convert("RGB")
     image = ImageOps.exif_transpose(image)
-
     width, height = image.size
 
     crop_x = max(0, min(crop_x, width - 1))
     crop_y = max(0, min(crop_y, height - 1))
-    crop_size = max(50, crop_size)
+    crop_width = max(50, min(crop_width, width - crop_x))
+    crop_height = max(50, min(crop_height, height - crop_y))
 
-    if crop_x + crop_size > width:
-        crop_size = width - crop_x
-    if crop_y + crop_size > height:
-        crop_size = min(crop_size, height - crop_y)
+    if guide_shape in {"square", "circle"}:
+        size = min(crop_width, crop_height, width - crop_x, height - crop_y)
+        crop_width = crop_height = size
 
     crop_box = (
-        int(crop_x),
-        int(crop_y),
-        int(crop_x + crop_size),
-        int(crop_y + crop_size),
+        int(crop_x), int(crop_y),
+        int(crop_x + crop_width), int(crop_y + crop_height),
     )
+    cropped = image.crop(crop_box)
 
-    cropped = image.crop(crop_box).resize((1200, 1200), Image.LANCZOS)
-
-    if guide_shape == "circle":
-        black_bg = Image.new("RGB", (1200, 1200), "black")
-        mask = Image.new("L", (1200, 1200), 0)
-        mask_draw = ImageDraw.Draw(mask)
-        mask_draw.ellipse((0, 0, 1199, 1199), fill=255)
-        black_bg.paste(cropped, (0, 0), mask)
-        output = black_bg
+    if guide_shape == "rectangle":
+        max_dimension = 1600
+        scale = min(max_dimension / cropped.width, max_dimension / cropped.height, 1)
+        output = cropped.resize(
+            (max(1, round(cropped.width * scale)), max(1, round(cropped.height * scale))),
+            Image.LANCZOS,
+        ) if scale < 1 else cropped
     else:
-        # square crop
-        output = cropped
+        cropped = cropped.resize((1200, 1200), Image.LANCZOS)
+        if guide_shape == "circle":
+            output = Image.new("RGB", (1200, 1200), "black")
+            mask = Image.new("L", (1200, 1200), 0)
+            ImageDraw.Draw(mask).ellipse((0, 0, 1199, 1199), fill=255)
+            output.paste(cropped, (0, 0), mask)
+        else:
+            output = cropped
 
     output.save(source_path, quality=95)
-
-    r2_upload_file(
-        source_path,
-        f"uploads/artifacts/{source_path.name}"
-    )
+    r2_upload_file(source_path, f"uploads/artifacts/{source_path.name}")
 
 
 @app.route("/artifacts/<int:artifact_id>/photos/edit", methods=["GET", "POST"], defaults={"photo_id": None})
@@ -2452,19 +2444,21 @@ def edit_artifact_photo(artifact_id, photo_id):
     )
 
     if request.method == "POST":
-        guide_shape = request.form.get("guide_shape", "square").strip().lower()
-        if guide_shape not in {"circle", "square"}:
-            guide_shape = "square"
+        guide_shape = request.form.get("guide_shape", "rectangle").strip().lower()
+        if guide_shape not in {"rectangle", "circle", "square"}:
+            guide_shape = "rectangle"
 
         crop_x = float(request.form.get("crop_x", 0))
         crop_y = float(request.form.get("crop_y", 0))
-        crop_size = float(request.form.get("crop_size", 500))
+        crop_width = float(request.form.get("crop_width", request.form.get("crop_size", 500)))
+        crop_height = float(request.form.get("crop_height", request.form.get("crop_size", 500)))
 
         save_artifact_edited_photo(
             source_path=source_path,
             crop_x=crop_x,
             crop_y=crop_y,
-            crop_size=crop_size,
+            crop_width=crop_width,
+            crop_height=crop_height,
             guide_shape=guide_shape,
         )
 
