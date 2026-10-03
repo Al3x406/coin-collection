@@ -1679,6 +1679,12 @@ def collection_value():
         for artifact in all_artifacts
     )
     total_purchase_cost = coin_purchase_cost + artifact_purchase_cost
+    total_gain_loss = total_estimated_value - total_purchase_cost
+    gain_loss_percent = (
+        (total_gain_loss / total_purchase_cost) * 100
+        if total_purchase_cost
+        else 0
+    )
 
     value_breakdown = []
     for label, value in [
@@ -1750,6 +1756,8 @@ def collection_value():
         coin_estimated_value=coin_estimated_value,
         artifact_estimated_value=artifact_estimated_value,
         total_purchase_cost=total_purchase_cost,
+        total_gain_loss=total_gain_loss,
+        gain_loss_percent=gain_loss_percent,
         total_coin_count=total_coin_count,
         total_artifact_count=total_artifact_count,
         value_breakdown=value_breakdown,
