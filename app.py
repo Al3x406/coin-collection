@@ -101,6 +101,7 @@ OWNER_ONLY_ENDPOINTS = {
     "remove_artifact_photo",
     "collection_value",
     "human_story_choose_coin",
+    "assign_set_slot_coin",
 }
 
 
@@ -698,6 +699,20 @@ class HumanStorySelection(db.Model):
     moment_key = db.Column(db.String(220), nullable=False, unique=True)
     coin_id = db.Column(db.Integer, db.ForeignKey("coin.id"), nullable=False)
     coin = db.relationship("Coin")
+
+
+class SetSlotSelection(db.Model):
+    """Owner-selected coin override for a generated set slot."""
+    __tablename__ = "set_slot_selection"
+    id = db.Column(db.Integer, primary_key=True)
+    set_id = db.Column(db.Integer, db.ForeignKey("coin_set.id"), nullable=False, index=True)
+    slot_type = db.Column(db.String(30), nullable=False)
+    slot_id = db.Column(db.Integer, nullable=False)
+    coin_id = db.Column(db.Integer, db.ForeignKey("coin.id"), nullable=False)
+    coin = db.relationship("Coin")
+    __table_args__ = (
+        db.UniqueConstraint("set_id", "slot_type", "slot_id", name="uq_set_slot_selection"),
+    )
 
 
 # --- SETS FEATURE MODELS ---
@@ -1801,6 +1816,16 @@ def _coin_matches_requirement(coin, requirement):
 def _match_set_requirements(coin_set, all_coins=None):
     if all_coins is None:
         all_coins = Coin.query.order_by(Coin.year.asc(), Coin.name.asc()).all()
+
+    SetSlotSelection.__table__.create(bind=db.engine, checkfirst=True)
+    overrides = {
+        row.slot_id: row
+        for row in SetSlotSelection.query.filter_by(
+            set_id=coin_set.id,
+            slot_type="requirement"
+        ).all()
+    }
+    coin_by_id = {coin.id: coin for coin in all_coins}
     used_ids = set()
     matches = []
 
@@ -1812,21 +1837,30 @@ def _match_set_requirements(coin_set, all_coins=None):
         )
     )
 
+    # Reserve manually selected coins first so automatic matching never
+    # displaces an owner's choice.
+    for row in overrides.values():
+        if row.coin_id in coin_by_id:
+            used_ids.add(row.coin_id)
+
     for requirement in requirements:
-        match = None
+        selection = overrides.get(requirement.id)
+        match = coin_by_id.get(selection.coin_id) if selection else None
+        manual = match is not None
 
-        for coin in all_coins:
-            if coin.id in used_ids:
-                continue
-
-            if _coin_matches_requirement(coin, requirement):
-                match = coin
-                used_ids.add(coin.id)
-                break
+        if match is None:
+            for coin in all_coins:
+                if coin.id in used_ids:
+                    continue
+                if _coin_matches_requirement(coin, requirement):
+                    match = coin
+                    used_ids.add(coin.id)
+                    break
 
         matches.append({
             "requirement": requirement,
-            "coin": match
+            "coin": match,
+            "manual": manual
         })
 
     return matches
@@ -1902,19 +1936,35 @@ def _ww2_coin_matches_slot(coin, slot):
 def _ww2_slot_matches(coin_set, all_coins=None):
     if all_coins is None:
         all_coins = Coin.query.order_by(Coin.year.asc(), Coin.name.asc()).all()
-    used_ids = set()
+
+    SetSlotSelection.__table__.create(bind=db.engine, checkfirst=True)
+    overrides = {
+        row.slot_id: row
+        for row in SetSlotSelection.query.filter_by(
+            set_id=coin_set.id,
+            slot_type="ww2"
+        ).all()
+    }
+    coin_by_id = {coin.id: coin for coin in all_coins}
+    used_ids = {
+        row.coin_id for row in overrides.values()
+        if row.coin_id in coin_by_id
+    }
     matches = []
     slots = sorted(coin_set.ww2_slots, key=lambda s: (s.sort_order or 0, s.country_label.lower(), s.year))
     for slot in slots:
-        match = None
-        for coin in all_coins:
-            if coin.id in used_ids:
-                continue
-            if _ww2_coin_matches_slot(coin, slot):
-                match = coin
-                used_ids.add(coin.id)
-                break
-        matches.append({"slot":slot,"coin":match})
+        selection = overrides.get(slot.id)
+        match = coin_by_id.get(selection.coin_id) if selection else None
+        manual = match is not None
+        if match is None:
+            for coin in all_coins:
+                if coin.id in used_ids:
+                    continue
+                if _ww2_coin_matches_slot(coin, slot):
+                    match = coin
+                    used_ids.add(coin.id)
+                    break
+        matches.append({"slot":slot,"coin":match,"manual":manual})
     return matches
 
 # --- SETS FEATURE ROUTES ---
@@ -2168,6 +2218,52 @@ def human_story_choose_coin():
     return redirect(url_for("human_story"))
 
 
+@app.route("/sets/<int:set_id>/assign-slot", methods=["POST"])
+def assign_set_slot_coin(set_id):
+    coin_set = CoinSet.query.get_or_404(set_id)
+    slot_type = (request.form.get("slot_type") or "").strip()
+    slot_id = request.form.get("slot_id", type=int)
+    coin_id = request.form.get("coin_id", type=int)
+    next_url = request.form.get("next") or url_for("set_detail", set_id=set_id)
+
+    if slot_type not in {"requirement", "ww2"} or not slot_id:
+        abort(400)
+
+    if slot_type == "requirement":
+        slot = CoinSetRequirement.query.filter_by(id=slot_id, set_id=set_id).first_or_404()
+    else:
+        slot = WW2GoalSlot.query.filter_by(id=slot_id, set_id=set_id).first_or_404()
+
+    SetSlotSelection.__table__.create(bind=db.engine, checkfirst=True)
+    selection = SetSlotSelection.query.filter_by(
+        set_id=set_id,
+        slot_type=slot_type,
+        slot_id=slot.id,
+    ).first()
+
+    if coin_id:
+        coin = db.session.get(Coin, coin_id)
+        if coin is None:
+            abort(404)
+        if selection is None:
+            selection = SetSlotSelection(
+                set_id=set_id,
+                slot_type=slot_type,
+                slot_id=slot.id,
+                coin_id=coin.id,
+            )
+            db.session.add(selection)
+        else:
+            selection.coin_id = coin.id
+    elif selection is not None:
+        db.session.delete(selection)
+
+    db.session.commit()
+    if not is_safe_local_path(next_url):
+        next_url = url_for("set_detail", set_id=set_id)
+    return redirect(next_url)
+
+
 @app.route("/sets/<int:set_id>")
 def set_detail(set_id):
     coin_set = (
@@ -2233,6 +2329,7 @@ def set_detail(set_id):
         ww2_complete=ww2_complete,
         requirement_matches=requirement_matches,
         completed_requirements=completed_requirements,
+        all_coins=all_coins,
     )
 
 @app.route("/sets/<int:set_id>/edit", methods=["GET", "POST"])
