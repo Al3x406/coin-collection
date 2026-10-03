@@ -72,8 +72,18 @@ body{background:#080706!important;color:#eee2cf}
 <textarea name="notes"></textarea>
 
 <label>Photos</label>
-<input name="images" type="file" accept="image/*" multiple>
-<div class="help">Select several photos at once. The first uploaded photo becomes the Cabinet cover image.</div>
+<input name="images" type="file" accept="image/*" multiple id="artifactPhotos">
+<div class="help">On iPhone, tap this once and choose Photo Library to select several existing photos together. If you take photos with the camera, iOS normally returns one photo at a time, so use the extra camera buttons below before saving.</div>
+
+<div id="cameraPhotoSlots">
+  <label style="margin-top:12px">Take Photo 1</label>
+  <input name="images" type="file" accept="image/*" capture="environment">
+  <label>Take Photo 2</label>
+  <input name="images" type="file" accept="image/*" capture="environment">
+  <label>Take Photo 3</label>
+  <input name="images" type="file" accept="image/*" capture="environment">
+</div>
+<div class="help">You can fill any or all of these. All selected/taken photos are saved to the same artifact.</div>
 
 <div class="actions">
 <button class="save" type="submit">Save Artifact</button>
