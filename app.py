@@ -1829,6 +1829,66 @@ def _preset_terms(value):
     return [item.strip().lower() for item in (value or "").split("|") if item.strip()]
 
 
+def _normalize_issuer(value):
+    """Normalize issuer text without allowing accidental substring matches."""
+    value = (value or "").casefold().replace("’", "'")
+    value = re.sub(r"[^a-z0-9]+", " ", value)
+    return " ".join(value.split())
+
+
+# Explicit equivalents that are safe for automatic set matching. Ambiguous
+# historical/territorial relationships stay manual (Artsakh, East Africa,
+# Eastern Caribbean States, etc.).
+ISSUER_EQUIVALENTS = {
+    "united states": {"united states", "usa", "united states of america"},
+    "united kingdom": {"united kingdom", "great britain", "britain"},
+    "soviet union": {"soviet union", "ussr"},
+    "germany": {"germany", "german reich", "germany 1871 1948", "federal republic of germany"},
+    "india": {"india", "british india"},
+    "south africa": {"south africa", "union of south africa"},
+    "switzerland": {"switzerland", "swiss confederation"},
+    "portugal": {"portugal", "portuguese republic"},
+    "spain": {"spain", "spanish state"},
+    "ireland": {"ireland", "eire"},
+    "turkey": {"turkey", "turkiye"},
+    "czechoslovakia": {"czechoslovakia", "bohemia and moravia", "protectorate of bohemia and moravia"},
+    "hungary": {"hungary", "kingdom of hungary"},
+    "slovakia": {"slovakia", "slovak republic"},
+    "croatia": {"croatia", "independent state of croatia"},
+    "thailand": {"thailand", "siam"},
+    "egypt": {"egypt", "kingdom of egypt"},
+    "china": {"china", "republic of china"},
+}
+
+
+def _issuer_matches_term(issuer, term):
+    issuer_norm = _normalize_issuer(issuer)
+    term_norm = _normalize_issuer(term)
+    if not issuer_norm or not term_norm:
+        return False
+    if issuer_norm == term_norm:
+        return True
+
+    equivalents = {
+        _normalize_issuer(key): {_normalize_issuer(item) for item in values}
+        for key, values in ISSUER_EQUIVALENTS.items()
+    }
+    for canonical, names in equivalents.items():
+        group = names | {canonical}
+        if term_norm in group and issuer_norm in group:
+            return True
+
+    # Numista-style labels often add a date period after an otherwise exact
+    # issuer name, e.g. "Germany (1871-1948)". Only accept a numeric suffix;
+    # never arbitrary text such as "Prussia" for "Russia".
+    if issuer_norm.startswith(term_norm + " "):
+        suffix = issuer_norm[len(term_norm) + 1:]
+        if suffix and all(part.isdigit() for part in suffix.split()):
+            return True
+
+    return False
+
+
 def _coin_matches_requirement(coin, requirement):
     try:
         coin_year = int(str(coin.year).strip()) if coin.year is not None else None
@@ -1845,8 +1905,7 @@ def _coin_matches_requirement(coin, requirement):
 
     country_terms = _preset_terms(requirement.country_terms)
     if country_terms:
-        country = (coin.country or "").lower()
-        if not any(term in country for term in country_terms):
+        if not any(_issuer_matches_term(coin.country, term) for term in country_terms):
             return False
 
     name_terms = _preset_terms(requirement.name_terms)
@@ -1981,8 +2040,10 @@ def _ww2_coin_matches_slot(coin, slot):
     if coin_year != slot.year:
         return False
 
-    country = (coin.country or '').lower()
-    return any(term in country for term in _ww2_terms(slot.country_terms))
+    return any(
+        _issuer_matches_term(coin.country, term)
+        for term in _ww2_terms(slot.country_terms)
+    )
 
 def _ww2_slot_matches(coin_set, all_coins=None):
     if all_coins is None:
