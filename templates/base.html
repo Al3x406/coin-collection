@@ -57,6 +57,11 @@
                     Add Coin
                 </a>
 
+                <a class="nav-link" href="{{ url_for('download_database') }}"
+                   onclick="return confirm('Are you sure you want to download a backup of your coin database?');">
+                    Download DB
+                </a>
+
                 <form
                     method="POST"
                     action="{{ url_for('owner_logout') }}"
