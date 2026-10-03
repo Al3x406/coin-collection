@@ -1866,6 +1866,11 @@ AMBIGUOUS_SET_ISSUERS = {
     "roman republic", "soviet union", "ussr", "yugoslavia",
     "austria hungary", "ottoman empire", "netherlands east indies",
     "dutch east indies", "malaya and british borneo", "papal states",
+    # Additional historical labels found in the current collection audit.
+    "ancient greece", "austrian empire", "china empire of",
+    "frankfurt free imperial city of", "india british",
+    "prussia kingdom of", "rome", "lysias",
+    "british honduras", "british guiana",
 }
 
 CANONICAL_SET_COUNTRIES = {
