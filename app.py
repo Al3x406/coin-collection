@@ -8,6 +8,7 @@ from flask import (
     session,
     abort,
     flash,
+    send_file,
 )
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import joinedload, selectinload
@@ -102,6 +103,7 @@ OWNER_ONLY_ENDPOINTS = {
     "collection_value",
     "human_story_choose_coin",
     "assign_set_slot_coin",
+    "download_database",
 }
 
 
@@ -181,6 +183,24 @@ def inject_access_status():
         "is_owner": bool(session.get("is_owner")),
         "has_view_access": has_view_access(),
     }
+
+
+@app.route("/owner/download-database")
+def download_database():
+    if not session.get("is_owner"):
+        abort(403)
+    database_path = Path(db.engine.url.database)
+    if not database_path.is_absolute():
+        database_path = Path(app.instance_path) / database_path
+    if not database_path.exists():
+        abort(404)
+    return send_file(
+        database_path,
+        as_attachment=True,
+        download_name="coin-collection.db",
+        mimetype="application/vnd.sqlite3",
+        max_age=0,
+    )
 
 
 @app.route("/access", methods=["GET", "POST"])
