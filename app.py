@@ -2147,12 +2147,15 @@ def ww1_set():
         if item.get("coin") is not None
     )
 
+    all_coins = Coin.query.order_by(Coin.year.asc(), Coin.name.asc()).all()
+
     return render_template(
         "ww1_set.html",
         coin_set=coin_set,
         matches=matches,
         completed=completed,
         total=len(matches),
+        all_coins=all_coins,
     )
 
 
