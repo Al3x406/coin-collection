@@ -1889,6 +1889,37 @@ def _issuer_matches_term(issuer, term):
     return False
 
 
+# Around the World should represent the modern country itself, not any empire,
+# federation, colony, or predecessor that once covered some/all of its land.
+# These remain available through the owner's manual assignment picker.
+WORLD_MANUAL_ONLY_TERMS = {
+    "ghana": {"gold coast"},
+    "indonesia": {"netherlands east indies", "dutch east indies"},
+    "india": {"british india"},
+    "malaysia": {"malaya"},
+    "turkey": {"ottoman empire"},
+    "austria": {"austrian empire", "austria hungary"},
+    "czechia": {"czechoslovakia"},
+    "russia": {"russian empire", "soviet union", "ussr"},
+    "serbia": {"yugoslavia"},
+    "slovakia": {"czechoslovakia"},
+    "slovenia": {"yugoslavia"},
+    "united kingdom": {"england", "scotland"},
+    "vatican city": {"papal states"},
+    "papua new guinea": {"new guinea"},
+}
+
+
+def _world_term_allowed_automatically(requirement, term):
+    coin_set = getattr(requirement, "coin_set", None)
+    if not coin_set or not (coin_set.name or "").startswith("Around the World"):
+        return True
+
+    label = _normalize_issuer(requirement.label)
+    term_norm = _normalize_issuer(term)
+    return term_norm not in WORLD_MANUAL_ONLY_TERMS.get(label, set())
+
+
 def _coin_matches_requirement(coin, requirement):
     try:
         coin_year = int(str(coin.year).strip()) if coin.year is not None else None
@@ -1905,7 +1936,11 @@ def _coin_matches_requirement(coin, requirement):
 
     country_terms = _preset_terms(requirement.country_terms)
     if country_terms:
-        if not any(_issuer_matches_term(coin.country, term) for term in country_terms):
+        if not any(
+            _world_term_allowed_automatically(requirement, term)
+            and _issuer_matches_term(coin.country, term)
+            for term in country_terms
+        ):
             return False
 
     name_terms = _preset_terms(requirement.name_terms)
