@@ -237,6 +237,14 @@
                     {% else %}
                         </div>
                     {% endif %}
+                    {% if is_owner %}
+                    <button type="button" class="slot-assign-btn"
+                            data-slot-type="ww2" data-slot-id="{{ item.slot.id }}"
+                            data-slot-label="{{ country }} · {{ item.slot.year }}"
+                            data-coin-id="{{ item.coin.id if item.manual and item.coin else '' }}">
+                        {{ 'Change' if item.manual else 'Assign' }}
+                    </button>
+                    {% endif %}
                 {% endfor %}
             </div>
 
@@ -862,6 +870,14 @@ body{
         </a>
     {% else %}
         </div>
+    {% endif %}
+    {% if is_owner %}
+    <button type="button" class="slot-assign-btn"
+            data-slot-type="requirement" data-slot-id="{{ item.requirement.id }}"
+            data-slot-label="{{ item.requirement.label }}"
+            data-coin-id="{{ item.coin.id if item.manual and item.coin else '' }}">
+        {{ 'Change' if item.manual else 'Assign' }}
+    </button>
     {% endif %}
 {% endmacro %}
 
@@ -1801,6 +1817,14 @@ body{background:#070808!important;color:#e8dcc6}
                         </div>
                     </div>
                 {% if item.coin %}</a>{% else %}</div>{% endif %}
+                {% if is_owner %}
+                <button type="button" class="slot-assign-btn world-assign-btn"
+                        data-slot-type="requirement" data-slot-id="{{ item.requirement.id }}"
+                        data-slot-label="{{ item.requirement.label }}"
+                        data-coin-id="{{ item.coin.id if item.manual and item.coin else '' }}">
+                    {{ 'Change assigned coin' if item.manual else 'Assign coin' }}
+                </button>
+                {% endif %}
             {% endif %}
         {% endfor %}
         </div></div>
@@ -1874,5 +1898,57 @@ body{background:#07090a!important;color:#eee8dc}
     {% endif %}
 </div>
 
+{% endif %}
+{% if is_owner and (requirement_matches or ww2_matches) %}
+<style>
+.slot-assign-btn{margin:5px 0 0;padding:5px 8px;border:1px solid #8a642c;border-radius:6px;background:#10110e;color:#d9b56f;font-size:.62rem;font-weight:800;cursor:pointer}
+.slot-assign-btn:hover{border-color:#e5bd6b;color:#f0cf86}
+.world-assign-btn{width:100%;margin:4px 0 8px}
+.set-assign-modal[hidden]{display:none}.set-assign-modal{position:fixed;inset:0;z-index:9999;display:grid;place-items:center;padding:16px;background:rgba(0,0,0,.78)}
+.set-assign-card{width:min(94vw,520px);padding:20px;border:1px solid #9a6d2d;border-radius:13px;background:#0d0f0f;box-shadow:0 20px 60px rgba(0,0,0,.65)}
+.set-assign-card h3{margin:0 0 5px;color:#efc775;font-family:Georgia,serif}.set-assign-label{margin-bottom:14px;color:#aaa091}
+.set-assign-card select{width:100%;padding:11px;border:1px solid #5f4b2b;border-radius:8px;background:#151715;color:#eee}
+.set-assign-actions{display:flex;gap:8px;margin-top:13px}.set-assign-actions button{flex:1;padding:10px;border-radius:7px;border:1px solid #8d672e;background:#d6a956;color:#17120b;font-weight:900;cursor:pointer}
+.set-assign-actions .secondary{background:#111310;color:#d8b46c}.set-assign-note{margin-top:10px;color:#746e64;font-size:.72rem;line-height:1.4}
+</style>
+<div class="set-assign-modal" id="setAssignModal" hidden>
+  <div class="set-assign-card">
+    <h3>Assign a coin</h3>
+    <div class="set-assign-label" id="setAssignLabel"></div>
+    <form method="post" action="{{ url_for('assign_set_slot_coin', set_id=coin_set.id) }}">
+      <input type="hidden" name="slot_type" id="setAssignType">
+      <input type="hidden" name="slot_id" id="setAssignId">
+      <input type="hidden" name="next" value="{{ request.path }}">
+      <select name="coin_id" id="setAssignCoin">
+        <option value="">Automatic match / remove manual assignment</option>
+        {% for choice in all_coins %}
+        <option value="{{ choice.id }}">{{ choice.date_display }} · {{ choice.country or 'Unknown country' }} · {{ choice.denomination or choice.name }}</option>
+        {% endfor %}
+      </select>
+      <div class="set-assign-actions">
+        <button type="button" class="secondary" id="setAssignCancel">Cancel</button>
+        <button type="submit">Save assignment</button>
+      </div>
+      <div class="set-assign-note">This only changes which coin fills this set slot. It does not change the coin's country, date, issuer, or other catalog information.</div>
+    </form>
+  </div>
+</div>
+<script>
+(() => {
+  const modal=document.getElementById('setAssignModal');
+  if(!modal) return;
+  const label=document.getElementById('setAssignLabel'), type=document.getElementById('setAssignType'),
+        id=document.getElementById('setAssignId'), coin=document.getElementById('setAssignCoin');
+  document.querySelectorAll('.slot-assign-btn').forEach(btn=>btn.addEventListener('click',()=>{
+    label.textContent=btn.dataset.slotLabel||'Set slot';
+    type.value=btn.dataset.slotType; id.value=btn.dataset.slotId;
+    coin.value=btn.dataset.coinId||'';
+    modal.hidden=false;
+  }));
+  const close=()=>modal.hidden=true;
+  document.getElementById('setAssignCancel').addEventListener('click',close);
+  modal.addEventListener('click',e=>{if(e.target===modal) close();});
+})();
+</script>
 {% endif %}
 {% endblock %}
