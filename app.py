@@ -783,6 +783,25 @@ class Artifact(db.Model):
     image_filename = db.Column(db.String(255))
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
+    photos = db.relationship(
+        "ArtifactPhoto",
+        back_populates="artifact",
+        cascade="all, delete-orphan",
+        order_by="ArtifactPhoto.sort_order",
+        lazy="select",
+    )
+
+
+class ArtifactPhoto(db.Model):
+    __tablename__ = "artifact_photo"
+    id = db.Column(db.Integer, primary_key=True)
+    artifact_id = db.Column(db.Integer, db.ForeignKey("artifact.id"), nullable=False, index=True)
+    filename = db.Column(db.String(255), nullable=False)
+    sort_order = db.Column(db.Integer, default=0, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    artifact = db.relationship("Artifact", back_populates="photos")
+
 
 # Home page / collection dashboard
 @app.route("/")
@@ -2466,14 +2485,19 @@ def edit_artifact_photo(artifact_id, photo_id):
 ARTIFACT_UPLOAD_FOLDER = os.path.join(app.root_path, "static", "uploads", "artifacts")
 os.makedirs(ARTIFACT_UPLOAD_FOLDER, exist_ok=True)
 
-def save_artifact_image(file_storage, artifact_id):
+def save_artifact_image(file_storage, artifact_id, photo_index=None):
     if not file_storage or not file_storage.filename:
         return None
     original = secure_filename(file_storage.filename)
     suffix = Path(original).suffix.lower()
     if suffix not in {".jpg", ".jpeg", ".png", ".webp"}:
         suffix = ".jpg"
-    filename = f"artifact_{artifact_id}{suffix}"
+
+    if photo_index is None:
+        filename = f"artifact_{artifact_id}{suffix}"
+    else:
+        filename = f"artifact_{artifact_id}_{photo_index}{suffix}"
+
     local_path = Path(ARTIFACT_UPLOAD_FOLDER) / filename
     file_storage.save(local_path)
 
@@ -2483,6 +2507,28 @@ def save_artifact_image(file_storage, artifact_id):
     )
 
     return filename
+
+
+def save_artifact_images(file_storages, artifact):
+    saved = []
+    for index, file_storage in enumerate(file_storages, start=1):
+        if not file_storage or not file_storage.filename:
+            continue
+        filename = save_artifact_image(file_storage, artifact.id, index)
+        if not filename:
+            continue
+        photo = ArtifactPhoto(
+            artifact_id=artifact.id,
+            filename=filename,
+            sort_order=index,
+        )
+        db.session.add(photo)
+        saved.append(filename)
+
+    if saved:
+        artifact.image_filename = saved[0]
+
+    return saved
 
 @app.route("/artifacts")
 def artifacts():
@@ -2574,7 +2620,11 @@ def add_artifact():
             return render_template("add_artifact.html", categories=ARTIFACT_CATEGORIES, error="Choose a valid category.")
         db.session.add(artifact)
         db.session.flush()
-        artifact.image_filename = save_artifact_image(request.files.get("image"), artifact.id)
+        uploaded_images = request.files.getlist("images")
+        if not any(image and image.filename for image in uploaded_images):
+            legacy_image = request.files.get("image")
+            uploaded_images = [legacy_image] if legacy_image and legacy_image.filename else []
+        save_artifact_images(uploaded_images, artifact)
         db.session.commit()
         return redirect(url_for("artifact_detail", artifact_id=artifact.id))
     return render_template("add_artifact.html", categories=ARTIFACT_CATEGORIES)
@@ -2608,14 +2658,19 @@ def edit_artifact(artifact_id):
 @app.route("/artifacts/<int:artifact_id>/delete", methods=["POST"])
 def delete_artifact(artifact_id):
     artifact = Artifact.query.get_or_404(artifact_id)
+    filenames = {
+        photo.filename
+        for photo in artifact.photos
+        if photo.filename
+    }
     if artifact.image_filename:
-        path = os.path.join(ARTIFACT_UPLOAD_FOLDER, artifact.image_filename)
+        filenames.add(artifact.image_filename)
+
+    for filename in filenames:
+        path = os.path.join(ARTIFACT_UPLOAD_FOLDER, filename)
         if os.path.isfile(path):
             os.remove(path)
-
-        r2_delete_key(
-            f"uploads/artifacts/{artifact.image_filename}"
-        )
+        r2_delete_key(f"uploads/artifacts/{filename}")
 
     db.session.delete(artifact)
     db.session.commit()
@@ -6418,4 +6473,6 @@ def collection_timeline():
         coins=all_coins
     )  
 if __name__ == "__main__":
+    with app.app_context():
+        db.create_all()
     app.run(debug=False)
