@@ -3406,6 +3406,7 @@ def edit_coin(coin_id):
             "country",
             coin.country
         )
+        coin.set_country = _default_set_country(coin.country)
 
 
         year_value = request.form.get(
