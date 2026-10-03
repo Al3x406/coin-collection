@@ -12,7 +12,7 @@ from flask import (
 )
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import joinedload, selectinload
-from sqlalchemy import text
+from sqlalchemy import text, create_engine, select
 from datetime import datetime
 from io import BytesIO
 import os
@@ -189,13 +189,44 @@ def inject_access_status():
 def download_database():
     if not session.get("is_owner"):
         abort(403)
-    database_path = Path(db.engine.url.database)
-    if not database_path.is_absolute():
-        database_path = Path(app.instance_path) / database_path
-    if not database_path.exists():
-        abort(404)
+
+    # A local SQLite deployment can send its database file directly.
+    database_name = db.engine.url.database
+    if database_name:
+        database_path = Path(database_name)
+        if not database_path.is_absolute():
+            database_path = Path(app.instance_path) / database_path
+        if database_path.exists():
+            return send_file(
+                database_path,
+                as_attachment=True,
+                download_name="coin-collection.db",
+                mimetype="application/vnd.sqlite3",
+                max_age=0,
+            )
+
+    # Production uses Turso/libSQL, which has no local database filepath.
+    # Build a portable SQLite snapshot by copying every SQLAlchemy table.
+    backup_dir = Path(app.instance_path) / "backups"
+    backup_dir.mkdir(parents=True, exist_ok=True)
+    backup_path = backup_dir / "coin-collection-download.db"
+    if backup_path.exists():
+        backup_path.unlink()
+
+    local_engine = create_engine(f"sqlite:///{backup_path}")
+    try:
+        db.metadata.create_all(local_engine)
+
+        with db.engine.connect() as source, local_engine.begin() as target:
+            for table in db.metadata.sorted_tables:
+                rows = source.execute(select(table)).mappings().all()
+                if rows:
+                    target.execute(table.insert(), [dict(row) for row in rows])
+    finally:
+        local_engine.dispose()
+
     return send_file(
-        database_path,
+        backup_path,
         as_attachment=True,
         download_name="coin-collection.db",
         mimetype="application/vnd.sqlite3",
