@@ -97,6 +97,7 @@ OWNER_ONLY_ENDPOINTS = {
     "set_featured_coin",
     "edit_coin_photo",
     "edit_artifact_photo",
+    "remove_artifact_photo",
     "collection_value",
     "human_story_choose_coin",
 }
@@ -2648,6 +2649,30 @@ def edit_artifact(artifact_id):
         db.session.commit()
         return redirect(url_for("artifact_detail", artifact_id=artifact.id))
     return render_template("edit_artifact.html", artifact=artifact, categories=ARTIFACT_CATEGORIES)
+
+@app.route("/artifacts/<int:artifact_id>/photos/<int:photo_id>/remove", methods=["POST"])
+def remove_artifact_photo(artifact_id, photo_id):
+    artifact = Artifact.query.get_or_404(artifact_id)
+    photo = ArtifactPhoto.query.filter_by(id=photo_id, artifact_id=artifact.id).first_or_404()
+    filename = photo.filename
+
+    local_path = Path(ARTIFACT_UPLOAD_FOLDER) / filename
+    if local_path.is_file():
+        local_path.unlink()
+    r2_delete_key(f"uploads/artifacts/{filename}")
+
+    db.session.delete(photo)
+    db.session.flush()
+
+    if artifact.image_filename == filename:
+        remaining = ArtifactPhoto.query.filter_by(artifact_id=artifact.id).order_by(
+            ArtifactPhoto.sort_order.asc(), ArtifactPhoto.id.asc()
+        ).first()
+        artifact.image_filename = remaining.filename if remaining else None
+
+    db.session.commit()
+    return redirect(url_for("artifact_detail", artifact_id=artifact.id))
+
 
 @app.route("/artifacts/<int:artifact_id>/delete", methods=["POST"])
 def delete_artifact(artifact_id):
