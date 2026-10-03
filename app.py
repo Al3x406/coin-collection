@@ -594,6 +594,10 @@ class Coin(db.Model):
         db.String(100)
     )
 
+    # Stable modern-country key used by generated geographic sets. The
+    # historical/catalog issuer in country is never overwritten.
+    set_country = db.Column(db.String(100))
+
     year = db.Column(
         db.Integer
     )
@@ -1068,11 +1072,23 @@ def ensure_coin_date_schema():
             "date_start_year": "INTEGER",
             "date_end_year": "INTEGER",
             "date_is_approx": "BOOLEAN DEFAULT 0",
+            "set_country": "VARCHAR(100)",
         }
         for column, sql_type in additions.items():
             if column not in columns:
                 db.session.execute(text(f"ALTER TABLE coin ADD COLUMN {column} {sql_type}"))
         db.session.commit()
+        # Backfill safe canonical countries for existing coins. Ambiguous
+        # historical/territorial issuers intentionally remain NULL for review.
+        rows = Coin.query.filter(Coin.set_country.is_(None)).all()
+        changed = False
+        for coin in rows:
+            canonical = _default_set_country(coin.country)
+            if canonical:
+                coin.set_country = canonical
+                changed = True
+        if changed:
+            db.session.commit()
         _coin_date_schema_checked = True
     except Exception:
         db.session.rollback()
@@ -1250,6 +1266,7 @@ def add_coin():
             name=request.form["name"],
 
             country=request.form["country"],
+            set_country=_default_set_country(request.form["country"]),
 
             year=normalized_year,
             date_start_year=normalized_date_start,
@@ -1836,6 +1853,59 @@ def _normalize_issuer(value):
     return " ".join(value.split())
 
 
+def _default_set_country(issuer):
+    """Return a safe canonical country for set matching, or None for review."""
+    raw = (issuer or "").strip()
+    norm = _normalize_issuer(raw)
+    if not norm:
+        return None
+
+    # Multi-country, colonial, disputed, or historical issuers should never be
+    # silently assigned to one modern country.
+    ambiguous = {
+        "ancient greece", "roman empire", "roman republic", "byzantine empire",
+        "soviet union", "ussr", "russian empire", "ottoman empire",
+        "austria hungary", "austrian empire", "czechoslovakia", "yugoslavia",
+        "prussia kingdom of", "netherlands east indies", "dutch east indies",
+        "east africa", "eastern caribbean states", "malaya and british borneo",
+        "british virgin islands", "netherlands antilles", "hong kong",
+        "bermuda", "cayman islands", "aruba", "jersey", "french polynesia",
+        "artsakh",
+    }
+    if norm in ambiguous:
+        return None
+
+    aliases = {
+        "usa": "United States",
+        "united states of america": "United States",
+        "great britain": "United Kingdom",
+        "britain": "United Kingdom",
+        "russian federation": "Russia",
+        "bahamas the": "Bahamas",
+        "germany federal republic of": "Germany",
+        "federal republic of germany": "Germany",
+        "eire": "Ireland",
+        "turkiye": "Turkey",
+    }
+    if norm in aliases:
+        return aliases[norm]
+
+    # Remove a Numista-style trailing date period, including "(1949-date)".
+    cleaned = re.sub(
+        r"\s*\(\s*\d{1,4}\s*[-–]\s*(?:\d{1,4}|date)\s*\)\s*$",
+        "",
+        raw,
+        flags=re.IGNORECASE,
+    ).strip()
+    return cleaned or None
+
+
+def _coin_set_issuer(coin):
+    # Existing databases are backfilled lazily; new coins get set_country at
+    # creation time. Falling back keeps deployments safe during migration.
+    return getattr(coin, "set_country", None) or coin.country
+
+
 # Explicit equivalents that are safe for automatic set matching. Ambiguous
 # historical/territorial relationships stay manual (Artsakh, East Africa,
 # Eastern Caribbean States, etc.).
@@ -1938,7 +2008,7 @@ def _coin_matches_requirement(coin, requirement):
     if country_terms:
         if not any(
             _world_term_allowed_automatically(requirement, term)
-            and _issuer_matches_term(coin.country, term)
+            and _issuer_matches_term(_coin_set_issuer(coin), term)
             for term in country_terms
         ):
             return False
@@ -3336,6 +3406,7 @@ def edit_coin(coin_id):
             "country",
             coin.country
         )
+        coin.set_country = _default_set_country(coin.country)
 
 
         year_value = request.form.get(
