@@ -2488,10 +2488,11 @@ def save_artifact_image(file_storage, artifact_id, photo_index=None):
     if suffix not in {".jpg", ".jpeg", ".png", ".webp"}:
         suffix = ".jpg"
 
+    unique = uuid.uuid4().hex[:10]
     if photo_index is None:
-        filename = f"artifact_{artifact_id}{suffix}"
+        filename = f"artifact_{artifact_id}_{unique}{suffix}"
     else:
-        filename = f"artifact_{artifact_id}_{photo_index}{suffix}"
+        filename = f"artifact_{artifact_id}_{photo_index}_{unique}{suffix}"
 
     local_path = Path(ARTIFACT_UPLOAD_FOLDER) / filename
     file_storage.save(local_path)
@@ -2506,21 +2507,23 @@ def save_artifact_image(file_storage, artifact_id, photo_index=None):
 
 def save_artifact_images(file_storages, artifact):
     saved = []
-    for index, file_storage in enumerate(file_storages, start=1):
+    existing_count = ArtifactPhoto.query.filter_by(artifact_id=artifact.id).count()
+    for offset, file_storage in enumerate(file_storages, start=1):
         if not file_storage or not file_storage.filename:
             continue
-        filename = save_artifact_image(file_storage, artifact.id, index)
+        sort_order = existing_count + offset
+        filename = save_artifact_image(file_storage, artifact.id, sort_order)
         if not filename:
             continue
         photo = ArtifactPhoto(
             artifact_id=artifact.id,
             filename=filename,
-            sort_order=index,
+            sort_order=sort_order,
         )
         db.session.add(photo)
         saved.append(filename)
 
-    if saved:
+    if saved and not artifact.image_filename:
         artifact.image_filename = saved[0]
 
     return saved
@@ -2643,9 +2646,11 @@ def edit_artifact(artifact_id):
         artifact.date_acquired = request.form.get("date_acquired", "").strip() or None
         artifact.source = request.form.get("source", "").strip() or None
         artifact.notes = request.form.get("notes", "").strip() or None
-        new_image = request.files.get("image")
-        if new_image and new_image.filename:
-            artifact.image_filename = save_artifact_image(new_image, artifact.id)
+        uploaded_images = request.files.getlist("images")
+        if not any(image and image.filename for image in uploaded_images):
+            legacy_image = request.files.get("image")
+            uploaded_images = [legacy_image] if legacy_image and legacy_image.filename else []
+        save_artifact_images(uploaded_images, artifact)
         db.session.commit()
         return redirect(url_for("artifact_detail", artifact_id=artifact.id))
     return render_template("edit_artifact.html", artifact=artifact, categories=ARTIFACT_CATEGORIES)
