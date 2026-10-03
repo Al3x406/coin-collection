@@ -3419,6 +3419,9 @@ def edit_coin(coin_id):
             "country",
             coin.country
         )
+        coin.set_country, coin.set_country_review = _canonical_set_country(
+            coin.country
+        )
 
 
         year_value = request.form.get(
