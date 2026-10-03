@@ -1909,7 +1909,12 @@ body{background:#07090a!important;color:#eee8dc}
 .set-assign-modal[hidden]{display:none}.set-assign-modal{position:fixed;inset:0;z-index:9999;display:grid;place-items:center;padding:16px;background:rgba(0,0,0,.78)}
 .set-assign-card{width:min(94vw,520px);padding:20px;border:1px solid #9a6d2d;border-radius:13px;background:#0d0f0f;box-shadow:0 20px 60px rgba(0,0,0,.65)}
 .set-assign-card h3{margin:0 0 5px;color:#efc775;font-family:Georgia,serif}.set-assign-label{margin-bottom:14px;color:#aaa091}
-.set-assign-card select{width:100%;padding:11px;border:1px solid #5f4b2b;border-radius:8px;background:#151715;color:#eee}
+.coin-picker-search{width:100%;box-sizing:border-box;padding:11px 12px;border:1px solid #6e542d;border-radius:8px;background:#151715;color:#eee;font-size:16px}
+.coin-picker-list{max-height:min(52vh,430px);overflow-y:auto;margin-top:10px;border:1px solid #3d3222;border-radius:9px;background:#090b0a}
+.coin-picker-row{width:100%;display:grid;grid-template-columns:48px minmax(0,1fr);gap:10px;align-items:center;padding:9px;border:0;border-bottom:1px solid #27231c;background:transparent;color:#eee;text-align:left;cursor:pointer}
+.coin-picker-row:last-child{border-bottom:0}.coin-picker-row.selected{background:#332713;outline:1px solid #c49443}.coin-picker-row[hidden]{display:none}
+.coin-picker-thumb{width:46px;height:46px;border-radius:50%;object-fit:contain;background:#151515;border:1px solid #5c4828}.coin-picker-thumb.empty{display:grid;place-items:center;color:#8d7650;font-size:10px}
+.coin-picker-main{font-weight:800}.coin-picker-sub{margin-top:2px;color:#9e9587;font-size:.72rem}.coin-picker-empty{padding:18px;text-align:center;color:#8d8374}
 .set-assign-actions{display:flex;gap:8px;margin-top:13px}.set-assign-actions button{flex:1;padding:10px;border-radius:7px;border:1px solid #8d672e;background:#d6a956;color:#17120b;font-weight:900;cursor:pointer}
 .set-assign-actions .secondary{background:#111310;color:#d8b46c}.set-assign-note{margin-top:10px;color:#746e64;font-size:.72rem;line-height:1.4}
 </style>
@@ -1921,12 +1926,26 @@ body{background:#07090a!important;color:#eee8dc}
       <input type="hidden" name="slot_type" id="setAssignType">
       <input type="hidden" name="slot_id" id="setAssignId">
       <input type="hidden" name="next" value="{{ request.path }}">
-      <select name="coin_id" id="setAssignCoin">
-        <option value="">Automatic match / remove manual assignment</option>
+      <input type="hidden" name="coin_id" id="setAssignCoin">
+      <input class="coin-picker-search" id="setAssignSearch" type="search" autocomplete="off" placeholder="Search country, year, denomination, or coin name…">
+      <div class="coin-picker-list" id="setAssignList">
+        <button type="button" class="coin-picker-row" data-coin-id="" data-search="automatic remove manual assignment">
+          <span class="coin-picker-thumb empty">AUTO</span>
+          <span><span class="coin-picker-main">Use automatic matching</span><span class="coin-picker-sub">Remove the manual assignment for this slot</span></span>
+        </button>
         {% for choice in all_coins %}
-        <option value="{{ choice.id }}">{{ choice.date_display }} · {{ choice.country or 'Unknown country' }} · {{ choice.denomination or choice.name }}</option>
+        {% set picker_img = choice.personal_obverse_image or choice.personal_reverse_image %}
+        <button type="button" class="coin-picker-row" data-coin-id="{{ choice.id }}" data-search="{{ choice.date_display }} {{ choice.country or '' }} {{ choice.denomination or '' }} {{ choice.name or '' }}">
+          {% if picker_img %}
+          <img class="coin-picker-thumb" src="{{ url_for('static', filename='uploads/coins/' ~ picker_img) }}" alt="">
+          {% elif choice.obverse_image or choice.reverse_image %}
+          <img class="coin-picker-thumb" src="{{ choice.obverse_image or choice.reverse_image }}" alt="">
+          {% else %}<span class="coin-picker-thumb empty">COIN</span>{% endif %}
+          <span><span class="coin-picker-main">{{ choice.date_display }} · {{ choice.country or 'Unknown country' }}</span><span class="coin-picker-sub">{{ choice.denomination or choice.name }}</span></span>
+        </button>
         {% endfor %}
-      </select>
+        <div class="coin-picker-empty" id="setAssignEmpty" hidden>No matching coins found.</div>
+      </div>
       <div class="set-assign-actions">
         <button type="button" class="secondary" id="setAssignCancel">Cancel</button>
         <button type="submit">Save assignment</button>
@@ -1940,12 +1959,22 @@ body{background:#07090a!important;color:#eee8dc}
   const modal=document.getElementById('setAssignModal');
   if(!modal) return;
   const label=document.getElementById('setAssignLabel'), type=document.getElementById('setAssignType'),
-        id=document.getElementById('setAssignId'), coin=document.getElementById('setAssignCoin');
+        id=document.getElementById('setAssignId'), coin=document.getElementById('setAssignCoin'),
+        search=document.getElementById('setAssignSearch'), rows=Array.from(document.querySelectorAll('.coin-picker-row')),
+        empty=document.getElementById('setAssignEmpty');
+  const selectCoin=(value)=>{ coin.value=value||''; rows.forEach(r=>r.classList.toggle('selected',(r.dataset.coinId||'')===coin.value)); };
+  rows.forEach(row=>row.addEventListener('click',()=>selectCoin(row.dataset.coinId)));
+  search.addEventListener('input',()=>{
+    const q=search.value.trim().toLowerCase(); let shown=0;
+    rows.forEach(row=>{const show=!q || (row.dataset.search||'').toLowerCase().includes(q); row.hidden=!show; if(show) shown++;});
+    empty.hidden=shown!==0;
+  });
   document.querySelectorAll('.slot-assign-btn').forEach(btn=>btn.addEventListener('click',()=>{
     label.textContent=btn.dataset.slotLabel||'Set slot';
     type.value=btn.dataset.slotType; id.value=btn.dataset.slotId;
-    coin.value=btn.dataset.coinId||'';
-    modal.hidden=false;
+    search.value=''; rows.forEach(r=>r.hidden=false); empty.hidden=true;
+    selectCoin(btn.dataset.coinId||'');
+    modal.hidden=false; setTimeout(()=>search.focus(),50);
   }));
   const close=()=>modal.hidden=true;
   document.getElementById('setAssignCancel').addEventListener('click',close);
