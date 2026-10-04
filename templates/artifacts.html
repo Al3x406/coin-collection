@@ -57,9 +57,18 @@ html,body{
 .hero-stat{padding:7px 10px;border:1px solid #594326;border-radius:999px;background:#0a0907b8;color:#b99b69;font-size:.72rem}
 
 /* SEARCH */
-.browse-bar{display:grid;grid-template-columns:1fr auto;gap:10px;margin:18px 0 16px}
-.browse-bar input{width:100%;padding:12px 14px;border:1px solid #4b3822;border-radius:9px;background:#0b0c0b;color:#eee3d3}
+.browse-bar{display:grid;grid-template-columns:minmax(220px,2fr) repeat(5,minmax(110px,1fr)) auto;gap:8px;margin:18px 0 8px}
+.browse-bar input,.browse-bar select{width:100%;min-width:0;padding:11px 12px;border:1px solid #4b3822;border-radius:9px;background:#0b0c0b;color:#eee3d3}
 .browse-bar button{padding:10px 16px;border:1px solid #8e6534;border-radius:9px;background:#17110b;color:#dfb86d;font-weight:900}
+.browse-tools{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:0 0 16px;color:#8f806c;font-size:.72rem}
+.browse-tools a{color:#c99a51;text-decoration:none}
+.view-toggle{display:flex;gap:6px}
+.view-toggle a{padding:6px 9px;border:1px solid #4b3822;border-radius:6px;background:#0b0c0b}
+.view-toggle a.active{border-color:#b98945;color:#efc77c}
+.artifact-grid.list-view{grid-template-columns:1fr}
+.artifact-grid.list-view .artifact-card{display:grid;grid-template-columns:150px 1fr}
+.artifact-grid.list-view .artifact-image{height:130px!important;min-height:130px!important}
+.artifact-grid.list-view .artifact-body{min-height:0;display:flex;flex-direction:column;justify-content:center}
 
 /* CABINET FRAME */
 .collection-cabinet{
@@ -191,7 +200,9 @@ html,body{
     .category-shelf:nth-child(n+4){border-top:8px solid #3a200f}
     .artifact-grid{grid-template-columns:repeat(3,1fr)}
 }
+@media(max-width:1100px){.browse-bar{grid-template-columns:repeat(3,1fr)}}
 @media(max-width:820px){
+    .browse-bar{grid-template-columns:repeat(2,1fr)}
     .hero-copy{width:100%;padding:40px 28px}
     .cabinet-hero{background-position:65% center}
     .cabinet-top{align-items:flex-start;flex-direction:column}
@@ -203,6 +214,8 @@ html,body{
 @media(max-width:560px){
     .cabinet-page{width:calc(100vw - 18px)}
     .browse-bar{grid-template-columns:1fr}
+    .artifact-grid.list-view .artifact-card{grid-template-columns:105px 1fr}
+    .artifact-grid.list-view .artifact-image{height:110px!important;min-height:110px!important}
     .category-shelves,.artifact-grid{grid-template-columns:1fr}
     .category-shelf{border-right:none!important}
 }
@@ -516,10 +529,41 @@ html,body{
 </section>
 
 <form class="browse-bar" method="get">
-    <input type="search" name="search" value="{{ search }}" placeholder="Search the cabinet by name, origin, year, or description...">
-    {% if selected_category %}<input type="hidden" name="category" value="{{ selected_category }}">{% endif %}
-    <button type="submit">Search</button>
+    <input type="search" name="search" value="{{ search }}" placeholder="Search name, origin, year, description, notes...">
+    <select name="category">
+        <option value="">All categories</option>
+        {% for cat in categories %}<option value="{{ cat }}" {% if selected_category==cat %}selected{% endif %}>{{ cat }} ({{ category_counts.get(cat,0) }})</option>{% endfor %}
+    </select>
+    <select name="country">
+        <option value="">All origins</option>
+        {% for item in countries %}<option value="{{ item }}" {% if selected_country==item %}selected{% endif %}>{{ item }}</option>{% endfor %}
+    </select>
+    <select name="condition">
+        <option value="">All conditions</option>
+        {% for item in conditions %}<option value="{{ item }}" {% if selected_condition==item %}selected{% endif %}>{{ item }}</option>{% endfor %}
+    </select>
+    <input type="number" name="year_from" value="{{ year_from }}" placeholder="From year">
+    <input type="number" name="year_to" value="{{ year_to }}" placeholder="To year">
+    <select name="sort">
+        <option value="newest" {% if sort=='newest' %}selected{% endif %}>Recently added</option>
+        <option value="name" {% if sort=='name' %}selected{% endif %}>Name A–Z</option>
+        <option value="oldest" {% if sort=='oldest' %}selected{% endif %}>Oldest first</option>
+        <option value="newest_date" {% if sort=='newest_date' %}selected{% endif %}>Newest date first</option>
+        <option value="value_high" {% if sort=='value_high' %}selected{% endif %}>Value: high to low</option>
+        <option value="value_low" {% if sort=='value_low' %}selected{% endif %}>Value: low to high</option>
+        <option value="acquired" {% if sort=='acquired' %}selected{% endif %}>Recently acquired</option>
+    </select>
+    <input type="hidden" name="view" value="{{ view }}">
+    <input type="hidden" name="show_all" value="1">
+    <button type="submit">Apply</button>
 </form>
+<div class="browse-tools">
+    <div>{% if search or selected_category or selected_country or selected_condition or year_from or year_to %}<a href="{{ url_for('artifacts', show_all='1') }}">Clear filters</a>{% else %}Browse and organize the full cabinet{% endif %}</div>
+    <div class="view-toggle">
+        <a class="{% if view=='grid' %}active{% endif %}" href="{{ url_for('artifacts', search=search, category=selected_category, country=selected_country, condition=selected_condition, year_from=year_from, year_to=year_to, sort=sort, view='grid', show_all='1') }}">Grid</a>
+        <a class="{% if view=='list' %}active{% endif %}" href="{{ url_for('artifacts', search=search, category=selected_category, country=selected_country, condition=selected_condition, year_from=year_from, year_to=year_to, sort=sort, view='list', show_all='1') }}">List</a>
+    </div>
+</div>
 
 <section class="collection-cabinet" id="cabinet-shelves">
 
@@ -585,7 +629,7 @@ html,body{
 
     </div>
 
-    {% if selected_category or search or request.args.get('show_all') %}
+    {% if selected_category or search or selected_country or selected_condition or year_from or year_to or request.args.get('show_all') %}
     <div class="results-wrap">
         <div class="results-heading">
             <h3>{% if selected_category %}{{ selected_category }}{% elif search %}Search Results{% else %}All Artifacts{% endif %}</h3>
@@ -593,7 +637,7 @@ html,body{
         </div>
 
         {% if artifacts %}
-        <div class="artifact-grid">
+        <div class="artifact-grid {% if view=='list' %}list-view{% endif %}">
             {% for artifact in artifacts %}
             <a class="artifact-card" href="{{ url_for('artifact_detail',artifact_id=artifact.id) }}">
                 <div class="artifact-image">
