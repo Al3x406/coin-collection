@@ -1079,6 +1079,73 @@ html,body{
     .artifact-cabinet:not(.list-view) .artifact-image{height:265px!important;min-height:265px!important}
     .artifact-cabinet:not(.list-view) .artifact-image img{max-height:245px!important}
 }
+
+/* --- CABINET V4: tighter museum proportions --- */
+.artifact-cabinet:not(.list-view) .cabinet-row{
+    min-height:310px;
+}
+.artifact-cabinet:not(.list-view) .display-bay{
+    min-height:310px;
+    padding:18px 10px 62px;
+}
+.artifact-cabinet:not(.list-view) .bay-light{
+    top:0;
+    width:150px;
+    height:62px;
+    opacity:1;
+    background:radial-gradient(ellipse,rgba(255,211,126,.72) 0,rgba(218,137,43,.22) 34%,rgba(116,59,16,.09) 54%,transparent 75%);
+    filter:blur(4px);
+}
+.artifact-cabinet:not(.list-view) .artifact-image{
+    height:225px!important;
+    min-height:225px!important;
+    padding:3px 5px 0!important;
+}
+.artifact-cabinet:not(.list-view) .artifact-image img{
+    max-height:220px!important;
+    max-width:100%!important;
+    transform:scale(1.12);
+    transform-origin:center bottom;
+}
+.artifact-cabinet:not(.list-view) .display-bay::after{
+    left:5%;
+    right:5%;
+    bottom:50px;
+    height:20px;
+    background:linear-gradient(180deg,#925526 0,#5b2d12 42%,#2a1207 100%);
+    box-shadow:0 8px 10px #000c,inset 0 2px #bd7b3d;
+}
+.artifact-cabinet:not(.list-view) .artifact-body{
+    left:14%!important;
+    right:14%!important;
+    bottom:6px!important;
+    min-height:48px!important;
+    padding:5px 10px 6px!important;
+}
+.artifact-cabinet:not(.list-view) .artifact-name{
+    font-size:.82rem!important;
+    line-height:1.08!important;
+}
+.artifact-cabinet:not(.list-view) .artifact-meta{
+    margin-top:2px!important;
+    font-size:.57rem!important;
+}
+.artifact-cabinet:not(.list-view) .artifact-value{
+    margin-top:2px!important;
+    font-size:.63rem!important;
+}
+.artifact-cabinet:not(.list-view) .cabinet-row::after{
+    height:30px;
+    bottom:-18px;
+    background:linear-gradient(180deg,#a5642f 0,#713b18 26%,#47210d 58%,#1c0b04 100%);
+    box-shadow:0 11px 14px #000e,inset 0 2px 0 #ce8b4c,inset 0 -3px 0 #160804;
+}
+@media(min-width:1400px){
+    .artifact-cabinet:not(.list-view) .cabinet-row{min-height:330px}
+    .artifact-cabinet:not(.list-view) .display-bay{min-height:330px}
+    .artifact-cabinet:not(.list-view) .artifact-image{height:245px!important;min-height:245px!important}
+    .artifact-cabinet:not(.list-view) .artifact-image img{max-height:238px!important}
+}
 </style>
 
 <div class="cabinet-page">
