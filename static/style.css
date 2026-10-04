@@ -21,25 +21,74 @@ table {
 /*
  * Cabinet alignment + plaque typography
  * -------------------------------------
- * Every artifact row uses the same overlay geometry so artifact images and
- * plaque copy stay registered to the photographed lights/stands.
+ * The original cabinet artwork remains the geometry source for every row.
+ * Alternate artwork is used only as softly blended end decoration so the
+ * lights, stands, artifact images, and plaques never move between shelves.
  */
 @media (min-width: 901px) {
     body .cabinet-page .artifact-cabinet:not(.list-view) .cabinet-row:nth-child(n) {
+        background-image: url('/static/cabinet_background.png') !important;
         background-position: center 50% !important;
         background-size: 100% auto !important;
         background-repeat: no-repeat !important;
+        isolation: isolate;
     }
 
-    /* Rotate the three cabinet scenes so the end decorations vary by shelf. */
-    body .cabinet-page .artifact-cabinet:not(.list-view) .cabinet-row:nth-child(3n + 1) {
-        background-image: url('/static/cabinet_background.png') !important;
+    /*
+     * The generated variants use different stand/plaque geometry, so using
+     * them as full-row backgrounds knocks the live artifacts out of alignment.
+     * Instead, reveal only their decorative outer edges and feather them into
+     * the original cabinet scene.
+     */
+    body .cabinet-page .artifact-cabinet:not(.list-view) .cabinet-row:nth-child(3n + 2)::before,
+    body .cabinet-page .artifact-cabinet:not(.list-view) .cabinet-row:nth-child(3n)::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        z-index: 0;
+        pointer-events: none;
+        background-position: center 50%;
+        background-size: 100% auto;
+        background-repeat: no-repeat;
+        -webkit-mask-image: linear-gradient(
+            to right,
+            #000 0%,
+            #000 8%,
+            rgba(0,0,0,.72) 11%,
+            rgba(0,0,0,.28) 14%,
+            transparent 18%,
+            transparent 82%,
+            rgba(0,0,0,.28) 86%,
+            rgba(0,0,0,.72) 89%,
+            #000 92%,
+            #000 100%
+        );
+        mask-image: linear-gradient(
+            to right,
+            #000 0%,
+            #000 8%,
+            rgba(0,0,0,.72) 11%,
+            rgba(0,0,0,.28) 14%,
+            transparent 18%,
+            transparent 82%,
+            rgba(0,0,0,.28) 86%,
+            rgba(0,0,0,.72) 89%,
+            #000 92%,
+            #000 100%
+        );
     }
-    body .cabinet-page .artifact-cabinet:not(.list-view) .cabinet-row:nth-child(3n + 2) {
-        background-image: url('/static/cabinet_art/cabinet_variant_1.png') !important;
+
+    body .cabinet-page .artifact-cabinet:not(.list-view) .cabinet-row:nth-child(3n + 2)::before {
+        background-image: url('/static/cabinet_art/cabinet_variant_1.png');
     }
-    body .cabinet-page .artifact-cabinet:not(.list-view) .cabinet-row:nth-child(3n) {
-        background-image: url('/static/cabinet_art/cabinet_variant_2.png') !important;
+
+    body .cabinet-page .artifact-cabinet:not(.list-view) .cabinet-row:nth-child(3n)::before {
+        background-image: url('/static/cabinet_art/cabinet_variant_2.png');
+    }
+
+    /* Keep live artifact content above the decorative edge layer. */
+    body .cabinet-page .artifact-cabinet:not(.list-view) .display-bay {
+        z-index: 1;
     }
 
     /* Calibrated object window. */
@@ -169,15 +218,9 @@ table {
     }
 }
 
-/* Keep the same three-scene rotation on smaller screens too. */
+/* On smaller screens, preserve the proven original cabinet geometry. */
 @media (max-width: 900px) {
-    body .cabinet-page .artifact-cabinet:not(.list-view) .cabinet-row:nth-child(3n + 1) {
+    body .cabinet-page .artifact-cabinet:not(.list-view) .cabinet-row:nth-child(n) {
         background-image: url('/static/cabinet_background.png') !important;
-    }
-    body .cabinet-page .artifact-cabinet:not(.list-view) .cabinet-row:nth-child(3n + 2) {
-        background-image: url('/static/cabinet_art/cabinet_variant_1.png') !important;
-    }
-    body .cabinet-page .artifact-cabinet:not(.list-view) .cabinet-row:nth-child(3n) {
-        background-image: url('/static/cabinet_art/cabinet_variant_2.png') !important;
     }
 }
