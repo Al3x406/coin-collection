@@ -1774,6 +1774,25 @@ html,body{
 }
 
 
+/* --- CABINET V17: remove conflicting plaque positioning rules --- */
+@media(min-width:901px){
+    /* V16 inherited width + translate rules from V9/V10. Combining those
+       with left/right offsets shifted the copy left of the photographed plaque.
+       Use one positioning model only: center point + fixed plaque width. */
+    .artifact-cabinet:not(.list-view) .artifact-body{
+        left:50%!important;
+        right:auto!important;
+        width:52%!important;
+        bottom:4.4%!important;
+        height:14.5%!important;
+        transform:translateX(-50%)!important;
+        padding:2% 5% 1.5%!important;
+        margin:0!important;
+        box-sizing:border-box!important;
+    }
+}
+
+
 </style>
 
 <div class="cabinet-page">
