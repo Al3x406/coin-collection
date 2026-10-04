@@ -1561,6 +1561,31 @@ html,body{
         transform:translateX(-50%)!important;
     }
 }
+
+/* --- CABINET V10: match overlay columns to the four photographed bays --- */
+/* The cabinet artwork's usable bays occupy the middle ~80% of the image.
+   Previous grid padding was only 4.4%, which made outer labels drift outward. */
+.artifact-cabinet:not(.list-view) .cabinet-row{
+    padding-left:10%!important;
+    padding-right:10%!important;
+}
+.artifact-cabinet:not(.list-view) .display-bay{
+    width:100%!important;
+    min-width:0!important;
+}
+.artifact-cabinet:not(.list-view) .artifact-body{
+    left:50%!important;
+    right:auto!important;
+    width:64%!important;
+    transform:translateX(-50%)!important;
+}
+@media(max-width:900px){
+    .artifact-cabinet:not(.list-view) .cabinet-row{
+        padding-left:5%!important;
+        padding-right:5%!important;
+    }
+    .artifact-cabinet:not(.list-view) .artifact-body{width:62%!important}
+}
 </style>
 
 <div class="cabinet-page">
