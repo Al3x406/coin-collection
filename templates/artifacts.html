@@ -1146,6 +1146,68 @@ html,body{
     .artifact-cabinet:not(.list-view) .artifact-image{height:245px!important;min-height:245px!important}
     .artifact-cabinet:not(.list-view) .artifact-image img{max-height:238px!important}
 }
+
+/* --- CABINET V5: plaques mounted to shelf face --- */
+.artifact-cabinet:not(.list-view) .cabinet-row{
+    min-height:325px;
+    padding-bottom:18px;
+    box-sizing:border-box;
+}
+.artifact-cabinet:not(.list-view) .display-bay{
+    min-height:307px;
+    padding:16px 10px 48px;
+    overflow:visible;
+}
+.artifact-cabinet:not(.list-view) .artifact-image{
+    height:238px!important;
+    min-height:238px!important;
+    padding-bottom:12px!important;
+}
+.artifact-cabinet:not(.list-view) .artifact-image img{
+    max-height:224px!important;
+}
+.artifact-cabinet:not(.list-view) .display-bay::after{
+    left:5%;
+    right:5%;
+    bottom:34px;
+    height:17px;
+    z-index:5;
+}
+.artifact-cabinet:not(.list-view) .artifact-body{
+    left:16%!important;
+    right:16%!important;
+    bottom:-10px!important;
+    min-height:42px!important;
+    padding:4px 10px 5px!important;
+    z-index:15!important;
+}
+.artifact-cabinet:not(.list-view) .artifact-name{
+    font-size:.76rem!important;
+    line-height:1.04!important;
+}
+.artifact-cabinet:not(.list-view) .artifact-meta{
+    margin-top:1px!important;
+    font-size:.53rem!important;
+}
+.artifact-cabinet:not(.list-view) .artifact-value{
+    margin-top:1px!important;
+    font-size:.59rem!important;
+}
+.artifact-cabinet:not(.list-view) .artifact-body::before,
+.artifact-cabinet:not(.list-view) .artifact-body::after{
+    top:6px;
+    width:4px;
+    height:4px;
+}
+.artifact-cabinet:not(.list-view) .cabinet-row::after{
+    z-index:13;
+}
+@media(min-width:1400px){
+    .artifact-cabinet:not(.list-view) .cabinet-row{min-height:345px}
+    .artifact-cabinet:not(.list-view) .display-bay{min-height:327px}
+    .artifact-cabinet:not(.list-view) .artifact-image{height:255px!important;min-height:255px!important}
+    .artifact-cabinet:not(.list-view) .artifact-image img{max-height:240px!important}
+}
 </style>
 
 <div class="cabinet-page">
