@@ -2876,67 +2876,104 @@ def save_artifact_images(file_storages, artifact):
 def artifacts():
     category = request.args.get("category", "").strip()
     search = request.args.get("search", "").strip()
+    country = request.args.get("country", "").strip()
+    condition = request.args.get("condition", "").strip()
+    sort = request.args.get("sort", "newest").strip()
+    view = request.args.get("view", "grid").strip()
+    year_from = request.args.get("year_from", "").strip()
+    year_to = request.args.get("year_to", "").strip()
 
     all_items = Artifact.query.order_by(Artifact.id.desc()).all()
-    items = all_items
+    items = list(all_items)
 
     if category and category in ARTIFACT_CATEGORIES:
-        items = [
-            artifact for artifact in items
-            if artifact.category == category
-        ]
+        items = [a for a in items if a.category == category]
+    if country:
+        items = [a for a in items if (a.country or "") == country]
+    if condition:
+        items = [a for a in items if (a.condition or "") == condition]
 
     if search:
         needle = search.casefold()
         items = [
-            artifact for artifact in items
+            a for a in items
             if needle in " ".join([
-                artifact.name or "",
-                artifact.country or "",
-                artifact.year_text or "",
-                artifact.description or "",
+                a.name or "", a.country or "", a.year_text or "",
+                a.description or "", a.notes or "", a.source or "",
+                a.category or "",
             ]).casefold()
         ]
 
+    def artifact_year_range(artifact):
+        years = [int(y) for y in re.findall(r"(?<!\\d)(\\d{4})(?!\\d)", artifact.year_text or "")]
+        if not years:
+            return (None, None)
+        return (min(years), max(years))
+
+    try:
+        min_year = int(year_from) if year_from else None
+    except ValueError:
+        min_year = None
+    try:
+        max_year = int(year_to) if year_to else None
+    except ValueError:
+        max_year = None
+
+    if min_year is not None:
+        items = [a for a in items if artifact_year_range(a)[1] is not None and artifact_year_range(a)[1] >= min_year]
+    if max_year is not None:
+        items = [a for a in items if artifact_year_range(a)[0] is not None and artifact_year_range(a)[0] <= max_year]
+
+    if sort == "name":
+        items.sort(key=lambda a: (a.name or "").casefold())
+    elif sort == "oldest":
+        items.sort(key=lambda a: (artifact_year_range(a)[0] is None, artifact_year_range(a)[0] or 999999, a.id))
+    elif sort == "newest_date":
+        items.sort(key=lambda a: (artifact_year_range(a)[1] is None, -(artifact_year_range(a)[1] or -999999), -a.id))
+    elif sort == "value_high":
+        items.sort(key=lambda a: (-(a.estimated_value or 0), (a.name or "").casefold()))
+    elif sort == "value_low":
+        items.sort(key=lambda a: (a.estimated_value is None, a.estimated_value or 0, (a.name or "").casefold()))
+    elif sort == "acquired":
+        items.sort(key=lambda a: (not bool(a.date_acquired), a.date_acquired or ""), reverse=False)
+        items.reverse()
+    else:
+        items.sort(key=lambda a: a.id, reverse=True)
+
+    category_counts = {cat: 0 for cat in ARTIFACT_CATEGORIES}
+    for a in all_items:
+        if a.category in category_counts:
+            category_counts[a.category] += 1
+
+    countries = sorted({a.country for a in all_items if a.country}, key=str.casefold)
+    conditions = sorted({a.condition for a in all_items if a.condition}, key=str.casefold)
+
     stats = {
         "total": len(all_items),
-        "categories": len({
-            artifact.category
-            for artifact in all_items
-            if artifact.category
-        }),
-        "estimated_value": sum(
-            artifact.estimated_value or 0
-            for artifact in all_items
-        ),
-        "paper_money": sum(
-            1 for artifact in all_items
-            if artifact.category == "Paper Money"
-        ),
-        "books": sum(
-            1 for artifact in all_items
-            if artifact.category == "Books"
-        ),
-        "medals": sum(
-            1 for artifact in all_items
-            if artifact.category == "Medals & Tokens"
-        ),
-        "antiques": sum(
-            1 for artifact in all_items
-            if artifact.category == "Antiques"
-        ),
-        "other": sum(
-            1 for artifact in all_items
-            if artifact.category == "Other Collectibles"
-        ),
+        "categories": len({a.category for a in all_items if a.category}),
+        "estimated_value": sum(a.estimated_value or 0 for a in all_items),
+        "paper_money": category_counts.get("Paper Money", 0),
+        "books": category_counts.get("Books", 0),
+        "medals": category_counts.get("Medals & Tokens", 0),
+        "antiques": category_counts.get("Antiques", 0),
+        "other": category_counts.get("Other Collectibles", 0),
     }
 
     return render_template(
         "artifacts.html",
         artifacts=items,
         categories=ARTIFACT_CATEGORIES,
+        category_counts=category_counts,
         selected_category=category,
         search=search,
+        countries=countries,
+        selected_country=country,
+        conditions=conditions,
+        selected_condition=condition,
+        year_from=year_from,
+        year_to=year_to,
+        sort=sort,
+        view=view if view in ("grid", "list") else "grid",
         stats=stats,
     )
 
