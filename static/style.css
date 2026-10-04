@@ -19,89 +19,92 @@ table {
 }
 
 /*
- * Cabinet grid registration
- * -------------------------
- * Each display bay is one coordinate system. The artifact and plaque text
- * occupy fixed rows inside that same bay, so they always share a centerline
- * and stay registered to the photographed stand/plaque.
+ * Artifact cabinet registration
+ * -----------------------------
+ * One clean coordinate system for the image-backed cabinet.
+ * Every row uses the same background crop, the four live bays are shifted
+ * slightly right to match the four photographed stand/light centers, and the
+ * artifact + plaque copy are positioned independently inside that same bay.
  */
 @media (min-width: 901px) {
     body .cabinet-page .artifact-cabinet:not(.list-view) .cabinet-row:nth-child(n) {
+        position: relative !important;
+        display: grid !important;
+        grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+        padding-left: 11.5% !important;
+        padding-right: 8.5% !important;
+        box-sizing: border-box !important;
         background-position: center 50% !important;
         background-size: 100% auto !important;
     }
 
     body .cabinet-page .artifact-cabinet:not(.list-view) .display-bay {
         position: relative !important;
-        display: grid !important;
-        grid-template-rows: 6% 58% 8% 16% 12% !important;
-        justify-items: center !important;
-        align-items: stretch !important;
+        display: block !important;
+        width: 100% !important;
         height: 100% !important;
+        min-width: 0 !important;
         min-height: 0 !important;
         padding: 0 !important;
+        margin: 0 !important;
         box-sizing: border-box !important;
         overflow: visible !important;
     }
 
-    /* Artifact display zone: centered under the lamp and bottom-aligned to the stand. */
+    /* Artifact photo: center beneath the lamp, bottom edge resting on stand. */
     body .cabinet-page .artifact-cabinet:not(.list-view) .cabinet-row:nth-child(n) .artifact-image,
     body .cabinet-page .artifact-cabinet:not(.list-view) .display-bay:nth-child(1) .artifact-image,
     body .cabinet-page .artifact-cabinet:not(.list-view) .display-bay:nth-child(2) .artifact-image,
     body .cabinet-page .artifact-cabinet:not(.list-view) .display-bay:nth-child(3) .artifact-image,
     body .cabinet-page .artifact-cabinet:not(.list-view) .display-bay:nth-child(4) .artifact-image {
-        grid-row: 2 !important;
-        position: static !important;
-        left: auto !important;
-        top: auto !important;
-        bottom: auto !important;
-        width: 58% !important;
-        height: 100% !important;
+        position: absolute !important;
+        left: 50% !important;
+        top: 7% !important;
+        bottom: 22.5% !important;
+        width: 56% !important;
+        height: auto !important;
         min-height: 0 !important;
+        margin: 0 !important;
         padding: 0 !important;
-        margin: 0 auto !important;
-        transform: none !important;
+        transform: translateX(-50%) !important;
         display: flex !important;
         align-items: flex-end !important;
         justify-content: center !important;
         background: transparent !important;
         overflow: visible !important;
         box-sizing: border-box !important;
-        align-self: stretch !important;
     }
 
     body .cabinet-page .artifact-cabinet:not(.list-view) .artifact-image img {
         display: block !important;
         width: auto !important;
         height: auto !important;
-        max-width: 92% !important;
-        max-height: 92% !important;
+        max-width: 90% !important;
+        max-height: 90% !important;
         margin: 0 auto !important;
         object-fit: contain !important;
         object-position: center bottom !important;
         transform: none !important;
     }
 
-    /* Plaque zone: fixed to the brass plate row of the background image. */
+    /* Plaque copy: absolute box mapped to the actual brass face. */
     body .cabinet-page .artifact-cabinet:not(.list-view) .cabinet-row:nth-child(n) .artifact-body {
-        grid-row: 4 !important;
-        position: static !important;
-        left: auto !important;
+        position: absolute !important;
+        left: 50% !important;
         right: auto !important;
         top: auto !important;
-        bottom: auto !important;
-        width: 48% !important;
-        height: 100% !important;
+        bottom: 4.5% !important;
+        width: 47% !important;
+        height: 14.5% !important;
         min-height: 0 !important;
-        margin: 0 auto !important;
-        padding: 2px 6% !important;
-        transform: none !important;
+        margin: 0 !important;
+        padding: 2px 4% 1px !important;
+        transform: translateX(-50%) !important;
         box-sizing: border-box !important;
         display: flex !important;
         flex-direction: column !important;
         align-items: center !important;
         justify-content: center !important;
-        align-self: stretch !important;
         overflow: hidden !important;
         text-align: center !important;
         background: transparent !important;
@@ -109,6 +112,7 @@ table {
         box-shadow: none !important;
         color: #181008 !important;
         text-shadow: none !important;
+        z-index: 20 !important;
     }
 
     body .cabinet-page .artifact-cabinet:not(.list-view) .artifact-name,
@@ -128,31 +132,30 @@ table {
     body .cabinet-page .artifact-cabinet:not(.list-view) .artifact-name {
         margin-top: 0 !important;
         color: #1b1108 !important;
-        font: 700 clamp(.48rem,.54vw,.66rem)/1.02 Georgia, serif !important;
+        font: 700 clamp(.48rem, .55vw, .67rem)/1 Georgia, serif !important;
         white-space: normal !important;
         display: -webkit-box !important;
         -webkit-box-orient: vertical !important;
         -webkit-line-clamp: 2 !important;
         line-clamp: 2 !important;
-        max-height: 2.04em !important;
+        max-height: 2em !important;
     }
 
     body .cabinet-page .artifact-cabinet:not(.list-view) .artifact-meta {
-        margin-top: 2px !important;
-        color: #51371e !important;
-        font-size: clamp(.33rem,.36vw,.44rem) !important;
+        margin-top: 1px !important;
+        color: #50361d !important;
+        font-size: clamp(.32rem, .36vw, .43rem) !important;
         line-height: 1 !important;
         font-weight: 600 !important;
         white-space: nowrap !important;
     }
 
     body .cabinet-page .artifact-cabinet:not(.list-view) .artifact-value {
-        margin-top: 2px !important;
+        margin-top: 1px !important;
         color: #241408 !important;
-        font-size: clamp(.37rem,.41vw,.50rem) !important;
+        font-size: clamp(.37rem, .41vw, .49rem) !important;
         line-height: 1 !important;
         font-weight: 800 !important;
         white-space: nowrap !important;
-        letter-spacing: .01em !important;
     }
 }
