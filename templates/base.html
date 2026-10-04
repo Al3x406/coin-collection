@@ -96,6 +96,65 @@
      to the cabinet page without disturbing the calibrated artifact layout. -->
 <link rel="stylesheet" href="{{ url_for('static', filename='cabinet_variants.css') }}">
 
+<script>
+(function () {
+    const cachePrefix = '/static/uploads/coins/reference_cache/';
+
+    function stableHash(value) {
+        // Small deterministic FNV-1a style hash. We hash only host + path so a
+        // refreshed Numista query string still maps to the same R2 object.
+        let hash = 2166136261;
+        for (let i = 0; i < value.length; i += 1) {
+            hash ^= value.charCodeAt(i);
+            hash = Math.imul(hash, 16777619);
+        }
+        return (hash >>> 0).toString(16).padStart(8, '0');
+    }
+
+    function routeNumistaReferenceImagesThroughCache() {
+        document.querySelectorAll('img[src]').forEach((img) => {
+            if (img.dataset.referenceCacheApplied === '1') {
+                return;
+            }
+
+            const raw = img.getAttribute('src');
+            if (!raw) {
+                return;
+            }
+
+            let source;
+            try {
+                source = new URL(raw, window.location.href);
+            } catch (error) {
+                return;
+            }
+
+            const host = source.hostname.toLowerCase();
+            if (!(host === 'numista.com' || host.endsWith('.numista.com'))) {
+                return;
+            }
+
+            const stableIdentity = host + source.pathname;
+            const filename = stableHash(stableIdentity) + '.jpg';
+            const cachedUrl = cachePrefix + filename
+                + '?source=' + encodeURIComponent(source.href);
+
+            img.dataset.referenceCacheApplied = '1';
+            img.src = cachedUrl;
+        });
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener(
+            'DOMContentLoaded',
+            routeNumistaReferenceImagesThroughCache
+        );
+    } else {
+        routeNumistaReferenceImagesThroughCache();
+    }
+}());
+</script>
+
 </body>
 
 </html>
