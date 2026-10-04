@@ -1441,6 +1441,70 @@ html,body{
     .artifact-cabinet:not(.list-view) .artifact-image{height:220px!important}
     .artifact-cabinet:not(.list-view) .artifact-body{bottom:20px!important}
 }
+
+/* --- CABINET V8: align collection overlays to photographed stands/plaques --- */
+.artifact-cabinet:not(.list-view) .display-bay{
+    padding:2% 7% 19%;
+}
+.artifact-cabinet:not(.list-view) .artifact-image{
+    height:72%!important;
+    align-items:flex-end!important;
+}
+.artifact-cabinet:not(.list-view) .artifact-image img{
+    max-width:84%!important;
+    max-height:88%!important;
+    transform:translateY(5%)!important;
+}
+.artifact-cabinet:not(.list-view) .artifact-body{
+    left:23%!important;
+    right:23%!important;
+    bottom:5.8%!important;
+    height:10.5%!important;
+    min-height:0!important;
+    padding:0 3%!important;
+    display:flex!important;
+    flex-direction:column!important;
+    justify-content:center!important;
+    overflow:hidden!important;
+}
+.artifact-cabinet:not(.list-view) .artifact-name{
+    display:-webkit-box!important;
+    -webkit-box-orient:vertical;
+    -webkit-line-clamp:2;
+    overflow:hidden!important;
+    font-size:clamp(.52rem,.58vw,.70rem)!important;
+    line-height:.96!important;
+    max-height:1.92em!important;
+}
+.artifact-cabinet:not(.list-view) .artifact-meta{
+    white-space:nowrap!important;
+    overflow:hidden!important;
+    text-overflow:ellipsis!important;
+    font-size:clamp(.38rem,.40vw,.48rem)!important;
+    line-height:.95!important;
+    margin-top:1px!important;
+}
+.artifact-cabinet:not(.list-view) .artifact-value{
+    white-space:nowrap!important;
+    overflow:hidden!important;
+    font-size:clamp(.42rem,.44vw,.53rem)!important;
+    line-height:.95!important;
+    margin-top:1px!important;
+}
+@media(max-width:900px){
+    .artifact-cabinet:not(.list-view) .display-bay{padding:18px 7% 66px}
+    .artifact-cabinet:not(.list-view) .artifact-image{height:215px!important}
+    .artifact-cabinet:not(.list-view) .artifact-image img{transform:none!important}
+    .artifact-cabinet:not(.list-view) .artifact-body{
+        left:19%!important;
+        right:19%!important;
+        bottom:18px!important;
+        height:44px!important;
+    }
+    .artifact-cabinet:not(.list-view) .artifact-name{font-size:.68rem!important}
+    .artifact-cabinet:not(.list-view) .artifact-meta{font-size:.48rem!important}
+    .artifact-cabinet:not(.list-view) .artifact-value{font-size:.52rem!important}
+}
 </style>
 
 <div class="cabinet-page">
