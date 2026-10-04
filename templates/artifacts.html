@@ -1309,6 +1309,138 @@ html,body{
 .artifact-cabinet.list-view .display-stand{display:none}
 @media(max-width:1150px){.cabinet-scenery{opacity:.38;transform:scale(.75);transform-origin:bottom}}
 @media(max-width:820px){.cabinet-scenery{display:none}}
+
+/* --- CABINET V7: image-backed display --- */
+.results-wrap.shelf-gallery{
+    max-width:1600px;
+    margin:0 auto;
+    padding:0;
+    background:#100703;
+    box-shadow:none;
+}
+.artifact-cabinet:not(.list-view){
+    border:0;
+    border-radius:0;
+    margin:0;
+    padding:0;
+    background:#120804;
+    box-shadow:none;
+}
+.artifact-cabinet:not(.list-view)::before,
+.artifact-cabinet:not(.list-view)::after,
+.artifact-cabinet:not(.list-view) .cabinet-row::before,
+.artifact-cabinet:not(.list-view) .cabinet-row::after,
+.artifact-cabinet:not(.list-view) .display-bay::after,
+.artifact-cabinet:not(.list-view) .bay-light,
+.artifact-cabinet:not(.list-view) .display-stand,
+.artifact-cabinet:not(.list-view) .cabinet-scenery{
+    display:none!important;
+}
+.artifact-cabinet:not(.list-view) .cabinet-row{
+    position:relative;
+    display:grid;
+    grid-template-columns:repeat(4,minmax(0,1fr));
+    min-height:0;
+    height:auto;
+    aspect-ratio:1600 / 288;
+    padding:0 4.4%;
+    border:0;
+    background-image:url("{{ url_for('static', filename='cabinet_background.png') }}");
+    background-size:100% auto;
+    background-repeat:no-repeat;
+    box-shadow:none;
+    overflow:visible;
+}
+.artifact-cabinet:not(.list-view) .cabinet-row:nth-child(1){background-position:center 0%}
+.artifact-cabinet:not(.list-view) .cabinet-row:nth-child(2){background-position:center 50%}
+.artifact-cabinet:not(.list-view) .cabinet-row:nth-child(3n){background-position:center 100%}
+.artifact-cabinet:not(.list-view) .cabinet-row:nth-child(n+4){background-position:center 50%}
+.artifact-cabinet:not(.list-view) .display-bay{
+    position:relative;
+    min-height:0;
+    height:100%;
+    padding:2.5% 7% 15%;
+    border:0;
+    background:transparent;
+    box-shadow:none;
+    overflow:visible;
+}
+.artifact-cabinet:not(.list-view) .artifact-card{
+    height:100%;
+    min-height:0;
+    background:transparent;
+    border:0;
+    box-shadow:none;
+}
+.artifact-cabinet:not(.list-view) .artifact-image{
+    height:76%!important;
+    min-height:0!important;
+    padding:0!important;
+    display:flex!important;
+    align-items:flex-end!important;
+    justify-content:center!important;
+    background:transparent!important;
+    overflow:visible!important;
+}
+.artifact-cabinet:not(.list-view) .artifact-image img{
+    width:auto!important;
+    height:auto!important;
+    max-width:88%!important;
+    max-height:94%!important;
+    object-fit:contain!important;
+    transform:none!important;
+    filter:drop-shadow(0 8px 5px rgba(0,0,0,.72));
+}
+.artifact-cabinet:not(.list-view) .artifact-body{
+    position:absolute!important;
+    z-index:5!important;
+    left:18%!important;
+    right:18%!important;
+    bottom:4.5%!important;
+    min-height:0!important;
+    padding:0!important;
+    border:0!important;
+    border-radius:0!important;
+    background:transparent!important;
+    box-shadow:none!important;
+    color:#1d1007!important;
+    text-align:center!important;
+}
+.artifact-cabinet:not(.list-view) .artifact-body::before,
+.artifact-cabinet:not(.list-view) .artifact-body::after{display:none!important}
+.artifact-cabinet:not(.list-view) .artifact-name{
+    color:#1d1007!important;
+    font-size:clamp(.62rem,.72vw,.88rem)!important;
+    line-height:1.02!important;
+    font-weight:800!important;
+    text-shadow:0 1px rgba(255,230,170,.35);
+}
+.artifact-cabinet:not(.list-view) .artifact-meta{
+    color:#39210f!important;
+    font-size:clamp(.45rem,.49vw,.6rem)!important;
+    line-height:1!important;
+    margin-top:2px!important;
+}
+.artifact-cabinet:not(.list-view) .artifact-value{
+    color:#201106!important;
+    font-size:clamp(.5rem,.54vw,.66rem)!important;
+    line-height:1!important;
+    margin-top:2px!important;
+    font-weight:800!important;
+}
+@media(max-width:900px){
+    .artifact-cabinet:not(.list-view) .cabinet-row{
+        aspect-ratio:auto;
+        min-height:620px;
+        grid-template-columns:repeat(2,1fr);
+        background-size:cover;
+        background-position:center!important;
+        padding:20px 5%;
+    }
+    .artifact-cabinet:not(.list-view) .display-bay{min-height:290px;padding:18px 7% 60px}
+    .artifact-cabinet:not(.list-view) .artifact-image{height:220px!important}
+    .artifact-cabinet:not(.list-view) .artifact-body{bottom:20px!important}
+}
 </style>
 
 <div class="cabinet-page">
@@ -1448,15 +1580,6 @@ html,body{
         <div class="artifact-cabinet {% if view=='list' %}list-view{% endif %}">
             {% for row in artifacts|batch(4, none) %}
             <div class="cabinet-row">
-                <div class="cabinet-scenery scenery-left" aria-hidden="true">
-                    <span class="book-stack"><i></i><i></i><i></i><i></i></span>
-                    <span class="brass-globe"><i></i></span>
-                </div>
-                <div class="cabinet-scenery scenery-right" aria-hidden="true">
-                    <span class="tall-books"><i></i><i></i><i></i></span>
-                    <span class="curio-statue">♜</span>
-                    <span class="cabinet-plant"><i></i><b></b><em></em></span>
-                </div>
                 {% for artifact in row %}
                 {% if artifact %}
                 <a class="display-bay" href="{{ url_for('artifact_detail',artifact_id=artifact.id) }}">
@@ -1470,7 +1593,6 @@ html,body{
                         </div>
                         {% endif %}
                     </div>
-                    <div class="display-stand" aria-hidden="true"><i></i><b></b></div>
                     <div class="artifact-body">
                         <div class="artifact-name">{{ artifact.name }}</div>
                         <div class="artifact-meta">{{ artifact.year_text or 'Date unknown' }}{% if artifact.country %} · {{ artifact.country }}{% endif %}</div>
