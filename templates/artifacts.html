@@ -749,6 +749,189 @@ html,body{
         margin:0;
     }
 }
+
+/* --- STRUCTURAL CABINET REBUILD --- */
+.artifact-cabinet{
+    margin:0 4px;
+    border:12px solid #3b200e;
+    border-top-width:18px;
+    border-bottom-width:20px;
+    background:#120a05;
+    box-shadow:
+        0 18px 30px #0009,
+        inset 0 0 50px #000c,
+        0 0 0 1px #80542a;
+}
+.cabinet-row{
+    position:relative;
+    display:grid;
+    grid-template-columns:repeat(4,minmax(0,1fr));
+    min-height:390px;
+    border-bottom:22px solid #3c200e;
+    background:
+        linear-gradient(90deg,rgba(255,255,255,.018),transparent 12%,transparent 88%,rgba(255,255,255,.018)),
+        linear-gradient(180deg,#211207,#100905 68%,#090503);
+    box-shadow:
+        inset 0 12px 22px #0009,
+        inset 0 -18px 24px #000b,
+        0 7px 12px #000a;
+}
+.cabinet-row:last-child{border-bottom:0}
+.cabinet-row::after{
+    content:"";
+    position:absolute;
+    left:-12px;
+    right:-12px;
+    bottom:-22px;
+    height:22px;
+    z-index:6;
+    border-top:1px solid #9b6632;
+    border-bottom:1px solid #1b0d06;
+    background:linear-gradient(180deg,#855027 0,#573018 38%,#2b160a 72%,#160a05 100%);
+    box-shadow:0 8px 12px #000b,inset 0 2px 0 #b17a40;
+    pointer-events:none;
+}
+.cabinet-row:last-child::after{display:none}
+.display-bay{
+    position:relative;
+    min-width:0;
+    min-height:390px;
+    padding:32px 18px 76px;
+    border-right:14px solid #3b200e;
+    color:inherit;
+    text-decoration:none;
+    box-sizing:border-box;
+    background:
+        radial-gradient(ellipse at 50% 4%,rgba(242,177,78,.12),transparent 35%),
+        repeating-linear-gradient(90deg,rgba(255,255,255,.012) 0 1px,transparent 1px 6px);
+    box-shadow:
+        inset 8px 0 12px #0006,
+        inset -8px 0 12px #0006;
+}
+.display-bay:last-child{border-right:0}
+.display-bay:hover{background-color:rgba(91,48,17,.08)}
+.bay-light{
+    position:absolute;
+    z-index:1;
+    top:8px;
+    left:50%;
+    width:88px;
+    height:26px;
+    transform:translateX(-50%);
+    border-radius:50%;
+    background:radial-gradient(ellipse,rgba(255,216,139,.82) 0,rgba(211,137,45,.26) 38%,transparent 72%);
+    filter:blur(2px);
+}
+.display-bay .artifact-image{
+    position:relative!important;
+    z-index:2!important;
+    height:270px!important;
+    min-height:270px!important;
+    padding:10px!important;
+    display:flex!important;
+    align-items:flex-end!important;
+    justify-content:center!important;
+    border:0!important;
+    background:transparent!important;
+    box-sizing:border-box!important;
+}
+.display-bay .artifact-image img{
+    display:block!important;
+    width:auto!important;
+    height:auto!important;
+    max-width:100%!important;
+    max-height:250px!important;
+    object-fit:contain!important;
+    filter:drop-shadow(0 13px 8px #000c);
+}
+.display-bay .artifact-body{
+    position:absolute!important;
+    z-index:7!important;
+    left:8%!important;
+    right:8%!important;
+    bottom:12px!important;
+    width:auto!important;
+    min-height:62px!important;
+    margin:0!important;
+    padding:8px 10px!important;
+    text-align:center!important;
+    border:1px solid #b88b4d!important;
+    border-radius:3px!important;
+    background:linear-gradient(180deg,#dfbd79,#b88a47 56%,#93672f)!important;
+    box-shadow:0 5px 10px #000b,inset 0 1px 0 #fff6!important;
+    box-sizing:border-box!important;
+}
+.display-bay .artifact-name{
+    margin:0!important;
+    color:#211306!important;
+    font:700 .9rem/1.12 Georgia,serif!important;
+}
+.display-bay .artifact-meta{
+    margin-top:3px!important;
+    color:#4b351d!important;
+    font-size:.62rem!important;
+}
+.display-bay .artifact-value{
+    margin-top:4px!important;
+    color:#281707!important;
+    font-size:.68rem!important;
+    font-weight:900!important;
+}
+.empty-bay{pointer-events:none}
+.artifact-cabinet.list-view{
+    border:0;
+    background:transparent;
+    box-shadow:none;
+}
+.artifact-cabinet.list-view .cabinet-row{
+    display:contents;
+}
+.artifact-cabinet.list-view .display-bay{
+    display:grid;
+    grid-template-columns:150px 1fr;
+    min-height:130px;
+    margin-bottom:10px;
+    padding:0;
+    border:1px solid #4b341d;
+    border-radius:8px;
+    background:#0d0b09;
+    overflow:hidden;
+}
+.artifact-cabinet.list-view .empty-bay,
+.artifact-cabinet.list-view .bay-light{display:none}
+.artifact-cabinet.list-view .artifact-image{
+    height:130px!important;
+    min-height:130px!important;
+    align-items:center!important;
+}
+.artifact-cabinet.list-view .artifact-image img{max-height:110px!important}
+.artifact-cabinet.list-view .artifact-body{
+    position:static!important;
+    width:auto!important;
+    min-height:0!important;
+    text-align:left!important;
+    border:0!important;
+    border-radius:0!important;
+    background:transparent!important;
+    box-shadow:none!important;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+}
+.artifact-cabinet.list-view .artifact-name{color:#e9c37d!important}
+.artifact-cabinet.list-view .artifact-meta{color:#928779!important}
+.artifact-cabinet.list-view .artifact-value{color:#d0a65d!important}
+@media(max-width:1150px){
+    .cabinet-row{grid-template-columns:repeat(2,1fr)}
+    .display-bay:nth-child(2n){border-right:0}
+    .display-bay:nth-child(n+3){border-top:14px solid #3b200e}
+}
+@media(max-width:560px){
+    .artifact-cabinet{border-width:8px}
+    .cabinet-row{grid-template-columns:1fr}
+    .display-bay{border-right:0!important;border-top:12px solid #3b200e!important}
+    .display-bay:first-child{border-top:0!important}
+}
 </style>
 
 <div class="cabinet-page">
@@ -885,25 +1068,33 @@ html,body{
         </div>
 
         {% if artifacts %}
-        <div class="artifact-grid {% if view=='list' %}list-view{% endif %}">
-            {% for artifact in artifacts %}
-            <a class="artifact-card" href="{{ url_for('artifact_detail',artifact_id=artifact.id) }}">
-                <div class="artifact-image">
-                    {% if artifact.image_filename %}
-                    <img src="{{ url_for('static',filename='uploads/artifacts/' ~ artifact.image_filename) }}" alt="{{ artifact.name }}">
-                    {% else %}
-                    <div class="artifact-placeholder">
-                        {% if artifact.category=='Paper Money' %}${% elif artifact.category=='Books' %}B{% elif artifact.category=='Medals & Tokens' %}✦{% else %}◆{% endif %}
+        <div class="artifact-cabinet {% if view=='list' %}list-view{% endif %}">
+            {% for row in artifacts|batch(4, none) %}
+            <div class="cabinet-row">
+                {% for artifact in row %}
+                {% if artifact %}
+                <a class="display-bay" href="{{ url_for('artifact_detail',artifact_id=artifact.id) }}">
+                    <div class="bay-light"></div>
+                    <div class="artifact-image">
+                        {% if artifact.image_filename %}
+                        <img src="{{ url_for('static',filename='uploads/artifacts/' ~ artifact.image_filename) }}" alt="{{ artifact.name }}">
+                        {% else %}
+                        <div class="artifact-placeholder">
+                            {% if artifact.category=='Paper Money' %}${% elif artifact.category=='Books' %}B{% elif artifact.category=='Medals & Tokens' %}✦{% else %}◆{% endif %}
+                        </div>
+                        {% endif %}
                     </div>
-                    {% endif %}
-                </div>
-                <div class="artifact-body">
-                    <div class="artifact-cat">{{ artifact.category }}</div>
-                    <div class="artifact-name">{{ artifact.name }}</div>
-                    <div class="artifact-meta">{{ artifact.year_text or 'Date unknown' }}{% if artifact.country %} · {{ artifact.country }}{% endif %}</div>
-                    {% if artifact.estimated_value is not none %}<div class="artifact-value">Est. ${{ "{:,.2f}".format(artifact.estimated_value) }}</div>{% endif %}
-                </div>
-            </a>
+                    <div class="artifact-body">
+                        <div class="artifact-name">{{ artifact.name }}</div>
+                        <div class="artifact-meta">{{ artifact.year_text or 'Date unknown' }}{% if artifact.country %} · {{ artifact.country }}{% endif %}</div>
+                        {% if artifact.estimated_value is not none %}<div class="artifact-value">Est. ${{ "{:,.2f}".format(artifact.estimated_value) }}</div>{% endif %}
+                    </div>
+                </a>
+                {% else %}
+                <div class="display-bay empty-bay"></div>
+                {% endif %}
+                {% endfor %}
+            </div>
             {% endfor %}
         </div>
         {% else %}
