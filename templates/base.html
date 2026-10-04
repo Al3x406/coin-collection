@@ -95,17 +95,17 @@
 
 </main>
 
-
-
-
-
-
-
-
-
-
-
-
+<style>
+/* Loaded after each page's inline styles so the cabinet variant overlays
+   cannot be suppressed by the older V7 display:none rule in artifacts.html. */
+@media (min-width: 901px) {
+    body .cabinet-page .artifact-cabinet:not(.list-view) .cabinet-row:nth-child(3n + 2)::before,
+    body .cabinet-page .artifact-cabinet:not(.list-view) .cabinet-row:nth-child(3n)::before {
+        display: block !important;
+        visibility: visible !important;
+    }
+}
+</style>
 
 </body>
 
