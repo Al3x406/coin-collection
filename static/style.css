@@ -66,23 +66,28 @@ table {
         transform: none !important;
     }
 
-    /* Museum-label area mapped to the brass plate. */
+    /*
+     * Plaque text placement.
+     * Keep the copy inside the inset green-box area marked on the brass plate,
+     * rather than letting it use nearly the full plaque width/height.
+     */
     body .cabinet-page .artifact-cabinet:not(.list-view) .cabinet-row:nth-child(n) .artifact-body {
         position: absolute !important;
         left: 50% !important;
         right: auto !important;
-        bottom: 4.9% !important;
-        width: 48% !important;
-        height: 13.2% !important;
+        bottom: 16px !important;
+        width: 34% !important;
+        height: 38px !important;
         min-height: 0 !important;
         margin: 0 !important;
-        padding: 2px 7% 1px !important;
+        padding: 2px 6px !important;
         transform: translateX(-50%) !important;
         box-sizing: border-box !important;
-        display: flex !important;
-        flex-direction: column !important;
-        align-items: center !important;
-        justify-content: center !important;
+        display: grid !important;
+        grid-template-rows: auto auto auto !important;
+        align-content: center !important;
+        justify-items: center !important;
+        row-gap: 1px !important;
         overflow: hidden !important;
         text-align: center !important;
         background: transparent !important;
@@ -90,6 +95,7 @@ table {
         box-shadow: none !important;
         color: #181008 !important;
         text-shadow: none !important;
+        z-index: 20 !important;
     }
 
     body .cabinet-page .artifact-cabinet:not(.list-view) .artifact-name,
@@ -106,36 +112,34 @@ table {
         text-overflow: ellipsis !important;
     }
 
-    /* Artifact title: strongest visual line, with two lines available for long names. */
     body .cabinet-page .artifact-cabinet:not(.list-view) .artifact-name {
-        margin-top: 0 !important;
-        color: #1b1108 !important;
-        font: 700 clamp(.50rem,.58vw,.70rem)/.98 Georgia, serif !important;
-        white-space: normal !important;
+        margin: 0 !important;
+        color: #1d1208 !important;
+        font: 700 .72rem/.95 Georgia, serif !important;
         display: -webkit-box !important;
         -webkit-box-orient: vertical !important;
         -webkit-line-clamp: 2 !important;
         line-clamp: 2 !important;
-        max-height: 1.96em !important;
+        white-space: normal !important;
+        max-height: 1.9em !important;
     }
 
-    /* Secondary information is quieter but still readable. */
     body .cabinet-page .artifact-cabinet:not(.list-view) .artifact-meta {
-        margin-top: 1px !important;
-        color: #51371e !important;
-        font-size: clamp(.34rem,.38vw,.46rem) !important;
-        line-height: 1 !important;
+        margin: 0 !important;
+        color: #4a3218 !important;
+        font-size: .41rem !important;
+        line-height: .95 !important;
         font-weight: 600 !important;
         white-space: nowrap !important;
     }
 
     body .cabinet-page .artifact-cabinet:not(.list-view) .artifact-value {
-        margin-top: 1px !important;
-        color: #241408 !important;
-        font-size: clamp(.38rem,.43vw,.52rem) !important;
-        line-height: 1 !important;
-        font-weight: 800 !important;
+        margin: 0 !important;
+        color: #241409 !important;
+        font-size: .49rem !important;
+        line-height: .95 !important;
+        font-weight: 700 !important;
         white-space: nowrap !important;
-        letter-spacing: .01em !important;
+        letter-spacing: 0 !important;
     }
 }
