@@ -19,11 +19,11 @@ table {
 }
 
 /*
- * Cabinet shared-bay layout
+ * Cabinet grid registration
  * -------------------------
- * Each artifact image and its plaque copy now participate in ONE centered
- * vertical layout inside the same display bay. This avoids independent
- * absolute-position nudges drifting apart from one another.
+ * Each display bay is one coordinate system. The artifact and plaque text
+ * occupy fixed rows inside that same bay, so they always share a centerline
+ * and stay registered to the photographed stand/plaque.
  */
 @media (min-width: 901px) {
     body .cabinet-page .artifact-cabinet:not(.list-view) .cabinet-row:nth-child(n) {
@@ -33,35 +33,33 @@ table {
 
     body .cabinet-page .artifact-cabinet:not(.list-view) .display-bay {
         position: relative !important;
-        display: flex !important;
-        flex-direction: column !important;
-        align-items: center !important;
-        justify-content: flex-start !important;
+        display: grid !important;
+        grid-template-rows: 6% 58% 8% 16% 12% !important;
+        justify-items: center !important;
+        align-items: stretch !important;
         height: 100% !important;
         min-height: 0 !important;
-        padding: 7% 0 4.5% !important;
+        padding: 0 !important;
         box-sizing: border-box !important;
         overflow: visible !important;
     }
 
-    /*
-     * Artifact zone. The image and the plaque share the exact same centerline.
-     * The bottom of this zone lands at the photographed stand.
-     */
+    /* Artifact display zone: centered under the lamp and bottom-aligned to the stand. */
     body .cabinet-page .artifact-cabinet:not(.list-view) .cabinet-row:nth-child(n) .artifact-image,
     body .cabinet-page .artifact-cabinet:not(.list-view) .display-bay:nth-child(1) .artifact-image,
     body .cabinet-page .artifact-cabinet:not(.list-view) .display-bay:nth-child(2) .artifact-image,
     body .cabinet-page .artifact-cabinet:not(.list-view) .display-bay:nth-child(3) .artifact-image,
     body .cabinet-page .artifact-cabinet:not(.list-view) .display-bay:nth-child(4) .artifact-image {
+        grid-row: 2 !important;
         position: static !important;
         left: auto !important;
         top: auto !important;
         bottom: auto !important;
         width: 58% !important;
-        height: 62% !important;
+        height: 100% !important;
         min-height: 0 !important;
         padding: 0 !important;
-        margin: 0 auto 5.5% !important;
+        margin: 0 auto !important;
         transform: none !important;
         display: flex !important;
         align-items: flex-end !important;
@@ -69,6 +67,7 @@ table {
         background: transparent !important;
         overflow: visible !important;
         box-sizing: border-box !important;
+        align-self: stretch !important;
     }
 
     body .cabinet-page .artifact-cabinet:not(.list-view) .artifact-image img {
@@ -83,26 +82,26 @@ table {
         transform: none !important;
     }
 
-    /*
-     * Plaque copy. This is no longer absolutely positioned separately from the
-     * artifact, so both stay centered as one unit regardless of object shape.
-     */
+    /* Plaque zone: fixed to the brass plate row of the background image. */
     body .cabinet-page .artifact-cabinet:not(.list-view) .cabinet-row:nth-child(n) .artifact-body {
+        grid-row: 4 !important;
         position: static !important;
         left: auto !important;
         right: auto !important;
+        top: auto !important;
         bottom: auto !important;
         width: 48% !important;
-        height: 13% !important;
+        height: 100% !important;
         min-height: 0 !important;
         margin: 0 auto !important;
-        padding: 1px 5% !important;
+        padding: 2px 6% !important;
         transform: none !important;
         box-sizing: border-box !important;
         display: flex !important;
         flex-direction: column !important;
         align-items: center !important;
         justify-content: center !important;
+        align-self: stretch !important;
         overflow: hidden !important;
         text-align: center !important;
         background: transparent !important;
@@ -129,7 +128,7 @@ table {
     body .cabinet-page .artifact-cabinet:not(.list-view) .artifact-name {
         margin-top: 0 !important;
         color: #1b1108 !important;
-        font: 700 clamp(.50rem,.58vw,.70rem)/1.02 Georgia, serif !important;
+        font: 700 clamp(.48rem,.54vw,.66rem)/1.02 Georgia, serif !important;
         white-space: normal !important;
         display: -webkit-box !important;
         -webkit-box-orient: vertical !important;
@@ -141,7 +140,7 @@ table {
     body .cabinet-page .artifact-cabinet:not(.list-view) .artifact-meta {
         margin-top: 2px !important;
         color: #51371e !important;
-        font-size: clamp(.34rem,.38vw,.46rem) !important;
+        font-size: clamp(.33rem,.36vw,.44rem) !important;
         line-height: 1 !important;
         font-weight: 600 !important;
         white-space: nowrap !important;
@@ -150,7 +149,7 @@ table {
     body .cabinet-page .artifact-cabinet:not(.list-view) .artifact-value {
         margin-top: 2px !important;
         color: #241408 !important;
-        font-size: clamp(.38rem,.43vw,.52rem) !important;
+        font-size: clamp(.37rem,.41vw,.50rem) !important;
         line-height: 1 !important;
         font-weight: 800 !important;
         white-space: nowrap !important;
