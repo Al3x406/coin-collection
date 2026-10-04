@@ -500,6 +500,149 @@ html,body{
     flex:0 0 auto !important;
 }
 
+
+/* --- DISPLAY SHELF GALLERY --- */
+.shelf-gallery{
+    padding:28px 28px 38px;
+    border-top:10px solid #4a2913;
+    background:
+        linear-gradient(90deg,rgba(84,46,19,.32),transparent 7%,transparent 93%,rgba(84,46,19,.32)),
+        repeating-linear-gradient(90deg,rgba(255,255,255,.012) 0 1px,transparent 1px 5px),
+        linear-gradient(180deg,#160d07,#0a0705);
+}
+.shelf-gallery .results-heading{margin-bottom:18px}
+.shelf-gallery .artifact-grid{
+    gap:0 18px;
+    padding:0 8px;
+    background:
+        repeating-linear-gradient(
+            to bottom,
+            transparent 0,
+            transparent 354px,
+            #7b4822 354px,
+            #4b2913 364px,
+            #241208 376px,
+            transparent 376px,
+            transparent 392px
+        );
+}
+.shelf-gallery .artifact-card{
+    position:relative;
+    height:354px;
+    margin:0 0 38px;
+    overflow:visible;
+    border:0;
+    border-radius:0;
+    background:transparent;
+    box-shadow:none;
+    transform:none;
+}
+.shelf-gallery .artifact-card:hover{border:0;transform:translateY(-3px)}
+.shelf-gallery .artifact-card::before{
+    content:"";
+    position:absolute;
+    left:7%;
+    right:7%;
+    bottom:76px;
+    height:12px;
+    border:1px solid #85572c;
+    border-radius:2px;
+    background:linear-gradient(#70411e,#321b0d);
+    box-shadow:0 7px 10px #0009;
+    z-index:0;
+}
+.shelf-gallery .artifact-image{
+    position:relative;
+    z-index:1;
+    height:250px!important;
+    min-height:250px!important;
+    padding:14px!important;
+    border:0!important;
+    background:
+        radial-gradient(ellipse at 50% 8%,rgba(246,189,91,.18),transparent 42%),
+        transparent!important;
+}
+.shelf-gallery .artifact-image img{
+    filter:drop-shadow(0 10px 8px rgba(0,0,0,.72));
+}
+.shelf-gallery .artifact-body{
+    position:relative;
+    z-index:2;
+    width:88%;
+    min-height:78px;
+    margin:-2px auto 0;
+    padding:9px 12px 10px;
+    text-align:center;
+    border:1px solid #a1783f;
+    border-radius:4px;
+    background:linear-gradient(180deg,#d2ae68,#9b7339);
+    box-shadow:0 5px 10px #0009,inset 0 1px 0 #fff4;
+    box-sizing:border-box;
+}
+.shelf-gallery .artifact-cat{display:none}
+.shelf-gallery .artifact-name{
+    margin:0;
+    color:#241507;
+    font:700 .96rem/1.15 Georgia,serif;
+}
+.shelf-gallery .artifact-meta{
+    margin-top:3px;
+    color:#49341d;
+    font-size:.67rem;
+}
+.shelf-gallery .artifact-value{
+    margin-top:4px;
+    color:#281707;
+    font-size:.72rem;
+}
+.shelf-gallery .empty-results{
+    margin-bottom:20px;
+    background:#0c0906;
+}
+.shelf-gallery .artifact-grid.list-view{
+    display:grid;
+    grid-template-columns:1fr;
+    background:none;
+    gap:10px;
+}
+.shelf-gallery .artifact-grid.list-view .artifact-card{
+    display:grid;
+    grid-template-columns:150px 1fr;
+    height:auto;
+    min-height:130px;
+    margin:0;
+    overflow:hidden;
+    border:1px solid #4b341d;
+    border-radius:8px;
+    background:#0d0b09;
+}
+.shelf-gallery .artifact-grid.list-view .artifact-card::before{display:none}
+.shelf-gallery .artifact-grid.list-view .artifact-body{
+    width:auto;
+    margin:0;
+    text-align:left;
+    border:0;
+    border-radius:0;
+    background:transparent;
+    box-shadow:none;
+}
+.shelf-gallery .artifact-grid.list-view .artifact-name{color:#e9c37d}
+.shelf-gallery .artifact-grid.list-view .artifact-meta{color:#928779}
+.shelf-gallery .artifact-grid.list-view .artifact-value{color:#d0a65d}
+@media(max-width:820px){
+    .shelf-gallery{padding:22px 12px 30px}
+    .shelf-gallery .artifact-grid{
+        background:
+            repeating-linear-gradient(to bottom,transparent 0,transparent 354px,#7b4822 354px,#4b2913 364px,#241208 376px,transparent 376px,transparent 392px);
+    }
+}
+@media(max-width:560px){
+    .shelf-gallery .artifact-grid{background:none}
+    .shelf-gallery .artifact-card{
+        border-bottom:12px solid #4b2913;
+        margin-bottom:20px;
+    }
+}
 </style>
 
 <div class="cabinet-page">
@@ -629,8 +772,7 @@ html,body{
 
     </div>
 
-    {% if selected_category or search or selected_country or selected_condition or year_from or year_to or request.args.get('show_all') %}
-    <div class="results-wrap">
+    <div class="results-wrap shelf-gallery">
         <div class="results-heading">
             <h3>{% if selected_category %}{{ selected_category }}{% elif search %}Search Results{% else %}All Artifacts{% endif %}</h3>
             <span>{{ artifacts|length }} displayed</span>
@@ -662,7 +804,6 @@ html,body{
         <div class="empty-results">No artifacts found here yet.</div>
         {% endif %}
     </div>
-    {% endif %}
 
 </section>
 </div>
