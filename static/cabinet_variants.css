@@ -1,0 +1,72 @@
+/* Cabinet end-cap variants.
+   Keep the original cabinet image as the geometry source; these overlays only
+   replace the decorative outer portions of selected rows. */
+@media (min-width: 901px) {
+  body .cabinet-page .artifact-cabinet:not(.list-view) .cabinet-row:nth-child(n) {
+    background-image: url('/static/cabinet_background.png') !important;
+    background-position: center 50% !important;
+    background-size: 100% auto !important;
+    background-repeat: no-repeat !important;
+    isolation: isolate !important;
+  }
+
+  body .cabinet-page .artifact-cabinet:not(.list-view) .cabinet-row:nth-child(3n + 2)::before,
+  body .cabinet-page .artifact-cabinet:not(.list-view) .cabinet-row:nth-child(3n)::before {
+    content: "" !important;
+    position: absolute !important;
+    inset: 0 !important;
+    z-index: 5 !important;
+    pointer-events: none !important;
+    opacity: 1 !important;
+    background-position: center 50% !important;
+    background-size: 100% auto !important;
+    background-repeat: no-repeat !important;
+    -webkit-mask-image: linear-gradient(
+      to right,
+      #000 0%,
+      #000 15%,
+      rgba(0,0,0,.78) 18%,
+      rgba(0,0,0,.38) 21%,
+      transparent 25%,
+      transparent 75%,
+      rgba(0,0,0,.38) 79%,
+      rgba(0,0,0,.78) 82%,
+      #000 85%,
+      #000 100%
+    ) !important;
+    mask-image: linear-gradient(
+      to right,
+      #000 0%,
+      #000 15%,
+      rgba(0,0,0,.78) 18%,
+      rgba(0,0,0,.38) 21%,
+      transparent 25%,
+      transparent 75%,
+      rgba(0,0,0,.38) 79%,
+      rgba(0,0,0,.78) 82%,
+      #000 85%,
+      #000 100%
+    ) !important;
+  }
+
+  body .cabinet-page .artifact-cabinet:not(.list-view) .cabinet-row:nth-child(3n + 2)::before {
+    background-image: url('/static/cabinet_art/cabinet_variant_1.png') !important;
+  }
+
+  body .cabinet-page .artifact-cabinet:not(.list-view) .cabinet-row:nth-child(3n)::before {
+    background-image: url('/static/cabinet_art/cabinet_variant_2.png') !important;
+  }
+
+  /* Do not let the bay backgrounds hide the end-cap layer. */
+  body .cabinet-page .artifact-cabinet:not(.list-view) .display-bay {
+    z-index: auto !important;
+  }
+
+  /* Live collection content stays above the decorative overlay. */
+  body .cabinet-page .artifact-cabinet:not(.list-view) .artifact-image {
+    z-index: 10 !important;
+  }
+  body .cabinet-page .artifact-cabinet:not(.list-view) .artifact-body {
+    z-index: 20 !important;
+  }
+}
