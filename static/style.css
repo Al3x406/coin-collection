@@ -17,3 +17,116 @@ table {
 .navbar-brand {
     font-weight: bold;
 }
+
+/*
+ * Cabinet alignment override
+ * --------------------------
+ * Use ONE background crop/geometry for every artifact row.  The old layout
+ * used different vertical crops of cabinet_background.png, so the lights,
+ * stands and plaques moved from row to row while the HTML overlay coordinates
+ * stayed the same.  That made perfect alignment impossible.
+ */
+@media (min-width: 901px) {
+    body .cabinet-page .artifact-cabinet:not(.list-view) .cabinet-row:nth-child(n) {
+        background-position: center 50% !important;
+        background-size: 100% auto !important;
+    }
+
+    /* Every artifact now uses the exact same calibrated display window. */
+    body .cabinet-page .artifact-cabinet:not(.list-view) .cabinet-row:nth-child(n) .artifact-image {
+        position: absolute !important;
+        left: 50% !important;
+        top: 8% !important;
+        bottom: 26% !important;
+        width: 56% !important;
+        height: auto !important;
+        min-height: 0 !important;
+        padding: 0 !important;
+        transform: translateX(-50%) !important;
+        display: flex !important;
+        align-items: flex-end !important;
+        justify-content: center !important;
+        overflow: visible !important;
+    }
+
+    /* Cancel the old per-column nudges. */
+    body .cabinet-page .artifact-cabinet:not(.list-view) .display-bay:nth-child(1) .artifact-image,
+    body .cabinet-page .artifact-cabinet:not(.list-view) .display-bay:nth-child(2) .artifact-image,
+    body .cabinet-page .artifact-cabinet:not(.list-view) .display-bay:nth-child(3) .artifact-image,
+    body .cabinet-page .artifact-cabinet:not(.list-view) .display-bay:nth-child(4) .artifact-image {
+        left: 50% !important;
+    }
+
+    body .cabinet-page .artifact-cabinet:not(.list-view) .artifact-image img {
+        width: auto !important;
+        height: auto !important;
+        max-width: 92% !important;
+        max-height: 92% !important;
+        margin: 0 auto !important;
+        object-fit: contain !important;
+        object-position: center bottom !important;
+        transform: none !important;
+    }
+
+    /* One plaque coordinate system for every row. */
+    body .cabinet-page .artifact-cabinet:not(.list-view) .cabinet-row:nth-child(n) .artifact-body {
+        position: absolute !important;
+        left: 50% !important;
+        right: auto !important;
+        bottom: 6.2% !important;
+        width: 44% !important;
+        height: 10.2% !important;
+        min-height: 0 !important;
+        margin: 0 !important;
+        padding: 0 3% !important;
+        transform: translateX(-50%) !important;
+        box-sizing: border-box !important;
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center !important;
+        justify-content: center !important;
+        overflow: hidden !important;
+        text-align: center !important;
+        background: transparent !important;
+        border: 0 !important;
+        box-shadow: none !important;
+        color: #171008 !important;
+        text-shadow: none !important;
+    }
+
+    body .cabinet-page .artifact-cabinet:not(.list-view) .artifact-name,
+    body .cabinet-page .artifact-cabinet:not(.list-view) .artifact-meta,
+    body .cabinet-page .artifact-cabinet:not(.list-view) .artifact-value {
+        position: static !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+        transform: none !important;
+        text-align: center !important;
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+    }
+
+    body .cabinet-page .artifact-cabinet:not(.list-view) .artifact-name {
+        margin-top: 0 !important;
+        font: 700 clamp(.46rem,.50vw,.61rem)/1 Georgia, serif !important;
+        color: #171008 !important;
+    }
+
+    body .cabinet-page .artifact-cabinet:not(.list-view) .artifact-meta {
+        margin-top: 1px !important;
+        font-size: clamp(.31rem,.34vw,.41rem) !important;
+        line-height: 1 !important;
+        color: #39210f !important;
+    }
+
+    body .cabinet-page .artifact-cabinet:not(.list-view) .artifact-value {
+        margin-top: 1px !important;
+        font-size: clamp(.35rem,.38vw,.46rem) !important;
+        line-height: 1 !important;
+        font-weight: 700 !important;
+        color: #201106 !important;
+    }
+}
