@@ -1834,6 +1834,16 @@ html,body{
 }
 
 
+/* --- CABINET V19: calibrate the unique third background crop --- */
+@media(min-width:901px){
+    /* Row 3 is the only row using the bottom (100%) crop of cabinet_background.
+       Its photographed plaque sits materially higher than the 0%/50% crops. */
+    .artifact-cabinet:not(.list-view) .cabinet-row:nth-child(3) .artifact-body{
+        bottom:16.5%!important;
+    }
+}
+
+
 </style>
 
 <div class="cabinet-page">
