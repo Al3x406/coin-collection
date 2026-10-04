@@ -92,6 +92,10 @@
 
 </main>
 
+<!-- Loaded after page-level cabinet styles so decor overrides stay isolated
+     to the cabinet page without disturbing the calibrated artifact layout. -->
+<link rel="stylesheet" href="{{ url_for('static', filename='cabinet_variants.css') }}">
+
 </body>
 
 </html>
