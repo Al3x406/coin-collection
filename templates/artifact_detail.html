@@ -123,7 +123,9 @@ html,body{
 }
 
 .main-photo{
-    height:480px;
+    height:auto;
+    min-height:320px;
+    max-height:620px;
     display:grid;
     place-items:center;
     overflow:hidden;
@@ -135,9 +137,11 @@ html,body{
 
 .main-photo img{
     width:100%;
-    height:100%;
+    height:auto;
+    max-height:620px;
     object-fit:contain;
     display:block;
+    margin:auto;
 }
 .photo-placeholder{
     color:#9c7743;
@@ -293,14 +297,16 @@ html,body{
 @media(max-width:900px){
     .content-grid{grid-template-columns:1fr}
     .gallery{border-right:none;border-bottom:1px solid #4c351e}
-    .main-photo{height:430px}
+    .main-photo{min-height:280px;max-height:560px}
+    .main-photo img{max-height:560px}
 }
 
 @media(max-width:620px){
     .artifact-page{width:calc(100vw - 18px)}
     .museum-header{flex-direction:column}
     .header-actions{justify-content:flex-start}
-    .main-photo{height:340px}
+    .main-photo{min-height:220px;max-height:480px}
+    .main-photo img{max-height:480px}
     .thumbnails{grid-template-columns:repeat(4,1fr)}
     .facts{grid-template-columns:1fr}
 }
