@@ -47,12 +47,17 @@ table {
         overflow: visible !important;
     }
 
-    /* Cancel old per-column nudges from the template. */
-    body .cabinet-page .artifact-cabinet:not(.list-view) .display-bay:nth-child(1) .artifact-image,
+    /* Keep the middle two centered, and pull the outer two inward to match
+       the actual lamp/stand centers in the cabinet artwork. */
+    body .cabinet-page .artifact-cabinet:not(.list-view) .display-bay:nth-child(1) .artifact-image {
+        left: 54% !important;
+    }
     body .cabinet-page .artifact-cabinet:not(.list-view) .display-bay:nth-child(2) .artifact-image,
-    body .cabinet-page .artifact-cabinet:not(.list-view) .display-bay:nth-child(3) .artifact-image,
-    body .cabinet-page .artifact-cabinet:not(.list-view) .display-bay:nth-child(4) .artifact-image {
+    body .cabinet-page .artifact-cabinet:not(.list-view) .display-bay:nth-child(3) .artifact-image {
         left: 50% !important;
+    }
+    body .cabinet-page .artifact-cabinet:not(.list-view) .display-bay:nth-child(4) .artifact-image {
+        left: 46% !important;
     }
 
     body .cabinet-page .artifact-cabinet:not(.list-view) .artifact-image img {
@@ -96,6 +101,18 @@ table {
         color: #181008 !important;
         text-shadow: none !important;
         z-index: 20 !important;
+    }
+
+    /* Match the plaque copy to the same corrected outer-bay centerline. */
+    body .cabinet-page .artifact-cabinet:not(.list-view) .display-bay:nth-child(1) .artifact-body {
+        left: 54% !important;
+    }
+    body .cabinet-page .artifact-cabinet:not(.list-view) .display-bay:nth-child(2) .artifact-body,
+    body .cabinet-page .artifact-cabinet:not(.list-view) .display-bay:nth-child(3) .artifact-body {
+        left: 50% !important;
+    }
+    body .cabinet-page .artifact-cabinet:not(.list-view) .display-bay:nth-child(4) .artifact-body {
+        left: 46% !important;
     }
 
     body .cabinet-page .artifact-cabinet:not(.list-view) .artifact-name,
