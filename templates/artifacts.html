@@ -1505,6 +1505,62 @@ html,body{
     .artifact-cabinet:not(.list-view) .artifact-meta{font-size:.48rem!important}
     .artifact-cabinet:not(.list-view) .artifact-value{font-size:.52rem!important}
 }
+
+/* --- CABINET V9: lock labels to plaque centers --- */
+.artifact-cabinet:not(.list-view) .artifact-body{
+    left:50%!important;
+    right:auto!important;
+    bottom:5.2%!important;
+    width:46%!important;
+    height:11.5%!important;
+    transform:translateX(-50%)!important;
+    box-sizing:border-box!important;
+    padding:0 4px!important;
+    align-items:center!important;
+    justify-content:center!important;
+    text-align:center!important;
+}
+.artifact-cabinet:not(.list-view) .artifact-name,
+.artifact-cabinet:not(.list-view) .artifact-meta,
+.artifact-cabinet:not(.list-view) .artifact-value{
+    display:block!important;
+    width:100%!important;
+    max-width:100%!important;
+    margin-left:0!important;
+    margin-right:0!important;
+    text-align:center!important;
+    position:static!important;
+    transform:none!important;
+}
+.artifact-cabinet:not(.list-view) .artifact-name{
+    white-space:nowrap!important;
+    text-overflow:ellipsis!important;
+    overflow:hidden!important;
+    -webkit-line-clamp:unset!important;
+    max-height:none!important;
+    font-size:clamp(.48rem,.52vw,.64rem)!important;
+    line-height:1!important;
+}
+.artifact-cabinet:not(.list-view) .artifact-meta{
+    font-size:clamp(.36rem,.38vw,.46rem)!important;
+    line-height:1!important;
+    margin-top:2px!important;
+}
+.artifact-cabinet:not(.list-view) .artifact-value{
+    font-size:clamp(.40rem,.42vw,.51rem)!important;
+    line-height:1!important;
+    margin-top:2px!important;
+}
+@media(max-width:900px){
+    .artifact-cabinet:not(.list-view) .artifact-body{
+        left:50%!important;
+        right:auto!important;
+        width:58%!important;
+        height:44px!important;
+        bottom:18px!important;
+        transform:translateX(-50%)!important;
+    }
+}
 </style>
 
 <div class="cabinet-page">
