@@ -1,19 +1,13 @@
-/* Cabinet end-cap variants.
-   The original cabinet artwork remains the geometry source for every row.
-   Alternate artwork is clipped to the far left/right ends only so none of the
-   variant shelves, stands, lights, or plaques can bleed into the live display. */
+/* Decorative cabinet end pieces using transparent PNG cutouts only.
+   The original cabinet image remains untouched so lights, shelves, stands,
+   artifact placement, and plaque alignment stay exactly as calibrated. */
 @media (min-width: 901px) {
-  body .cabinet-page .artifact-cabinet:not(.list-view) .cabinet-row:nth-child(n) {
-    background-image: url('/static/cabinet_background.png') !important;
-    background-position: center 50% !important;
-    background-size: 100% auto !important;
-    background-repeat: no-repeat !important;
+  body .cabinet-page .artifact-cabinet:not(.list-view) .cabinet-row {
     isolation: isolate !important;
   }
 
-  /* Rows 1, 4, 7... stay completely original.
-     Rows 2, 5, 8... use variant 1 end caps.
-     Rows 3, 6, 9... use variant 2 end caps. */
+  /* Keep rows 1, 4, 7... completely original. Add decor only to the
+     alternating rows between them. */
   body .cabinet-page .artifact-cabinet:not(.list-view) .cabinet-row:nth-child(3n + 2)::before,
   body .cabinet-page .artifact-cabinet:not(.list-view) .cabinet-row:nth-child(3n + 2)::after,
   body .cabinet-page .artifact-cabinet:not(.list-view) .cabinet-row:nth-child(3n)::before,
@@ -21,54 +15,72 @@
     content: "" !important;
     display: block !important;
     position: absolute !important;
-    top: 0 !important;
-    bottom: 0 !important;
-    width: 14% !important;
+    top: 6% !important;
+    bottom: 17% !important;
+    width: 12.5% !important;
     height: auto !important;
-    z-index: 6 !important;
+    z-index: 7 !important;
     pointer-events: none !important;
-    opacity: 1 !important;
+    opacity: .98 !important;
     background-repeat: no-repeat !important;
-    /* 14% wide crop -> 714.285% makes the source image render at the
-       same effective width as the full cabinet row. */
-    background-size: 714.285% auto !important;
+    background-size: contain, 100% 100% !important;
+    filter: drop-shadow(0 7px 5px rgba(0,0,0,.72));
   }
 
-  /* Left end cap: show only the left edge of the selected variant and softly
-     fade it before it reaches the first display stand. */
+  /* Left decor gets a subtle wood-colored backing so the original owl/books
+     do not ghost through transparent areas. It fades before the first stand. */
   body .cabinet-page .artifact-cabinet:not(.list-view) .cabinet-row:nth-child(3n + 2)::before,
   body .cabinet-page .artifact-cabinet:not(.list-view) .cabinet-row:nth-child(3n)::before {
-    left: 0 !important;
+    left: .7% !important;
     right: auto !important;
-    background-position: left 50% !important;
-    -webkit-mask-image: linear-gradient(to right,#000 0%,#000 72%,rgba(0,0,0,.72) 82%,rgba(0,0,0,.30) 91%,transparent 100%) !important;
-    mask-image: linear-gradient(to right,#000 0%,#000 72%,rgba(0,0,0,.72) 82%,rgba(0,0,0,.30) 91%,transparent 100%) !important;
+    background-position: left bottom, left top !important;
+    -webkit-mask-image: linear-gradient(to right,#000 0%,#000 78%,rgba(0,0,0,.72) 88%,transparent 100%) !important;
+    mask-image: linear-gradient(to right,#000 0%,#000 78%,rgba(0,0,0,.72) 88%,transparent 100%) !important;
   }
 
-  /* Right end cap: mirror the clipping/fade on the opposite side. */
+  /* Right side mirrors the left. */
   body .cabinet-page .artifact-cabinet:not(.list-view) .cabinet-row:nth-child(3n + 2)::after,
   body .cabinet-page .artifact-cabinet:not(.list-view) .cabinet-row:nth-child(3n)::after {
-    right: 0 !important;
+    right: .7% !important;
     left: auto !important;
-    background-position: right 50% !important;
-    -webkit-mask-image: linear-gradient(to left,#000 0%,#000 72%,rgba(0,0,0,.72) 82%,rgba(0,0,0,.30) 91%,transparent 100%) !important;
-    mask-image: linear-gradient(to left,#000 0%,#000 72%,rgba(0,0,0,.72) 82%,rgba(0,0,0,.30) 91%,transparent 100%) !important;
+    background-position: right bottom, right top !important;
+    -webkit-mask-image: linear-gradient(to left,#000 0%,#000 78%,rgba(0,0,0,.72) 88%,transparent 100%) !important;
+    mask-image: linear-gradient(to left,#000 0%,#000 78%,rgba(0,0,0,.72) 88%,transparent 100%) !important;
   }
 
-  body .cabinet-page .artifact-cabinet:not(.list-view) .cabinet-row:nth-child(3n + 2)::before,
-  body .cabinet-page .artifact-cabinet:not(.list-view) .cabinet-row:nth-child(3n + 2)::after {
-    background-image: url('/static/cabinet_art/cabinet_variant_1.png') !important;
+  /* Row 2, 8, 14... */
+  body .cabinet-page .artifact-cabinet:not(.list-view) .cabinet-row:nth-child(6n + 2)::before {
+    background-image: url('/static/cabinet_art/hourglass_books_ivy.png'), linear-gradient(to right,rgba(25,10,4,.97),rgba(28,12,5,.86) 72%,transparent 100%) !important;
+  }
+  body .cabinet-page .artifact-cabinet:not(.list-view) .cabinet-row:nth-child(6n + 2)::after {
+    background-image: url('/static/cabinet_art/treasure_chest_books_ivy.png'), linear-gradient(to left,rgba(25,10,4,.97),rgba(28,12,5,.86) 72%,transparent 100%) !important;
   }
 
-  body .cabinet-page .artifact-cabinet:not(.list-view) .cabinet-row:nth-child(3n)::before,
-  body .cabinet-page .artifact-cabinet:not(.list-view) .cabinet-row:nth-child(3n)::after {
-    background-image: url('/static/cabinet_art/cabinet_variant_2.png') !important;
+  /* Row 3, 9, 15... */
+  body .cabinet-page .artifact-cabinet:not(.list-view) .cabinet-row:nth-child(6n + 3)::before {
+    background-image: url('/static/cabinet_art/lantern_books_ivy.png'), linear-gradient(to right,rgba(25,10,4,.97),rgba(28,12,5,.86) 72%,transparent 100%) !important;
+  }
+  body .cabinet-page .artifact-cabinet:not(.list-view) .cabinet-row:nth-child(6n + 3)::after {
+    background-image: url('/static/cabinet_art/armillary_books_ivy.png'), linear-gradient(to left,rgba(25,10,4,.97),rgba(28,12,5,.86) 72%,transparent 100%) !important;
   }
 
-  /* Keep the real collection content above the decorative end-cap slices. */
-  body .cabinet-page .artifact-cabinet:not(.list-view) .display-bay {
-    z-index: auto !important;
+  /* Row 5, 11, 17... */
+  body .cabinet-page .artifact-cabinet:not(.list-view) .cabinet-row:nth-child(6n + 5)::before {
+    background-image: url('/static/cabinet_art/ship_books_ivy.png'), linear-gradient(to right,rgba(25,10,4,.97),rgba(28,12,5,.86) 72%,transparent 100%) !important;
   }
+  body .cabinet-page .artifact-cabinet:not(.list-view) .cabinet-row:nth-child(6n + 5)::after {
+    background-image: url('/static/cabinet_art/statue_books_ivy.png'), linear-gradient(to left,rgba(25,10,4,.97),rgba(28,12,5,.86) 72%,transparent 100%) !important;
+  }
+
+  /* Row 6, 12, 18... */
+  body .cabinet-page .artifact-cabinet:not(.list-view) .cabinet-row:nth-child(6n)::before {
+    background-image: url('/static/cabinet_art/owl_books_ivy.png'), linear-gradient(to right,rgba(25,10,4,.97),rgba(28,12,5,.86) 72%,transparent 100%) !important;
+  }
+  body .cabinet-page .artifact-cabinet:not(.list-view) .cabinet-row:nth-child(6n)::after {
+    background-image: url('/static/cabinet_art/globe_books_ivy.png'), linear-gradient(to left,rgba(25,10,4,.97),rgba(28,12,5,.86) 72%,transparent 100%) !important;
+  }
+
+  /* Live collection content always stays above the end decorations. */
   body .cabinet-page .artifact-cabinet:not(.list-view) .artifact-image {
     z-index: 10 !important;
   }
@@ -77,10 +89,9 @@
   }
 }
 
-/* Mobile/tablet keeps the proven original background only. */
 @media (max-width: 900px) {
-  body .cabinet-page .artifact-cabinet:not(.list-view) .cabinet-row:nth-child(n)::before,
-  body .cabinet-page .artifact-cabinet:not(.list-view) .cabinet-row:nth-child(n)::after {
+  body .cabinet-page .artifact-cabinet:not(.list-view) .cabinet-row::before,
+  body .cabinet-page .artifact-cabinet:not(.list-view) .cabinet-row::after {
     display: none !important;
   }
 }
