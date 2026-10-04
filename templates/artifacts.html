@@ -1657,6 +1657,32 @@ html,body{
         bottom:27%!important;
     }
 }
+
+/* --- CABINET V14: smaller objects + true bay-center registration --- */
+@media(min-width:901px){
+    /* Keep each object on the stand, but give it breathing room inside the
+       two stand uprights instead of allowing it to fill the whole span. */
+    .artifact-cabinet:not(.list-view) .artifact-image{
+        left:50%!important;
+        width:56%!important;
+        transform:translateX(-50%)!important;
+        justify-content:center!important;
+    }
+    .artifact-cabinet:not(.list-view) .artifact-image img{
+        max-width:86%!important;
+        max-height:86%!important;
+        margin-left:auto!important;
+        margin-right:auto!important;
+        object-position:center bottom!important;
+    }
+
+    /* The photographed cabinet's four light/stand centers are not perfectly
+       equidistant. Register each live bay to the actual center in the artwork. */
+    .artifact-cabinet:not(.list-view) .display-bay:nth-child(1) .artifact-image{left:48%!important}
+    .artifact-cabinet:not(.list-view) .display-bay:nth-child(2) .artifact-image{left:49%!important}
+    .artifact-cabinet:not(.list-view) .display-bay:nth-child(3) .artifact-image{left:51%!important}
+    .artifact-cabinet:not(.list-view) .display-bay:nth-child(4) .artifact-image{left:52%!important}
+}
 </style>
 
 <div class="cabinet-page">
