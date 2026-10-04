@@ -21,13 +21,25 @@ table {
 /*
  * Cabinet alignment + plaque typography
  * -------------------------------------
- * Every artifact row uses the same cabinet crop and the same overlay geometry.
- * This keeps lights, stands, images, and plaque copy aligned consistently.
+ * Every artifact row uses the same overlay geometry so artifact images and
+ * plaque copy stay registered to the photographed lights/stands.
  */
 @media (min-width: 901px) {
     body .cabinet-page .artifact-cabinet:not(.list-view) .cabinet-row:nth-child(n) {
         background-position: center 50% !important;
         background-size: 100% auto !important;
+        background-repeat: no-repeat !important;
+    }
+
+    /* Rotate the three cabinet scenes so the end decorations vary by shelf. */
+    body .cabinet-page .artifact-cabinet:not(.list-view) .cabinet-row:nth-child(3n + 1) {
+        background-image: url('/static/cabinet_background.png') !important;
+    }
+    body .cabinet-page .artifact-cabinet:not(.list-view) .cabinet-row:nth-child(3n + 2) {
+        background-image: url('/static/cabinet_art/cabinet_variant_1.png') !important;
+    }
+    body .cabinet-page .artifact-cabinet:not(.list-view) .cabinet-row:nth-child(3n) {
+        background-image: url('/static/cabinet_art/cabinet_variant_2.png') !important;
     }
 
     /* Calibrated object window. */
@@ -71,11 +83,7 @@ table {
         transform: none !important;
     }
 
-    /*
-     * Plaque text placement.
-     * Keep the copy inside the inset green-box area marked on the brass plate,
-     * rather than letting it use nearly the full plaque width/height.
-     */
+    /* Plaque copy is kept inside the brass inset area. */
     body .cabinet-page .artifact-cabinet:not(.list-view) .cabinet-row:nth-child(n) .artifact-body {
         position: absolute !important;
         left: 50% !important;
@@ -158,5 +166,18 @@ table {
         font-weight: 700 !important;
         white-space: nowrap !important;
         letter-spacing: 0 !important;
+    }
+}
+
+/* Keep the same three-scene rotation on smaller screens too. */
+@media (max-width: 900px) {
+    body .cabinet-page .artifact-cabinet:not(.list-view) .cabinet-row:nth-child(3n + 1) {
+        background-image: url('/static/cabinet_background.png') !important;
+    }
+    body .cabinet-page .artifact-cabinet:not(.list-view) .cabinet-row:nth-child(3n + 2) {
+        background-image: url('/static/cabinet_art/cabinet_variant_1.png') !important;
+    }
+    body .cabinet-page .artifact-cabinet:not(.list-view) .cabinet-row:nth-child(3n) {
+        background-image: url('/static/cabinet_art/cabinet_variant_2.png') !important;
     }
 }
