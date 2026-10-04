@@ -1701,6 +1701,79 @@ html,body{
 }
 
 
+/* --- CABINET V16: optical alignment + plaque-safe typography --- */
+@media(min-width:901px){
+    /* Treat each bay as a fixed museum slot. Images sit on a common baseline
+       under the lamp, rather than inheriting their source image proportions. */
+    .artifact-cabinet:not(.list-view) .artifact-image{
+        left:50%!important;
+        transform:translateX(-50%)!important;
+        width:58%!important;
+        height:60%!important;
+        bottom:25%!important;
+        display:flex!important;
+        align-items:flex-end!important;
+        justify-content:center!important;
+    }
+    .artifact-cabinet:not(.list-view) .artifact-image img{
+        width:auto!important;
+        height:auto!important;
+        max-width:100%!important;
+        max-height:100%!important;
+        margin:0 auto!important;
+        transform:none!important;
+        object-position:center bottom!important;
+    }
+
+    /* Slight row registration because the photographed shelf lips are not
+       at exactly the same percentage in every crop. */
+    .artifact-cabinet:not(.list-view) .cabinet-row:nth-child(1) .artifact-image{bottom:25.5%!important}
+    .artifact-cabinet:not(.list-view) .cabinet-row:nth-child(2) .artifact-image{bottom:26.5%!important}
+    .artifact-cabinet:not(.list-view) .cabinet-row:nth-child(n+3) .artifact-image{bottom:25.5%!important}
+
+    /* Put ALL copy inside the photographed brass plaque. */
+    .artifact-cabinet:not(.list-view) .artifact-body{
+        left:25%!important;
+        right:25%!important;
+        bottom:4.4%!important;
+        height:14.5%!important;
+        min-height:0!important;
+        padding:2.5% 5% 1.5%!important;
+        box-sizing:border-box!important;
+        display:flex!important;
+        flex-direction:column!important;
+        align-items:center!important;
+        justify-content:center!important;
+        overflow:hidden!important;
+    }
+    .artifact-cabinet:not(.list-view) .artifact-name{
+        width:100%!important;
+        margin:0!important;
+        font-size:clamp(.48rem,.57vw,.70rem)!important;
+        line-height:1.02!important;
+        white-space:nowrap!important;
+        overflow:hidden!important;
+        text-overflow:ellipsis!important;
+    }
+    .artifact-cabinet:not(.list-view) .artifact-meta{
+        width:100%!important;
+        margin:1px 0 0!important;
+        font-size:clamp(.34rem,.39vw,.47rem)!important;
+        line-height:1!important;
+        white-space:nowrap!important;
+        overflow:hidden!important;
+        text-overflow:ellipsis!important;
+    }
+    .artifact-cabinet:not(.list-view) .artifact-value{
+        width:100%!important;
+        margin:1px 0 0!important;
+        font-size:clamp(.38rem,.43vw,.51rem)!important;
+        line-height:1!important;
+        white-space:nowrap!important;
+    }
+}
+
+
 </style>
 
 <div class="cabinet-page">
