@@ -1793,6 +1793,47 @@ html,body{
 }
 
 
+/* --- CABINET V18: exact plaque interior registration --- */
+@media(min-width:901px){
+    /* The photographed brass face occupies the lower middle of each bay.
+       Keep the text well inside that face, away from the dark wooden stand. */
+    .artifact-cabinet:not(.list-view) .artifact-body{
+        left:50%!important;
+        right:auto!important;
+        width:44%!important;
+        height:10.2%!important;
+        bottom:6.2%!important;
+        transform:translateX(-50%)!important;
+        padding:0 3%!important;
+        display:flex!important;
+        flex-direction:column!important;
+        justify-content:center!important;
+        align-items:center!important;
+        overflow:hidden!important;
+        color:#171008!important;
+        text-shadow:none!important;
+        line-height:1!important;
+    }
+    .artifact-cabinet:not(.list-view) .artifact-name{
+        font-size:clamp(.42rem,.47vw,.57rem)!important;
+        line-height:1!important;
+        font-weight:700!important;
+        margin:0!important;
+    }
+    .artifact-cabinet:not(.list-view) .artifact-meta{
+        font-size:clamp(.30rem,.33vw,.39rem)!important;
+        line-height:1!important;
+        margin:1px 0 0!important;
+    }
+    .artifact-cabinet:not(.list-view) .artifact-value{
+        font-size:clamp(.34rem,.37vw,.44rem)!important;
+        line-height:1!important;
+        margin:1px 0 0!important;
+        font-weight:700!important;
+    }
+}
+
+
 </style>
 
 <div class="cabinet-page">
