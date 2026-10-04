@@ -1639,6 +1639,24 @@ html,body{
         transform:translateX(-50%)!important;
     }
 }
+
+/* --- CABINET V13: row-specific stand baselines --- */
+/* The source cabinet artwork does not place the stand at the same Y coordinate
+   in every cropped background segment. Calibrate each crop independently. */
+@media(min-width:901px){
+    /* Top photographed shelf: lower live objects onto the stand rail. */
+    .artifact-cabinet:not(.list-view) .cabinet-row:nth-child(1) .artifact-image{
+        bottom:25%!important;
+    }
+    /* Middle photographed shelf already matches the stand correctly. */
+    .artifact-cabinet:not(.list-view) .cabinet-row:nth-child(2) .artifact-image{
+        bottom:29%!important;
+    }
+    /* Lower/repeated shelves use the lower cabinet crop. */
+    .artifact-cabinet:not(.list-view) .cabinet-row:nth-child(n+3) .artifact-image{
+        bottom:27%!important;
+    }
+}
 </style>
 
 <div class="cabinet-page">
