@@ -1683,6 +1683,22 @@ html,body{
     .artifact-cabinet:not(.list-view) .display-bay:nth-child(3) .artifact-image{left:51%!important}
     .artifact-cabinet:not(.list-view) .display-bay:nth-child(4) .artifact-image{left:52%!important}
 }
+
+/* --- CABINET V15: measured center correction from deployed screenshot --- */
+@media(min-width:901px){
+    /* Keep the V14 size; only correct registration. The prior per-column
+       offsets were applied in the wrong direction. */
+    .artifact-cabinet:not(.list-view) .display-bay:nth-child(1) .artifact-image{left:52%!important}
+    .artifact-cabinet:not(.list-view) .display-bay:nth-child(2) .artifact-image{left:51%!important}
+    .artifact-cabinet:not(.list-view) .display-bay:nth-child(3) .artifact-image{left:49%!important}
+    .artifact-cabinet:not(.list-view) .display-bay:nth-child(4) .artifact-image{left:48%!important}
+
+    /* Drop image bottoms the final few pixels so they visually contact the
+       top surface of each photographed stand. */
+    .artifact-cabinet:not(.list-view) .cabinet-row:nth-child(1) .artifact-image{bottom:22%!important}
+    .artifact-cabinet:not(.list-view) .cabinet-row:nth-child(2) .artifact-image{bottom:26%!important}
+    .artifact-cabinet:not(.list-view) .cabinet-row:nth-child(n+3) .artifact-image{bottom:24%!important}
+}
 </style>
 
 <div class="cabinet-page">
