@@ -1599,6 +1599,46 @@ html,body{
         bottom:1.2%!important;
     }
 }
+
+/* --- CABINET V12: register objects to light + stand markers --- */
+@media(min-width:901px){
+    /* Each live bay is centered directly beneath its cabinet light. */
+    .artifact-cabinet:not(.list-view) .display-bay{
+        padding:0!important;
+    }
+    .artifact-cabinet:not(.list-view) .artifact-image{
+        position:absolute!important;
+        left:50%!important;
+        top:7%!important;
+        bottom:29%!important;
+        width:68%!important; /* span between the two stand uprights */
+        height:auto!important;
+        min-height:0!important;
+        transform:translateX(-50%)!important;
+        display:flex!important;
+        align-items:flex-end!important; /* object's bottom sits on stand */
+        justify-content:center!important;
+        overflow:visible!important;
+    }
+    .artifact-cabinet:not(.list-view) .artifact-image img{
+        width:auto!important;
+        height:auto!important;
+        max-width:100%!important;
+        max-height:100%!important;
+        object-fit:contain!important;
+        object-position:center bottom!important;
+        transform:none!important;
+        margin:0 auto!important;
+    }
+    /* Plaque copy remains centered independently below the stand. */
+    .artifact-cabinet:not(.list-view) .artifact-body{
+        left:50%!important;
+        right:auto!important;
+        bottom:1.2%!important;
+        width:64%!important;
+        transform:translateX(-50%)!important;
+    }
+}
 </style>
 
 <div class="cabinet-page">
