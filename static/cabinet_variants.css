@@ -1,6 +1,7 @@
 /* Cabinet end-cap variants.
-   Keep the original cabinet image as the geometry source; these overlays only
-   replace the decorative outer portions of selected rows. */
+   The original cabinet artwork remains the geometry source for every row.
+   Alternate artwork is clipped to the far left/right ends only so none of the
+   variant shelves, stands, lights, or plaques can bleed into the live display. */
 @media (min-width: 901px) {
   body .cabinet-page .artifact-cabinet:not(.list-view) .cabinet-row:nth-child(n) {
     background-image: url('/static/cabinet_background.png') !important;
@@ -10,63 +11,76 @@
     isolation: isolate !important;
   }
 
+  /* Rows 1, 4, 7... stay completely original.
+     Rows 2, 5, 8... use variant 1 end caps.
+     Rows 3, 6, 9... use variant 2 end caps. */
   body .cabinet-page .artifact-cabinet:not(.list-view) .cabinet-row:nth-child(3n + 2)::before,
-  body .cabinet-page .artifact-cabinet:not(.list-view) .cabinet-row:nth-child(3n)::before {
+  body .cabinet-page .artifact-cabinet:not(.list-view) .cabinet-row:nth-child(3n + 2)::after,
+  body .cabinet-page .artifact-cabinet:not(.list-view) .cabinet-row:nth-child(3n)::before,
+  body .cabinet-page .artifact-cabinet:not(.list-view) .cabinet-row:nth-child(3n)::after {
     content: "" !important;
+    display: block !important;
     position: absolute !important;
-    inset: 0 !important;
-    z-index: 5 !important;
+    top: 0 !important;
+    bottom: 0 !important;
+    width: 14% !important;
+    height: auto !important;
+    z-index: 6 !important;
     pointer-events: none !important;
     opacity: 1 !important;
-    background-position: center 50% !important;
-    background-size: 100% auto !important;
     background-repeat: no-repeat !important;
-    -webkit-mask-image: linear-gradient(
-      to right,
-      #000 0%,
-      #000 15%,
-      rgba(0,0,0,.78) 18%,
-      rgba(0,0,0,.38) 21%,
-      transparent 25%,
-      transparent 75%,
-      rgba(0,0,0,.38) 79%,
-      rgba(0,0,0,.78) 82%,
-      #000 85%,
-      #000 100%
-    ) !important;
-    mask-image: linear-gradient(
-      to right,
-      #000 0%,
-      #000 15%,
-      rgba(0,0,0,.78) 18%,
-      rgba(0,0,0,.38) 21%,
-      transparent 25%,
-      transparent 75%,
-      rgba(0,0,0,.38) 79%,
-      rgba(0,0,0,.78) 82%,
-      #000 85%,
-      #000 100%
-    ) !important;
+    /* 14% wide crop -> 714.285% makes the source image render at the
+       same effective width as the full cabinet row. */
+    background-size: 714.285% auto !important;
   }
 
-  body .cabinet-page .artifact-cabinet:not(.list-view) .cabinet-row:nth-child(3n + 2)::before {
+  /* Left end cap: show only the left edge of the selected variant and softly
+     fade it before it reaches the first display stand. */
+  body .cabinet-page .artifact-cabinet:not(.list-view) .cabinet-row:nth-child(3n + 2)::before,
+  body .cabinet-page .artifact-cabinet:not(.list-view) .cabinet-row:nth-child(3n)::before {
+    left: 0 !important;
+    right: auto !important;
+    background-position: left 50% !important;
+    -webkit-mask-image: linear-gradient(to right,#000 0%,#000 72%,rgba(0,0,0,.72) 82%,rgba(0,0,0,.30) 91%,transparent 100%) !important;
+    mask-image: linear-gradient(to right,#000 0%,#000 72%,rgba(0,0,0,.72) 82%,rgba(0,0,0,.30) 91%,transparent 100%) !important;
+  }
+
+  /* Right end cap: mirror the clipping/fade on the opposite side. */
+  body .cabinet-page .artifact-cabinet:not(.list-view) .cabinet-row:nth-child(3n + 2)::after,
+  body .cabinet-page .artifact-cabinet:not(.list-view) .cabinet-row:nth-child(3n)::after {
+    right: 0 !important;
+    left: auto !important;
+    background-position: right 50% !important;
+    -webkit-mask-image: linear-gradient(to left,#000 0%,#000 72%,rgba(0,0,0,.72) 82%,rgba(0,0,0,.30) 91%,transparent 100%) !important;
+    mask-image: linear-gradient(to left,#000 0%,#000 72%,rgba(0,0,0,.72) 82%,rgba(0,0,0,.30) 91%,transparent 100%) !important;
+  }
+
+  body .cabinet-page .artifact-cabinet:not(.list-view) .cabinet-row:nth-child(3n + 2)::before,
+  body .cabinet-page .artifact-cabinet:not(.list-view) .cabinet-row:nth-child(3n + 2)::after {
     background-image: url('/static/cabinet_art/cabinet_variant_1.png') !important;
   }
 
-  body .cabinet-page .artifact-cabinet:not(.list-view) .cabinet-row:nth-child(3n)::before {
+  body .cabinet-page .artifact-cabinet:not(.list-view) .cabinet-row:nth-child(3n)::before,
+  body .cabinet-page .artifact-cabinet:not(.list-view) .cabinet-row:nth-child(3n)::after {
     background-image: url('/static/cabinet_art/cabinet_variant_2.png') !important;
   }
 
-  /* Do not let the bay backgrounds hide the end-cap layer. */
+  /* Keep the real collection content above the decorative end-cap slices. */
   body .cabinet-page .artifact-cabinet:not(.list-view) .display-bay {
     z-index: auto !important;
   }
-
-  /* Live collection content stays above the decorative overlay. */
   body .cabinet-page .artifact-cabinet:not(.list-view) .artifact-image {
     z-index: 10 !important;
   }
   body .cabinet-page .artifact-cabinet:not(.list-view) .artifact-body {
     z-index: 20 !important;
+  }
+}
+
+/* Mobile/tablet keeps the proven original background only. */
+@media (max-width: 900px) {
+  body .cabinet-page .artifact-cabinet:not(.list-view) .cabinet-row:nth-child(n)::before,
+  body .cabinet-page .artifact-cabinet:not(.list-view) .cabinet-row:nth-child(n)::after {
+    display: none !important;
   }
 }
