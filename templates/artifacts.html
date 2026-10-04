@@ -1586,6 +1586,19 @@ html,body{
     }
     .artifact-cabinet:not(.list-view) .artifact-body{width:62%!important}
 }
+
+/* --- CABINET V11: vertical registration to photographed stands/plaques --- */
+/* Horizontal bay centers are now correct. Register the live overlays to the
+   furniture artwork vertically: objects rest on the stands and copy sits on
+   the brass plaques instead of floating above them. */
+@media(min-width:901px){
+    .artifact-cabinet:not(.list-view) .artifact-image img{
+        transform:translateY(16%)!important;
+    }
+    .artifact-cabinet:not(.list-view) .artifact-body{
+        bottom:1.2%!important;
+    }
+}
 </style>
 
 <div class="cabinet-page">
