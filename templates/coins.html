@@ -862,7 +862,7 @@
         {% else %}
         {% set note = item %}
         <article class="coin-card">
-            <a class="coin-card-link" href="{{ url_for('banknotes.edit_note',note_id=note.id) if is_owner else url_for('coins',type='banknote') }}">
+            <a class="coin-card-link" href="{{ url_for('banknotes.detail_note',note_id=note.id) }}">
                 <div class="coin-card-image-wrap">
                     {% if note.photos %}
                     <img class="coin-card-image banknote-round-preview" src="{{ url_for('static',filename=note.photos[0].filename) }}" alt="{{ note.name }} front" loading="lazy">
@@ -964,7 +964,7 @@
                     </tr>
                     {% else %}
                     {% set note = item %}
-                    <tr {% if is_owner %}data-href="{{ url_for('banknotes.edit_note',note_id=note.id) }}"{% endif %}>
+                    <tr data-href="{{ url_for('banknotes.detail_note',note_id=note.id) }}">
                         <td>{% if note.photos %}<img class="collection-table-photo banknote-round-preview" src="{{ url_for('static',filename=note.photos[0].filename) }}" alt="" loading="lazy">{% else %}—{% endif %}</td>
                         <td class="collection-table-name">{{ note.name }} <span class="badge bg-secondary">Banknote</span></td>
                         <td>{{ note.year or note.date_start_year or '—' }}</td>
@@ -972,7 +972,7 @@
                         <td>—</td><td>—</td><td>—</td>
                         <td>{{ '$%.2f'|format(note.estimated_value) if note.estimated_value is not none else '—' }}</td>
                         <td>1</td>
-                        <td>{% if is_owner %}<a class="collection-table-action" href="{{ url_for('banknotes.edit_note',note_id=note.id) }}">Edit</a>{% else %}Banknote{% endif %}</td>
+                        <td><a class="collection-table-action" href="{{ url_for('banknotes.detail_note',note_id=note.id) }}">View</a></td>
                     </tr>
                     {% endif %}
                     {% endfor %}
