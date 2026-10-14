@@ -84,6 +84,8 @@ OWNER_ONLY_ENDPOINTS = {
     "upload_coin_photos",
     "remove_coin_photo",
     "numista_search",
+    "numista_banknote_search",
+    "numista_banknote_details",
     "numista_type_details",
     "numista_type_issues",
     "identify_coin_ocr",
@@ -3923,6 +3925,58 @@ def get_numista_headers():
 
     return {
         "Numista-API-Key": api_key
+    }
+
+
+
+@app.route("/api/numista/banknotes/search")
+def numista_banknote_search():
+    headers = get_numista_headers()
+    if not headers:
+        return {"error": "Numista API key is not configured."}, 500
+    query = request.args.get("q", "").strip()
+    if not query:
+        return {"error": "Enter a banknote search term."}, 400
+    params = {"q": query, "category": "banknote", "lang": "en", "page": 1, "count": 25}
+    year = request.args.get("year", "").strip()
+    if year:
+        params["year"] = year
+    data, error = _numista_get("/types", headers, params)
+    if error:
+        return error
+    results = []
+    for item in data.get("types", []):
+        if item.get("category") not in (None, "banknote"):
+            continue
+        results.append({
+            "id": item.get("id"), "title": item.get("title"),
+            "issuer": (item.get("issuer") or {}).get("name"),
+            "min_year": item.get("min_year"), "max_year": item.get("max_year")
+        })
+    return {"results": results, "count": data.get("count", len(results))}
+
+
+@app.route("/api/numista/banknotes/type/<int:type_id>")
+def numista_banknote_details(type_id):
+    headers = get_numista_headers()
+    if not headers:
+        return {"error": "Numista API key is not configured."}, 500
+    item, error = _numista_get(f"/types/{type_id}", headers, {"lang": "en"})
+    if error:
+        return error
+    if item.get("category") != "banknote":
+        return {"error": "This Numista entry is not a banknote."}, 400
+    value = item.get("value") or {}
+    issuing_entity = item.get("issuing_entity") or {}
+    return {
+        "id": item.get("id"), "title": item.get("title"),
+        "country": (item.get("issuer") or {}).get("name"),
+        "denomination": value.get("text"),
+        "min_year": item.get("min_year"), "max_year": item.get("max_year"),
+        "issuing_authority": issuing_entity.get("name"),
+        "url": item.get("url"),
+        "front_image": (item.get("obverse") or {}).get("thumbnail"),
+        "back_image": (item.get("reverse") or {}).get("thumbnail")
     }
 
 
