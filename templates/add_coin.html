@@ -1,12 +1,16 @@
 {% extends "base.html" %}
 
 {% block title %}
-Add Coin
+Add Currency
 {% endblock %}
 
 {% block content %}
 
-<h1>Add Coin</h1>
+<h1>Add Currency</h1>
+<nav class="nav nav-pills mb-4" aria-label="Choose currency type">
+    <a class="nav-link active" aria-current="page" href="{{ url_for('add_coin') }}">Add Coin</a>
+    <a class="nav-link" href="{{ url_for('banknotes.add_note') }}">Add Banknote</a>
+</nav>
 
 <div class="card mb-4 border-info">
     <div class="card-body d-flex justify-content-between align-items-center flex-wrap gap-3">

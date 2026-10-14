@@ -1,7 +1,15 @@
 {% extends "base.html" %}
 {% block title %}{{ 'Edit' if note.id else 'Add' }} Banknote{% endblock %}
 {% block content %}
-<h1>{{ 'Edit' if note.id else 'Add' }} Banknote</h1>
+{% if not note.id %}
+<h1>Add Currency</h1>
+<nav class="nav nav-pills mb-4" aria-label="Choose currency type">
+    <a class="nav-link" href="{{ url_for('add_coin') }}">Add Coin</a>
+    <a class="nav-link active" aria-current="page" href="{{ url_for('banknotes.add_note') }}">Add Banknote</a>
+</nav>
+{% else %}
+<h1>Edit Banknote</h1>
+{% endif %}
 {% if error %}<div class="alert alert-danger">{{ error }}</div>{% endif %}
 <form method="post" enctype="multipart/form-data" class="row g-3">
 {% for key,label in [('name','Name'),('country','Issuing country'),('set_country','Set country'),('denomination','Denomination'),('currency','Currency'),('year','Year'),('date_start_year','Earliest year'),('date_end_year','Latest year'),('issuing_authority','Issuing authority'),('serial_number','Serial number'),('catalog_number','Catalog reference'),('portrait','Front design'),('reverse_design','Back design'),('condition','Condition'),('estimated_value','Estimated value (USD)'),('purchase_price','Purchase price (USD)'),('date_acquired','Date acquired'),('source','Source')] %}
