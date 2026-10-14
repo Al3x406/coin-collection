@@ -1629,7 +1629,10 @@ def coins():
         for coin in complete_collection
     )
 
-    all_banknotes = Banknote.query.all()
+    complete_banknotes = Banknote.query.all()
+    countries = sorted(set(countries) | {n.country.strip() for n in complete_banknotes if n.country and n.country.strip()})
+    years = sorted(set(years) | {n.year for n in complete_banknotes if n.year is not None}, reverse=True)
+    all_banknotes = list(complete_banknotes)
     if search:
         needle = search.casefold()
         all_banknotes = [n for n in all_banknotes if needle in " ".join(
@@ -1668,7 +1671,7 @@ def coins():
         "total_coins": total_coins,
         "countries": len(countries),
         "unique_types": len(unique_types),
-        "estimated_value": estimated_value,
+        "estimated_value": estimated_value + sum(n.estimated_value or 0 for n in complete_banknotes),
         "displayed_records": len(all_coins) + len(all_banknotes),
     }
 
