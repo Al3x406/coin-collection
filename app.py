@@ -1477,6 +1477,9 @@ def mint_detail(mint_id):
     )
 @app.route("/coins")
 def coins():
+    currency_type = request.args.get("type", "all").strip().lower()
+    if currency_type not in {"all", "coin", "banknote"}:
+        currency_type = "all"
     search = request.args.get("search", "").strip()
     country = request.args.get("country", "").strip()
     year = request.args.get("year", "").strip()
@@ -1626,17 +1629,57 @@ def coins():
         for coin in complete_collection
     )
 
+    complete_banknotes = Banknote.query.all()
+    countries = sorted(set(countries) | {n.country.strip() for n in complete_banknotes if n.country and n.country.strip()})
+    years = sorted(set(years) | {n.year for n in complete_banknotes if n.year is not None}, reverse=True)
+    all_banknotes = list(complete_banknotes)
+    if search:
+        needle = search.casefold()
+        all_banknotes = [n for n in all_banknotes if needle in " ".join(
+            [n.name or "", n.country or "", n.denomination or "", n.currency or "",
+             n.issuing_authority or "", n.catalog_number or ""]
+        ).casefold()]
+    if country:
+        all_banknotes = [n for n in all_banknotes if n.country == country]
+    if year:
+        try:
+            selected_year = int(year)
+            all_banknotes = [n for n in all_banknotes if n.year == selected_year or (
+                n.date_start_year is not None and n.date_end_year is not None
+                and n.date_start_year <= selected_year <= n.date_end_year)]
+        except ValueError:
+            pass
+    if mint or reference_image in {"missing", "has"}:
+        # Mint and coin reference-image filters do not apply to banknotes.
+        all_banknotes = []
+    reverse = order != "asc"
+    if sort_by == "value":
+        all_banknotes.sort(key=lambda n: n.estimated_value or 0, reverse=reverse)
+    elif sort_by == "country":
+        all_banknotes.sort(key=lambda n: (n.country or "").casefold(), reverse=reverse)
+    elif sort_by == "name":
+        all_banknotes.sort(key=lambda n: (n.name or "").casefold(), reverse=reverse)
+    else:
+        all_banknotes.sort(key=lambda n: n.year if n.year is not None else (
+            n.date_start_year if n.date_start_year is not None else -9999), reverse=reverse)
+    if currency_type == "coin":
+        all_banknotes = []
+    if currency_type == "banknote":
+        all_coins = []
+
     collection_stats = {
         "total_coins": total_coins,
         "countries": len(countries),
         "unique_types": len(unique_types),
-        "estimated_value": estimated_value,
-        "displayed_records": len(all_coins),
+        "estimated_value": estimated_value + sum(n.estimated_value or 0 for n in complete_banknotes),
+        "displayed_records": len(all_coins) + len(all_banknotes),
     }
 
     return render_template(
         "coins.html",
         coins=all_coins,
+        banknotes=all_banknotes,
+        currency_type=currency_type,
         search=search,
         country=country,
         year=year,
@@ -6881,7 +6924,7 @@ def collection_timeline():
         coins=all_coins
     )  
 from banknote_feature import register_banknotes
-register_banknotes(app, db)
+Banknote = register_banknotes(app, db)
 # Gunicorn does not execute the __main__ block; initialize additive tables on startup.
 with app.app_context():
     db.create_all()
