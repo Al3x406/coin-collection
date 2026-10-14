@@ -8,6 +8,9 @@
  const zoom=document.getElementById('banknoteCropZoom');
  const message=document.getElementById('banknoteCropMessage');
  const modal=window.bootstrap?.Modal ? new bootstrap.Modal(modalEl) : null;
+ const retry=document.getElementById('banknoteOpenCropAgain');
+ const feedback=document.getElementById('banknoteCropFeedback');
+ let lastInput=null;
  let input=null, source=null, objectUrl=null, scale=1, dx=0, dy=0, drag=null;
  const clamp=(n,a,b)=>Math.min(b,Math.max(a,n));
  function layout(){
@@ -30,12 +33,13 @@
   el.addEventListener('change',()=>{
    const file=el.files?.[0];if(!file)return;
    if(!file.type.startsWith('image/')){message.textContent='Choose an image file.';return;}
-   input=el;message.textContent='Loading photo…';
+   input=el;lastInput=el;retry.disabled=false;feedback.textContent='Photo selected. Crop editor should open now.';message.textContent='Loading photo…';
    objectUrl=URL.createObjectURL(file);
    const pic=new Image();
    pic.onload=()=>{
     source=pic;img.src=objectUrl;zoom.value='1';dx=dy=0;
     if(modal){modal.show();requestAnimationFrame(()=>{layout();message.textContent='Position the banknote inside the crop area.';});}
+    else {modalEl.style.display='block';modalEl.classList.add('show');modalEl.removeAttribute('aria-hidden');layout();}
     else message.textContent='Cropping is not available in this browser; the original photo will be used.';
    };
    pic.onerror=()=>{message.textContent='Unable to open this photo.';reset();};
@@ -47,7 +51,9 @@
  frame.addEventListener('pointermove',e=>{if(!drag)return;dx=drag.dx+e.clientX-drag.x;dy=drag.dy+e.clientY-drag.y;layout();});
  frame.addEventListener('pointerup',()=>drag=null);
  frame.addEventListener('pointercancel',()=>drag=null);
- document.getElementById('banknoteKeepOriginal').addEventListener('click',()=>modal?.hide());
+ function closeCrop(){if(modal)modal.hide();else {modalEl.style.display='none';modalEl.classList.remove('show');modalEl.setAttribute('aria-hidden','true');reset();}}
+ retry.addEventListener('click',()=>{if(lastInput?.files?.length){lastInput.dispatchEvent(new Event('change'));}else feedback.textContent='Take or select a photo first.';});
+ document.getElementById('banknoteKeepOriginal').addEventListener('click',()=>{feedback.textContent='Original photo selected.';closeCrop();});
  document.getElementById('banknoteApplyCrop').addEventListener('click',()=>{
   if(!source||!input)return;
   try{
@@ -63,7 +69,7 @@
     const dt=new DataTransfer();
     dt.items.add(new File([blob],(input.name||'banknote')+'-cropped.jpg',{type:'image/jpeg'}));
     input.files=dt.files;
-    modal?.hide();
+    feedback.textContent='Cropped photo ready to save.';closeCrop();
    },'image/jpeg',0.92);
   }catch(e){message.textContent='Crop failed. You can use the original photo instead.';}
  });
@@ -99,10 +105,13 @@
 
 <form method="post" enctype="multipart/form-data" class="row g-3">
 {% for key,label in [('name','Name'),('country','Issuing country'),('denomination','Denomination'),('year','Year'),('condition','Condition'),('estimated_value','Estimated value (USD)'),('purchase_price','Price paid (USD)'),('date_acquired','Date acquired')] %}
-<div class="col-md-6"><label class="form-label" for="{{ key }}">{{ label }}</label><input class="form-control" id="{{ key }}" name="{{ key }}" value="{{ note|attr(key) if note|attr(key) is not none else '' }}" {% if key=='name' %}required{% endif %}></div>
+<div class="col-md-6"><label class="form-label" for="{{ key }}">{{ label }}</label><input class="form-control" id="{{ key }}" name="{{ key }}" {% if key=='date_acquired' %}type="date"{% endif %} value="{{ note|attr(key) if note|attr(key) is not none else '' }}" {% if key=='name' %}required{% endif %}></div>
 {% endfor %}
 <div class="col-md-6"><label class="form-label">Front photo</label><input type="file" name="front" accept="image/*" data-banknote-crop="front" class="form-control"></div>
 <div class="col-md-6"><label class="form-label">Back photo</label><input type="file" name="back" accept="image/*" data-banknote-crop="back" class="form-control"></div>
+<div class="col-12"><p class="small text-muted mb-1">After taking a photo, tap <strong>Use Photo</strong> on the iPhone screen to return here.</p>
+<button type="button" id="banknoteOpenCropAgain" class="btn btn-outline-secondary btn-sm" disabled>Crop selected photo again</button>
+<div id="banknoteCropFeedback" class="small mt-2" role="status"></div></div>
 <div class="col-12"><label class="form-label" for="notes">Historical notes</label><textarea id="notes" name="notes" class="form-control" rows="4">{{ note.notes or '' }}</textarea></div>
 <details class="col-12 mt-4"><summary class="fw-semibold mb-3" style="cursor:pointer">Additional details (optional)</summary>
 <div class="row g-3">
