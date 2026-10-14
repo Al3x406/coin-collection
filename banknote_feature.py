@@ -112,6 +112,16 @@ def register_banknotes(app, db):
                 error = str(exc)
         return render_template("banknote_form.html", note=note, error=error)
 
+    @bp.route("/banknotes/<int:note_id>/delete", methods=["POST"])
+    def delete_note(note_id):
+        owner_required()
+        note = db.get_or_404(Banknote, note_id)
+        # Photos are related with delete-orphan cascade. Keep uploaded files in
+        # storage rather than risk deleting a file shared with another record.
+        db.session.delete(note)
+        db.session.commit()
+        return redirect(url_for("coins"))
+
     @bp.route("/banknotes/<int:note_id>/edit", methods=["GET","POST"])
     def edit_note(note_id):
         owner_required()
