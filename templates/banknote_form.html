@@ -1,5 +1,62 @@
 {% extends "base.html" %}
-{% block title %}{{ 'Edit' if note.id else 'Add' }} Banknote{% endblock %}
+{% block title %}{{ 'Edit' if note.id else 'Add' }} Banknote<script>
+(() => {
+  const query = document.getElementById('noteNumistaQuery');
+  const year = document.getElementById('noteNumistaYear');
+  const button = document.getElementById('noteNumistaSearch');
+  const results = document.getElementById('noteNumistaResults');
+  const status = document.getElementById('noteNumistaStatus');
+  const preview = document.getElementById('noteNumistaPreview');
+  const set = (key, value) => { const field = document.getElementById(key); if (field && value !== null && value !== undefined && value !== '') field.value = value; };
+  async function get(url) {
+    const response = await fetch(url, {credentials:'same-origin'});
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || 'Numista request failed');
+    return data;
+  }
+  function image(url, label) {
+    if (!url || !/^https:\/\//.test(url)) return;
+    const wrapper = document.createElement('div');
+    const img = document.createElement('img');
+    img.src = url; img.alt = label; img.style.maxWidth = '180px'; img.style.maxHeight = '130px'; img.style.objectFit = 'contain';
+    wrapper.appendChild(img); preview.appendChild(wrapper);
+  }
+  button.addEventListener('click', async () => {
+    const q = query.value.trim();
+    if (!q) {status.textContent='Enter a search term.'; return;}
+    results.replaceChildren(); preview.replaceChildren(); status.textContent='Searching…'; button.disabled=true;
+    try {
+      const params = new URLSearchParams({q});
+      if (year.value.trim()) params.set('year',year.value.trim());
+      const data = await get('/api/numista/banknotes/search?' + params);
+      status.textContent = data.results.length ? 'Choose the matching N# reference:' : 'No matching banknotes found.';
+      data.results.forEach(item => {
+        const option = document.createElement('button');
+        option.type='button'; option.className='list-group-item list-group-item-action';
+        option.textContent = 'N#' + item.id + ' · ' + (item.title || 'Banknote') + ' · ' + (item.issuer || '') + ' · ' + (item.min_year || '');
+        option.addEventListener('click', async () => {
+          status.textContent='Loading reference…';
+          try {
+            const detail = await get('/api/numista/banknotes/type/' + encodeURIComponent(item.id));
+            set('name',detail.title); set('country',detail.country); set('set_country',detail.country);
+            set('denomination',detail.denomination); set('issuing_authority',detail.issuing_authority);
+            if (detail.min_year === detail.max_year) set('year',detail.min_year);
+            set('date_start_year',detail.min_year); set('date_end_year',detail.max_year);
+            set('catalog_number','N#' + detail.id);
+            set('source',detail.url || 'https://en.numista.com/catalogue/note.php?id=' + detail.id);
+            preview.replaceChildren(); image(detail.front_image,'Numista front reference'); image(detail.back_image,'Numista back reference');
+            status.textContent='Reference N#' + detail.id + ' selected. Review details before saving.';
+          } catch(e) {status.textContent=e.message;}
+        });
+        results.appendChild(option);
+      });
+    } catch(e) {status.textContent=e.message;}
+    finally {button.disabled=false;}
+  });
+  query.addEventListener('keydown', e => {if(e.key==='Enter'){e.preventDefault();button.click();}});
+})();
+</script>
+{% endblock %}
 {% block content %}
 {% if not note.id %}
 <h1>Add Currency</h1>
@@ -11,6 +68,22 @@
 <h1>Edit Banknote</h1>
 {% endif %}
 {% if error %}<div class="alert alert-danger">{{ error }}</div>{% endif %}
+<section class="card mb-4 border-info">
+  <div class="card-body">
+    <h5 class="card-title">Find a Numista banknote reference</h5>
+    <p class="text-muted small">Search by country, denomination, or year. Select a match to fill the form. Your own photos remain separate.</p>
+    <div class="d-flex flex-wrap gap-2 mb-2">
+      <input id="noteNumistaQuery" class="form-control" style="max-width:380px" placeholder="e.g. France 100 francs 1940" aria-label="Numista banknote search">
+      <input id="noteNumistaYear" class="form-control" style="max-width:120px" placeholder="Year" aria-label="Optional year">
+      <button id="noteNumistaSearch" class="btn btn-outline-info" type="button">Search Numista</button>
+    </div>
+    <div id="noteNumistaStatus" role="status" class="small mb-2"></div>
+    <div id="noteNumistaResults" class="list-group"></div>
+    <div id="noteNumistaPreview" class="d-flex flex-wrap gap-3 mt-2"></div>
+    <small class="text-muted">Catalogue data © Numista. N# and source link will be saved as the reference. Verify the exact issue before saving.</small>
+  </div>
+</section>
+
 <form method="post" enctype="multipart/form-data" class="row g-3">
 {% for key,label in [('name','Name'),('country','Issuing country'),('set_country','Set country'),('denomination','Denomination'),('currency','Currency'),('year','Year'),('date_start_year','Earliest year'),('date_end_year','Latest year'),('issuing_authority','Issuing authority'),('serial_number','Serial number'),('catalog_number','Catalog reference'),('portrait','Front design'),('reverse_design','Back design'),('condition','Condition'),('estimated_value','Estimated value (USD)'),('purchase_price','Purchase price (USD)'),('date_acquired','Date acquired'),('source','Source')] %}
 <div class="col-md-6"><label class="form-label" for="{{ key }}">{{ label }}</label><input class="form-control" id="{{ key }}" name="{{ key }}" value="{{ getattr(note,key,None) if false else (note|attr(key) if note|attr(key) is not none else '') }}" {% if key=='name' %}required{% endif %}></div>
