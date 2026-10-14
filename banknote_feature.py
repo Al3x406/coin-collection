@@ -42,23 +42,6 @@ def register_banknotes(app, db):
         created_at = db.Column(db.DateTime, default=datetime.utcnow)
         banknote = db.relationship("Banknote", back_populates="photos")
 
-    class CoinSetAllowedType(db.Model):
-        __tablename__ = "coin_set_allowed_type"
-        set_id = db.Column(db.Integer, db.ForeignKey("coin_set.id"), primary_key=True)
-        collectible_type = db.Column(db.String(20), primary_key=True)
-
-    class BanknoteSetMembership(db.Model):
-        __tablename__ = "banknote_set_memberships"
-        set_id = db.Column(db.Integer, db.ForeignKey("coin_set.id"), primary_key=True)
-        banknote_id = db.Column(db.Integer, db.ForeignKey("banknote.id"), primary_key=True)
-
-    class BanknoteSetSlotSelection(db.Model):
-        __tablename__ = "banknote_set_slot_selection"
-        set_id = db.Column(db.Integer, db.ForeignKey("coin_set.id"), primary_key=True)
-        slot_type = db.Column(db.String(30), primary_key=True)
-        slot_id = db.Column(db.Integer, primary_key=True)
-        banknote_id = db.Column(db.Integer, db.ForeignKey("banknote.id"), nullable=False)
-
     bp = Blueprint("banknotes", __name__)
     def owner_required():
         if not session.get("is_owner"):
