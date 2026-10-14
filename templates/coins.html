@@ -576,7 +576,7 @@
 
                 {% if is_owner %}
                 <a class="collection-add-button" href="{{ url_for('add_coin') }}">
-                    + Add Coin
+                    + Add Currency
                 </a>
                 {% endif %}
             </div>
@@ -638,7 +638,6 @@
                 <option value="coin" {% if currency_type == 'coin' %}selected{% endif %}>Coins</option>
                 <option value="banknote" {% if currency_type == 'banknote' %}selected{% endif %}>Banknotes</option>
             </select>
-            {% if is_owner %}<a class="collection-add-button" href="{{ url_for('banknotes.add_note') }}">+ Add Banknote</a>{% endif %}
         </div>
         <div class="collection-filter-grid">
             <input
