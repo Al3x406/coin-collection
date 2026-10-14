@@ -90,6 +90,11 @@ def register_banknotes(app, db):
     def list_notes():
         return render_template("banknotes.html", notes=Banknote.query.order_by(Banknote.id.desc()).all())
 
+    @bp.route("/banknotes/<int:note_id>")
+    def detail_note(note_id):
+        note = db.get_or_404(Banknote, note_id)
+        return render_template("banknote_detail.html", note=note, is_owner=bool(session.get("is_owner")))
+
     @bp.route("/banknotes/add", methods=["GET","POST"])
     def add_note():
         owner_required()
@@ -101,7 +106,7 @@ def register_banknotes(app, db):
                 db.session.add(note)
                 save_photos(note)
                 db.session.commit()
-                return redirect(url_for("banknotes.list_notes"))
+                return redirect(url_for("banknotes.detail_note", note_id=note.id))
             except (ValueError, TypeError) as exc:
                 db.session.rollback()
                 error = str(exc)
