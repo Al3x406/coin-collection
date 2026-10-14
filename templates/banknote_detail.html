@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}{{ note.name }} · Banknote Details{% endblock %}
+{% block content %}
+<style>
+.banknote-detail{max-width:1050px;margin:2rem auto;padding:1.5rem;color:#eee}
+.banknote-detail h1{color:#f1dfb0}
+.banknote-detail .note-photo{max-width:100%;max-height:450px;object-fit:contain;border-radius:12px;border:1px solid #8e784a;background:#15191b}
+.banknote-detail .note-panel{background:#161c1e;border:1px solid #534b37;border-radius:14px;padding:1.25rem;margin:1.5rem 0}
+.banknote-detail dl{display:grid;grid-template-columns:minmax(120px,180px) 1fr;gap:12px}
+.banknote-detail dt{color:#b6a783}
+.banknote-detail dd{margin:0;overflow-wrap:anywhere}
+</style>
+<div class="banknote-detail">
+ <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+  <div><a href="{{ url_for('coins') }}">← Back to Collection</a><h1 class="mt-3">{{ note.name }}</h1><p>Banknote{% if note.country %} · {{ note.country }}{% endif %}</p></div>
+  {% if is_owner %}<a class="btn btn-outline-warning" href="{{ url_for('banknotes.edit_note',note_id=note.id) }}">Edit Banknote</a>{% endif %}
+ </div>
+ <div class="row g-3">{% for photo in note.photos %}
+  <div class="col-md-6"><div class="note-panel text-center"><div class="mb-2">{{ (photo.side or 'Photo')|title }}</div><img class="note-photo" src="{{ url_for('static',filename=photo.filename) }}" alt="{{ note.name }} {{ photo.side or 'photo' }}"></div></div>
+ {% endfor %}</div>
+ <div class="note-panel"><h3>Banknote Information</h3><dl>
+ {% for label,value in [('Name',note.name),('Issuing country',note.country),('Set country',note.set_country),('Denomination',note.denomination),('Currency',note.currency),('Year',note.year),('Issuing authority',note.issuing_authority),('Condition',note.condition),('Catalog number',note.catalog_number),('Serial number',note.serial_number),('Front design',note.portrait),('Back design',note.reverse_design)] %}
+ {% if value is not none and value != '' %}<dt>{{ label }}</dt><dd>{{ value }}</dd>{% endif %}
+ {% endfor %}
+ {% if note.date_start_year is not none or note.date_end_year is not none %}<dt>Date range</dt><dd>{{ note.date_start_year if note.date_start_year is not none else '?' }}–{{ note.date_end_year if note.date_end_year is not none else '?' }}</dd>{% endif %}
+ {% if note.estimated_value is not none %}<dt>Estimated value</dt><dd>${{ '%.2f'|format(note.estimated_value) }}</dd>{% endif %}
+ {% if note.purchase_price is not none %}<dt>Price paid</dt><dd>${{ '%.2f'|format(note.purchase_price) }}</dd>{% endif %}
+ {% if note.date_acquired %}<dt>Date acquired</dt><dd>{{ note.date_acquired }}</dd>{% endif %}
+ {% if note.source %}<dt>Reference</dt><dd><a href="{{ note.source }}" rel="noopener noreferrer" target="_blank">View reference</a></dd>{% endif %}
+ </dl></div>
+ {% if note.notes %}<div class="note-panel"><h3>Historical Notes</h3><p style="white-space:pre-wrap">{{ note.notes }}</p></div>{% endif %}
+</div>
+{% endblock %}
