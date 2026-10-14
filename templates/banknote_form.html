@@ -98,18 +98,18 @@
 </section>
 
 <form method="post" enctype="multipart/form-data" class="row g-3">
-{% for key,label in [('name','Name'),('country','Issuing country'),('denomination','Denomination'),('year','Year'),('condition','Condition'),('estimated_value','Estimated value (USD)')] %}
+{% for key,label in [('name','Name'),('country','Issuing country'),('denomination','Denomination'),('year','Year'),('condition','Condition'),('estimated_value','Estimated value (USD)'),('purchase_price','Price paid (USD)'),('date_acquired','Date acquired')] %}
 <div class="col-md-6"><label class="form-label" for="{{ key }}">{{ label }}</label><input class="form-control" id="{{ key }}" name="{{ key }}" value="{{ note|attr(key) if note|attr(key) is not none else '' }}" {% if key=='name' %}required{% endif %}></div>
 {% endfor %}
 <div class="col-md-6"><label class="form-label">Front photo</label><input type="file" name="front" accept="image/*" data-banknote-crop="front" class="form-control"></div>
 <div class="col-md-6"><label class="form-label">Back photo</label><input type="file" name="back" accept="image/*" data-banknote-crop="back" class="form-control"></div>
+<div class="col-12"><label class="form-label" for="notes">Historical notes</label><textarea id="notes" name="notes" class="form-control" rows="4">{{ note.notes or '' }}</textarea></div>
 <details class="col-12 mt-4"><summary class="fw-semibold mb-3" style="cursor:pointer">Additional details (optional)</summary>
 <div class="row g-3">
-{% for key,label in [('set_country','Set country'),('currency','Currency'),('date_start_year','Earliest year'),('date_end_year','Latest year'),('issuing_authority','Issuing authority'),('serial_number','Serial number'),('catalog_number','Numista / catalog reference'),('portrait','Front design'),('reverse_design','Back design'),('purchase_price','Purchase price (USD)'),('date_acquired','Date acquired'),('source','Source URL')] %}
+{% for key,label in [('set_country','Set country'),('currency','Currency'),('date_start_year','Earliest year'),('date_end_year','Latest year'),('issuing_authority','Issuing authority'),('serial_number','Serial number'),('catalog_number','Numista / catalog reference'),('portrait','Front design'),('reverse_design','Back design'),('source','Source URL')] %}
 <div class="col-md-6"><label class="form-label" for="{{ key }}">{{ label }}</label><input class="form-control" id="{{ key }}" name="{{ key }}" value="{{ note|attr(key) if note|attr(key) is not none else '' }}"></div>
 {% endfor %}
 <div class="col-12"><label><input type="checkbox" name="date_is_approx" {% if note.date_is_approx %}checked{% endif %}> Approximate date</label></div>
-<div class="col-12"><label class="form-label">Historical notes</label><textarea name="notes" class="form-control" rows="4">{{ note.notes or '' }}</textarea></div>
 </div></details>
 <div class="col-12"><button class="btn btn-primary" type="submit">Save banknote</button> <a class="btn btn-outline-secondary" href="{{ url_for('coins') }}">Cancel</a></div>
 </form>
@@ -119,7 +119,7 @@
  <div class="modal-dialog modal-dialog-centered"><div class="modal-content">
  <div class="modal-header"><h5 class="modal-title" id="banknoteCropTitle">Crop banknote photo</h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div>
  <div class="modal-body">
- <p class="small text-muted">Drag to center the banknote. Use the slider to zoom. The visible area will be saved.</p>
+ <p class="small text-muted">Drag to center the banknote, then zoom to fit. After taking a picture on iPhone, tap <strong>Use Photo</strong> first to open this editor.</p>
  <div id="banknoteCropFrame" style="width:100%;aspect-ratio:12/7;overflow:hidden;position:relative;touch-action:none;background:#151515;border:2px solid #b89a58;border-radius:8px;cursor:grab">
  <img id="banknoteCropImage" alt="Photo to crop" draggable="false" style="position:absolute;max-width:none;user-select:none;pointer-events:none">
  </div>
