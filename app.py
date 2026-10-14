@@ -6880,6 +6880,9 @@ def collection_timeline():
         "timeline.html",
         coins=all_coins
     )  
+from banknote_feature import register_banknotes
+register_banknotes(app, db)
+
 if __name__ == "__main__":
     with app.app_context():
         db.create_all()
