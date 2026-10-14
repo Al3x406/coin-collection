@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}Banknotes{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center"><h1>Banknotes</h1>{% if is_owner %}<a class="btn btn-primary" href="{{ url_for('banknotes.add_note') }}">Add banknote</a>{% endif %}</div>
+<div class="row g-3 mt-2">{% for note in notes %}<div class="col-md-6"><div class="card h-100"><div class="card-body">
+<h5>{{ note.name }}</h5><p class="mb-1">{{ note.country or 'Unknown issuer' }} · {{ note.year or 'Undated' }}</p>
+<p class="text-muted">{{ note.denomination or '' }} {{ note.currency or '' }}</p>
+{% for photo in note.photos %}<img src="{{ url_for('static',filename=photo.filename) }}" alt="{{ photo.side }} of {{ note.name }}" class="img-fluid rounded mb-2" style="max-height:180px">{% endfor %}
+<p>Estimated value: {{ '$%.2f'|format(note.estimated_value) if note.estimated_value is not none else 'Not set' }}</p>
+{% if is_owner %}<a href="{{ url_for('banknotes.edit_note',note_id=note.id) }}" class="btn btn-outline-primary btn-sm">Edit</a>{% endif %}
+</div></div></div>{% else %}<p>No banknotes entered yet.</p>{% endfor %}</div>
+{% endblock %}
