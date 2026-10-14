@@ -446,6 +446,8 @@
         border-bottom: 0;
     }
 
+    .banknote-round-preview { border-radius: 50%; aspect-ratio: 1 / 1; object-fit: contain; background: #0a0e10; }
+
     .collection-table-photo {
         width: 42px;
         height: 42px;
@@ -743,7 +745,9 @@
     {% if coins or banknotes %}
 
     <section id="collectionGrid" class="collection-grid">
-        {% for coin in coins %}
+        {% for kind, item in currency_entries %}
+        {% if kind == "coin" %}
+        {% set coin = item %}
         <article class="coin-card">
             <a class="coin-card-link" href="{{ url_for('coin_detail', coin_id=coin.id) }}">
                 <div class="coin-card-image-wrap">
@@ -855,13 +859,13 @@
                 </div>
             </a>
         </article>
-        {% endfor %}
-        {% for note in banknotes %}
+        {% else %}
+        {% set note = item %}
         <article class="coin-card">
             <a class="coin-card-link" href="{{ url_for('banknotes.edit_note',note_id=note.id) if is_owner else url_for('coins',type='banknote') }}">
                 <div class="coin-card-image-wrap">
                     {% if note.photos %}
-                    <img class="coin-card-image" src="{{ url_for('static',filename=note.photos[0].filename) }}" alt="{{ note.name }} front" loading="lazy">
+                    <img class="coin-card-image banknote-round-preview" src="{{ url_for('static',filename=note.photos[0].filename) }}" alt="{{ note.name }} front" loading="lazy">
                     {% else %}<div class="coin-card-no-image">Banknote</div>{% endif %}
                 </div>
                 <div class="p-3">
@@ -872,6 +876,7 @@
                 </div>
             </a>
         </article>
+        {% endif %}
         {% endfor %}
     </section>
 
@@ -893,7 +898,9 @@
                     </tr>
                 </thead>
                 <tbody>
-                    {% for coin in coins %}
+                    {% for kind, item in currency_entries %}
+                    {% if kind == "coin" %}
+                    {% set coin = item %}
                     <tr data-href="{{ url_for('coin_detail', coin_id=coin.id) }}">
                         <td>
                             {% if coin.personal_obverse_image %}
@@ -955,10 +962,10 @@
                             </a>
                         </td>
                     </tr>
-                    {% endfor %}
-                    {% for note in banknotes %}
+                    {% else %}
+                    {% set note = item %}
                     <tr {% if is_owner %}data-href="{{ url_for('banknotes.edit_note',note_id=note.id) }}"{% endif %}>
-                        <td>{% if note.photos %}<img class="collection-table-photo" src="{{ url_for('static',filename=note.photos[0].filename) }}" alt="" loading="lazy">{% else %}—{% endif %}</td>
+                        <td>{% if note.photos %}<img class="collection-table-photo banknote-round-preview" src="{{ url_for('static',filename=note.photos[0].filename) }}" alt="" loading="lazy">{% else %}—{% endif %}</td>
                         <td class="collection-table-name">{{ note.name }} <span class="badge bg-secondary">Banknote</span></td>
                         <td>{{ note.year or note.date_start_year or '—' }}</td>
                         <td>{{ note.country or '—' }}</td>
@@ -967,6 +974,7 @@
                         <td>1</td>
                         <td>{% if is_owner %}<a class="collection-table-action" href="{{ url_for('banknotes.edit_note',note_id=note.id) }}">Edit</a>{% else %}Banknote{% endif %}</td>
                     </tr>
+                    {% endif %}
                     {% endfor %}
                 </tbody>
             </table>
