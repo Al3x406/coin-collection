@@ -1,5 +1,75 @@
 {% extends "base.html" %}
-{% block title %}Add Currency{% endblock %}
+{% block title %}Add Currency
+<script>
+(() => {
+ const modalEl=document.getElementById('banknoteCropModal');
+ const frame=document.getElementById('banknoteCropFrame');
+ const img=document.getElementById('banknoteCropImage');
+ const zoom=document.getElementById('banknoteCropZoom');
+ const message=document.getElementById('banknoteCropMessage');
+ const modal=window.bootstrap?.Modal ? new bootstrap.Modal(modalEl) : null;
+ let input=null, source=null, objectUrl=null, scale=1, dx=0, dy=0, drag=null;
+ const clamp=(n,a,b)=>Math.min(b,Math.max(a,n));
+ function layout(){
+  if(!source)return;
+  const w=frame.clientWidth,h=frame.clientHeight;
+  const base=Math.max(w/source.width,h/source.height);
+  scale=base*Number(zoom.value);
+  const iw=source.width*scale,ih=source.height*scale;
+  dx=clamp(dx,(w-iw)/2,(iw-w)/2);
+  dy=clamp(dy,(h-ih)/2,(ih-h)/2);
+  img.style.width=iw+'px';img.style.height=ih+'px';
+  img.style.left=((w-iw)/2+dx)+'px';img.style.top=((h-ih)/2+dy)+'px';
+ }
+ function reset(){
+  if(objectUrl)URL.revokeObjectURL(objectUrl);
+  objectUrl=null;source=null;input=null;drag=null;
+ }
+ modalEl.addEventListener('hidden.bs.modal',reset);
+ document.querySelectorAll('[data-banknote-crop]').forEach(el=>{
+  el.addEventListener('change',()=>{
+   const file=el.files?.[0];if(!file)return;
+   if(!file.type.startsWith('image/')){message.textContent='Choose an image file.';return;}
+   input=el;message.textContent='Loading photo…';
+   objectUrl=URL.createObjectURL(file);
+   const pic=new Image();
+   pic.onload=()=>{
+    source=pic;img.src=objectUrl;zoom.value='1';dx=dy=0;
+    if(modal){modal.show();requestAnimationFrame(()=>{layout();message.textContent='Position the banknote inside the crop area.';});}
+    else message.textContent='Cropping is not available in this browser; the original photo will be used.';
+   };
+   pic.onerror=()=>{message.textContent='Unable to open this photo.';reset();};
+   pic.src=objectUrl;
+  });
+ });
+ zoom.addEventListener('input',layout);
+ frame.addEventListener('pointerdown',e=>{if(!source)return;drag={x:e.clientX,y:e.clientY,dx,dy};frame.setPointerCapture(e.pointerId);});
+ frame.addEventListener('pointermove',e=>{if(!drag)return;dx=drag.dx+e.clientX-drag.x;dy=drag.dy+e.clientY-drag.y;layout();});
+ frame.addEventListener('pointerup',()=>drag=null);
+ frame.addEventListener('pointercancel',()=>drag=null);
+ document.getElementById('banknoteKeepOriginal').addEventListener('click',()=>modal?.hide());
+ document.getElementById('banknoteApplyCrop').addEventListener('click',()=>{
+  if(!source||!input)return;
+  try{
+   const canvas=document.createElement('canvas');canvas.width=1200;canvas.height=700;
+   const ctx=canvas.getContext('2d');
+   const factor=canvas.width/frame.clientWidth;
+   ctx.fillStyle='#151515';ctx.fillRect(0,0,canvas.width,canvas.height);
+   ctx.drawImage(source,((frame.clientWidth-source.width*scale)/2+dx)*factor,
+    ((frame.clientHeight-source.height*scale)/2+dy)*factor,
+    source.width*scale*factor,source.height*scale*factor);
+   canvas.toBlob(blob=>{
+    if(!blob){message.textContent='Could not crop this image.';return;}
+    const dt=new DataTransfer();
+    dt.items.add(new File([blob],(input.name||'banknote')+'-cropped.jpg',{type:'image/jpeg'}));
+    input.files=dt.files;
+    modal?.hide();
+   },'image/jpeg',0.92);
+  }catch(e){message.textContent='Crop failed. You can use the original photo instead.';}
+ });
+})();
+</script>
+{% endblock %}
 {% block content %}
 {% if not note.id %}
 <h1>Add Currency</h1>
@@ -31,8 +101,8 @@
 {% for key,label in [('name','Name'),('country','Issuing country'),('denomination','Denomination'),('year','Year'),('condition','Condition'),('estimated_value','Estimated value (USD)')] %}
 <div class="col-md-6"><label class="form-label" for="{{ key }}">{{ label }}</label><input class="form-control" id="{{ key }}" name="{{ key }}" value="{{ note|attr(key) if note|attr(key) is not none else '' }}" {% if key=='name' %}required{% endif %}></div>
 {% endfor %}
-<div class="col-md-6"><label class="form-label">Front photo</label><input type="file" name="front" accept="image/*" class="form-control"></div>
-<div class="col-md-6"><label class="form-label">Back photo</label><input type="file" name="back" accept="image/*" class="form-control"></div>
+<div class="col-md-6"><label class="form-label">Front photo</label><input type="file" name="front" accept="image/*" data-banknote-crop="front" class="form-control"></div>
+<div class="col-md-6"><label class="form-label">Back photo</label><input type="file" name="back" accept="image/*" data-banknote-crop="back" class="form-control"></div>
 <details class="col-12 mt-4"><summary class="fw-semibold mb-3" style="cursor:pointer">Additional details (optional)</summary>
 <div class="row g-3">
 {% for key,label in [('set_country','Set country'),('currency','Currency'),('date_start_year','Earliest year'),('date_end_year','Latest year'),('issuing_authority','Issuing authority'),('serial_number','Serial number'),('catalog_number','Numista / catalog reference'),('portrait','Front design'),('reverse_design','Back design'),('purchase_price','Purchase price (USD)'),('date_acquired','Date acquired'),('source','Source URL')] %}
@@ -43,6 +113,22 @@
 </div></details>
 <div class="col-12"><button class="btn btn-primary" type="submit">Save banknote</button> <a class="btn btn-outline-secondary" href="{{ url_for('coins') }}">Cancel</a></div>
 </form>
+
+<div class="modal fade" id="banknoteCropModal" tabindex="-1" aria-labelledby="banknoteCropTitle" aria-hidden="true">
+ <div class="modal-dialog modal-dialog-centered"><div class="modal-content">
+ <div class="modal-header"><h5 class="modal-title" id="banknoteCropTitle">Crop banknote photo</h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div>
+ <div class="modal-body">
+ <p class="small text-muted">Drag to center the banknote. Use the slider to zoom. The visible area will be saved.</p>
+ <div id="banknoteCropFrame" style="width:100%;aspect-ratio:12/7;overflow:hidden;position:relative;touch-action:none;background:#151515;border:2px solid #b89a58;border-radius:8px;cursor:grab">
+ <img id="banknoteCropImage" alt="Photo to crop" draggable="false" style="position:absolute;max-width:none;user-select:none;pointer-events:none">
+ </div>
+ <label class="form-label mt-3" for="banknoteCropZoom">Zoom</label><input id="banknoteCropZoom" class="form-range" type="range" min="1" max="3" step="0.01" value="1">
+ <div id="banknoteCropMessage" class="small" role="status"></div>
+ </div><div class="modal-footer">
+ <button type="button" class="btn btn-outline-secondary" id="banknoteKeepOriginal">Use original</button>
+ <button type="button" class="btn btn-primary" id="banknoteApplyCrop">Use cropped photo</button>
+ </div></div></div>
+</div>
 <script>
 (() => {
   const query = document.getElementById('noteNumistaQuery');
