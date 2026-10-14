@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Edit' if note.id else 'Add' }} Banknote{% endblock %}
+{% block content %}
+<h1>{{ 'Edit' if note.id else 'Add' }} Banknote</h1>
+{% if error %}<div class="alert alert-danger">{{ error }}</div>{% endif %}
+<form method="post" enctype="multipart/form-data" class="row g-3">
+{% for key,label in [('name','Name'),('country','Issuing country'),('set_country','Set country'),('denomination','Denomination'),('currency','Currency'),('year','Year'),('date_start_year','Earliest year'),('date_end_year','Latest year'),('issuing_authority','Issuing authority'),('serial_number','Serial number'),('catalog_number','Catalog reference'),('portrait','Front design'),('reverse_design','Back design'),('condition','Condition'),('estimated_value','Estimated value (USD)'),('purchase_price','Purchase price (USD)'),('date_acquired','Date acquired'),('source','Source')] %}
+<div class="col-md-6"><label class="form-label" for="{{ key }}">{{ label }}</label><input class="form-control" id="{{ key }}" name="{{ key }}" value="{{ getattr(note,key,None) if false else (note|attr(key) if note|attr(key) is not none else '') }}" {% if key=='name' %}required{% endif %}></div>
+{% endfor %}
+<div class="col-12"><label><input type="checkbox" name="date_is_approx" {% if note.date_is_approx %}checked{% endif %}> Approximate date</label></div>
+<div class="col-md-6"><label class="form-label">Front photo</label><input type="file" name="front" accept="image/*" class="form-control"></div>
+<div class="col-md-6"><label class="form-label">Back photo</label><input type="file" name="back" accept="image/*" class="form-control"></div>
+<div class="col-12"><label class="form-label">Historical notes</label><textarea name="notes" class="form-control" rows="4">{{ note.notes or '' }}</textarea></div>
+<div class="col-12"><button class="btn btn-primary" type="submit">Save banknote</button> <a class="btn btn-outline-secondary" href="{{ url_for('banknotes.list_notes') }}">Cancel</a></div>
+</form>
+{% endblock %}
