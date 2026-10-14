@@ -52,12 +52,17 @@
  <div class="modal-dialog modal-dialog-centered"><div class="modal-content">
  <div class="modal-header"><h5 class="modal-title" id="banknoteCropTitle">Crop banknote photo</h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div>
  <div class="modal-body">
- <p class="small text-muted">Drag the image to position the bill. Adjust its size with Zoom, and adjust the crop shape with the Width slider.</p>
+ <p class="small text-muted">Drag the image to position the bill. Adjust its size with Zoom, straighten the tilt, and adjust the crop shape with Width. The guide stays level.</p>
  <div id="banknoteCropFrame" style="width:100%;aspect-ratio:12/7;overflow:hidden;position:relative;touch-action:none;background:#151515;border:2px solid #b89a58;border-radius:8px;cursor:grab">
- <img id="banknoteCropImage" alt="Photo to crop" draggable="false" style="position:absolute;max-width:none;user-select:none;pointer-events:none">
+ <img id="banknoteCropImage" alt="Photo to crop" draggable="false" style="position:absolute;max-width:none;user-select:none;pointer-events:none;transform-origin:center center">
+ <div aria-hidden="true" style="position:absolute;inset:5%;border:1px dashed rgba(255,255,255,.75);pointer-events:none;box-shadow:0 0 0 1px rgba(0,0,0,.35)"></div>
+ <div aria-hidden="true" style="position:absolute;left:50%;top:0;bottom:0;border-left:1px dashed rgba(255,255,255,.35);pointer-events:none"></div>
+ <div aria-hidden="true" style="position:absolute;top:50%;left:0;right:0;border-top:1px dashed rgba(255,255,255,.35);pointer-events:none"></div>
  </div>
  <label class="form-label mt-3" for="banknoteCropWidth">Crop width / shape</label><input id="banknoteCropWidth" class="form-range" type="range" min="1.2" max="2.8" step="0.05" value="1.7">
  <label class="form-label mt-3" for="banknoteCropZoom">Bill size / zoom</label><input id="banknoteCropZoom" class="form-range" type="range" min="0.35" max="3" step="0.01" value="1">
+ <label class="form-label mt-3" for="banknoteCropAngle">Straighten / tilt: <output id="banknoteCropAngleValue">0°</output></label><input id="banknoteCropAngle" class="form-range" type="range" min="-25" max="25" step="0.5" value="0">
+ <button type="button" id="banknoteResetAngle" class="btn btn-outline-secondary btn-sm">Reset tilt</button>
  <div id="banknoteCropMessage" class="small" role="status"></div>
  </div><div class="modal-footer">
  <button type="button" class="btn btn-outline-secondary" id="banknoteKeepOriginal">Use original</button>
@@ -128,6 +133,8 @@
  const img=document.getElementById('banknoteCropImage');
  const zoom=document.getElementById('banknoteCropZoom');
  const cropWidth=document.getElementById('banknoteCropWidth');
+ const angle=document.getElementById('banknoteCropAngle');
+ const angleValue=document.getElementById('banknoteCropAngleValue');
  const message=document.getElementById('banknoteCropMessage');
  const modal=window.bootstrap?.Modal ? new bootstrap.Modal(modalEl) : null;
  const retry=document.getElementById('banknoteOpenCropAgain');
@@ -145,6 +152,7 @@
   dy=clamp(dy,-h/2-ih/2,h/2+ih/2);
   img.style.width=iw+'px';img.style.height=ih+'px';
   img.style.left=((w-iw)/2+dx)+'px';img.style.top=((h-ih)/2+dy)+'px';
+  img.style.transform='rotate('+Number(angle.value)+'deg)';
  }
  function reset(){
   if(objectUrl)URL.revokeObjectURL(objectUrl);
@@ -159,7 +167,7 @@
    objectUrl=URL.createObjectURL(file);
    const pic=new Image();
    pic.onload=()=>{
-    source=pic;img.src=objectUrl;zoom.value='1';cropWidth.value='1.7';frame.style.aspectRatio=cropWidth.value+' / 1';dx=dy=0;
+    source=pic;img.src=objectUrl;zoom.value='1';cropWidth.value='1.7';angle.value='0';angleValue.textContent='0°';frame.style.aspectRatio=cropWidth.value+' / 1';dx=dy=0;
     if(modal){modal.show();requestAnimationFrame(()=>{layout();message.textContent='Position the banknote inside the crop area.';});}
     else {modalEl.style.display='block';modalEl.classList.add('show');modalEl.removeAttribute('aria-hidden');layout();}
 
@@ -169,6 +177,8 @@
   });
  });
  zoom.addEventListener('input',layout);
+ angle.addEventListener('input',()=>{angleValue.textContent=angle.value+'°';layout();});
+ document.getElementById('banknoteResetAngle').addEventListener('click',()=>{angle.value='0';angleValue.textContent='0°';layout();});
  cropWidth.addEventListener('input',()=>{frame.style.aspectRatio=cropWidth.value+' / 1';layout();});
  frame.addEventListener('pointerdown',e=>{if(!source)return;drag={x:e.clientX,y:e.clientY,dx,dy};frame.setPointerCapture(e.pointerId);});
  frame.addEventListener('pointermove',e=>{if(!drag)return;dx=drag.dx+e.clientX-drag.x;dy=drag.dy+e.clientY-drag.y;layout();});
@@ -184,9 +194,11 @@
    const ctx=canvas.getContext('2d');
    const factor=canvas.width/frame.clientWidth;
    ctx.fillStyle='#151515';ctx.fillRect(0,0,canvas.width,canvas.height);
-   ctx.drawImage(source,((frame.clientWidth-source.width*scale)/2+dx)*factor,
-    ((frame.clientHeight-source.height*scale)/2+dy)*factor,
-    source.width*scale*factor,source.height*scale*factor);
+   const drawWidth=source.width*scale*factor,drawHeight=source.height*scale*factor;
+   const centerX=(frame.clientWidth/2+dx)*factor,centerY=(frame.clientHeight/2+dy)*factor;
+   ctx.translate(centerX,centerY);
+   ctx.rotate(Number(angle.value)*Math.PI/180);
+   ctx.drawImage(source,-drawWidth/2,-drawHeight/2,drawWidth,drawHeight);
    canvas.toBlob(blob=>{
     if(!blob){message.textContent='Could not crop this image.';return;}
     const dt=new DataTransfer();
