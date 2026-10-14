@@ -1681,10 +1681,10 @@ def coins():
         if sort_by == "mintage":
             return (item.mintage if kind == "coin" and item.mintage is not None else float("-inf"), item.id)
         year_value = item.year if item.year is not None else (
-            item.date_start_year if kind == "banknote" and item.date_start_year is not None else float("-inf"))
+            item.date_start_year if kind == "banknote" and item.date_start_year is not None else None)
         try:
-            year_value = int(year_value)
-        except (ValueError, TypeError):
+            year_value = int(year_value) if year_value is not None else float("-inf")
+        except (ValueError, TypeError, OverflowError):
             year_value = float("-inf")
         return (year_value, item.id)
 
