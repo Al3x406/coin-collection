@@ -33,23 +33,3 @@ CREATE TABLE IF NOT EXISTS banknote_photo (
  created_at DATETIME
 );
 CREATE INDEX IF NOT EXISTS ix_banknote_photo_banknote_id ON banknote_photo(banknote_id);
--- Default absence of rows means coin-only, preserving existing set behavior.
-CREATE TABLE IF NOT EXISTS coin_set_allowed_type (
- set_id INTEGER NOT NULL REFERENCES coin_set(id),
- collectible_type VARCHAR(20) NOT NULL CHECK(collectible_type IN ('coin','banknote')),
- PRIMARY KEY (set_id, collectible_type)
-);
--- Existing coin_set_memberships remain authoritative for coins.
-CREATE TABLE IF NOT EXISTS banknote_set_memberships (
- set_id INTEGER NOT NULL REFERENCES coin_set(id),
- banknote_id INTEGER NOT NULL REFERENCES banknote(id),
- PRIMARY KEY(set_id,banknote_id)
-);
--- Existing set_slot_selection remains authoritative for coin overrides.
-CREATE TABLE IF NOT EXISTS banknote_set_slot_selection (
- set_id INTEGER NOT NULL REFERENCES coin_set(id),
- slot_type VARCHAR(30) NOT NULL,
- slot_id INTEGER NOT NULL,
- banknote_id INTEGER NOT NULL REFERENCES banknote(id),
- PRIMARY KEY(set_id,slot_type,slot_id)
-);
