@@ -1669,6 +1669,27 @@ def coins():
     if currency_type == "banknote":
         all_coins = []
 
+    # Build one ordered stream so banknotes appear among coins, not at the bottom.
+    currency_entries = [("coin", c) for c in all_coins] + [("banknote", n) for n in all_banknotes]
+
+    def currency_sort_key(entry):
+        kind, item = entry
+        if sort_by == "alphabet":
+            return ((item.name or "").casefold(), item.id)
+        if sort_by == "value":
+            return (item.estimated_value if item.estimated_value is not None else float("-inf"), item.id)
+        if sort_by == "mintage":
+            return (item.mintage if kind == "coin" and item.mintage is not None else float("-inf"), item.id)
+        year_value = item.year if item.year is not None else (
+            item.date_start_year if kind == "banknote" and item.date_start_year is not None else float("-inf"))
+        try:
+            year_value = int(year_value)
+        except (ValueError, TypeError):
+            year_value = float("-inf")
+        return (year_value, item.id)
+
+    currency_entries.sort(key=currency_sort_key, reverse=reverse)
+
     collection_stats = {
         "total_coins": total_coins,
         "countries": len(countries),
@@ -1681,6 +1702,7 @@ def coins():
         "coins.html",
         coins=all_coins,
         banknotes=all_banknotes,
+        currency_entries=currency_entries,
         currency_type=currency_type,
         search=search,
         country=country,
