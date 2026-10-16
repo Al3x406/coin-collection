@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+{% block title %}Identify Banknote{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-4">
+<div><h1>Identify Banknote</h1><p class="text-muted">Read a note’s text, then compare possible Numista matches.</p></div>
+<a class="btn btn-outline-secondary" href="{{ url_for('banknotes.add_note') }}">Add Banknote Manually</a>
+</div>
+<div class="card mb-4"><div class="card-body">
+<h2 class="h4">Banknote photos</h2>
+<p class="text-muted">Photograph the whole bill straight on. Text recognition runs on this site's server. Catalogue searches use the clues below; photos are not sent to Numista. Non-Latin text may need manual transcription.</p>
+<div class="row g-3">
+{% for side in ['front','back'] %}
+<div class="col-md-6"><label class="form-label" for="note-{{ side }}">{{ side|title }} photo</label>
+<input class="form-control" type="file" id="note-{{ side }}" accept="image/jpeg,image/png,image/webp">
+<img id="preview-{{ side }}" hidden alt="Selected {{ side }} photo" style="width:100%;height:180px;object-fit:contain;margin-top:12px">
+</div>
+{% endfor %}
+</div>
+<button class="btn btn-outline-primary mt-3" id="read-note" type="button">Read Text from Photos</button>
+<div id="ocr-status" class="mt-2" role="status"></div>
+</div></div>
+<form id="note-search" class="card mb-4"><div class="card-body">
+<h2 class="h4">Identification clues</h2>
+<div class="row g-3">
+<div class="col-md-5"><label class="form-label" for="note-country">Country / issuing bank</label><input class="form-control" id="note-country" placeholder="e.g. France or Banque de France"></div>
+<div class="col-md-4"><label class="form-label" for="note-value">Denomination</label><input class="form-control" id="note-value" placeholder="e.g. 100 francs"></div>
+<div class="col-md-3"><label class="form-label" for="note-year">Year (optional)</label><input class="form-control" id="note-year" inputmode="numeric" pattern="[0-9]{4}" placeholder="e.g. 1940"></div>
+<div class="col-12"><label class="form-label" for="note-text">Visible text / search words</label><textarea class="form-control" id="note-text" rows="3" placeholder="Use a few distinctive words. Remove serial numbers and recognition errors."></textarea></div>
+</div>
+<p class="small text-muted mt-3">Review the extracted text before searching. These are possible matches, not confirmed identifications.</p>
+<button type="submit" class="btn btn-primary" id="search-notes">Find Banknote Matches</button>
+<div id="search-status" class="mt-2" role="status"></div>
+</div></form>
+<section aria-label="Possible banknote matches"><div id="note-matches" class="row g-3"></div></section>
+<p class="small text-muted mt-3">Catalogue data and reference photos © their Numista contributors. Check the exact year, signature and variety before saving.</p>
+<script>
+(() => {
+ const $ = id => document.getElementById(id);
+ const photos = {front:null,back:null};
+ const pending = {front:Promise.resolve(),back:Promise.resolve()};
+ async function json(url,options) {
+   const response=await fetch(url,{credentials:'same-origin',...options});
+   const data=await response.json().catch(()=>({}));
+   if(!response.ok)throw new Error(data.error || 'Request failed. Please try again.');
+   return data;
+ }
+ for(const side of ['front','back']) {
+   $('note-'+side).addEventListener('change', () => {
+     const file=$('note-'+side).files[0];photos[side]=null;$('preview-'+side).hidden=true;
+     pending[side]=(async()=>{
+       if(!file)return;
+       const url=URL.createObjectURL(file);
+       try {
+         const img=new Image();img.src=url;await img.decode();
+         const ratio=Math.min(1,1600/Math.max(img.naturalWidth,img.naturalHeight));
+         const canvas=document.createElement('canvas');canvas.width=Math.max(1,Math.round(img.naturalWidth*ratio));canvas.height=Math.max(1,Math.round(img.naturalHeight*ratio));
+         const ctx=canvas.getContext('2d');ctx.fillStyle='white';ctx.fillRect(0,0,canvas.width,canvas.height);ctx.drawImage(img,0,0,canvas.width,canvas.height);
+         photos[side]=canvas.toDataURL('image/jpeg',.85);
+         $('preview-'+side).src=photos[side];$('preview-'+side).hidden=false;
+       } catch(e){$('ocr-status').textContent='Could not open that photo. Choose a JPG, PNG or WEBP.';}
+       finally{URL.revokeObjectURL(url);}
+     })();
+   });
+ }
+ $('read-note').addEventListener('click',async()=>{
+   $('read-note').disabled=true;$('ocr-status').textContent='Reading banknote text…';
+   try {
+     await Promise.all(Object.values(pending));
+     const body=new FormData();
+     for(const side of ['front','back'])if(photos[side])body.append(side,await(await fetch(photos[side])).blob(),side+'.jpg');
+     const data=await json('/api/identify/banknotes/ocr',{method:'POST',body});
+     if(data.combined_text)$('note-text').value=data.combined_text;
+     if(data.suggested_year && !$('note-year').value)$('note-year').value=data.suggested_year;
+     $('ocr-status').textContent=data.combined_text?'Text extracted. Correct it and keep a few useful search words below.':'No readable text found. Enter the country, denomination or visible text manually.';
+   }catch(e){$('ocr-status').textContent=e.message;}finally{$('read-note').disabled=false;}
+ });
+ $('note-search').addEventListener('submit',async e=>{
+   e.preventDefault();
+   const q=[$('note-country').value,$('note-value').value,$('note-text').value].map(s=>s.trim()).filter(Boolean).join(' ');
+   if(!q){$('search-status').textContent='Enter a country, denomination or visible text.';return;}
+   $('search-notes').disabled=true;$('note-matches').replaceChildren();$('search-status').textContent='Searching banknotes…';
+   try {
+     const params=new URLSearchParams({q});if($('note-year').value)params.set('year',$('note-year').value);
+     const data=await json('/api/numista/banknotes/search?'+params);
+     $('search-status').textContent=data.results.length?'Possible matches. Open a reference to compare both sides.':'No matches. Try fewer words or remove the year.';
+     for(const item of data.results){
+       const col=document.createElement('div');col.className='col-md-6';
+       const card=document.createElement('div');card.className='card h-100';const body=document.createElement('div');body.className='card-body';card.append(body);col.append(card);
+       const title=document.createElement('h3');title.className='h5';title.textContent=item.title || 'Banknote';body.append(title);
+       const meta=document.createElement('p');meta.textContent=[item.issuer,item.min_year===item.max_year?item.min_year:[item.min_year,item.max_year].filter(Boolean).join('–'),'N#'+item.id].filter(Boolean).join(' · ');body.append(meta);
+       const compare=document.createElement('button');compare.type='button';compare.className='btn btn-outline-primary';compare.textContent='Compare reference';body.append(compare);
+       compare.addEventListener('click',async()=>{
+         compare.disabled=true;
+         try{
+           const detail=await json('/api/numista/banknotes/type/'+encodeURIComponent(item.id));
+           for(const [url,label] of [[detail.front_image,'Front'],[detail.back_image,'Back']]){
+             if(!url || !/^https:\/\//.test(url))continue;
+             const img=document.createElement('img');img.src=url;img.alt=label+' catalogue reference';img.style.cssText='width:100%;height:150px;object-fit:contain;margin:10px 0';body.append(img);
+           }
+           const source=document.createElement('a');source.href='https://en.numista.com/'+item.id;source.target='_blank';source.rel='noopener noreferrer';source.textContent='View on Numista';source.className='d-block mb-3';body.append(source);
+           const select=document.createElement('button');select.className='btn btn-primary';select.type='button';select.textContent='Use This Banknote';body.append(select);
+           select.addEventListener('click',async()=>{
+             await Promise.all(Object.values(pending));
+             try{sessionStorage.setItem('banknoteIdentifierDraft',JSON.stringify({id:item.id,year:$('note-year').value,...photos}));}
+             catch(e){$('search-status').textContent='Your browser could not transfer the photos. Reattach them on the Add Banknote form.';if(!confirm('The reference will transfer, but you will need to reattach your photos. Continue?'))return;}
+             location.href={{ url_for('banknotes.add_note')|tojson }}+'?numista_id='+encodeURIComponent(item.id);
+           });
+           compare.remove();
+         }catch(e){$('search-status').textContent=e.message;compare.disabled=false;}
+       });
+       $('note-matches').append(col);
+     }
+   }catch(e){$('search-status').textContent=e.message;}finally{$('search-notes').disabled=false;}
+ });
+})();
+</script>
+{% endblock %}
