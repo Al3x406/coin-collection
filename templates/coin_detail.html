@@ -632,7 +632,8 @@
                         <label class="form-label small mb-1">Reference / Numista page URL <span class="text-muted">(optional)</span></label>
                         <input class="form-control form-control-sm mb-3" type="url" name="numista_url" value="{{ coin.numista_url or '' }}" placeholder="https://...">
 
-                        <button class="btn btn-warning" type="submit">📷 Upload Reference Images</button>
+                        <p class="small text-muted">Paste a Numista page URL and save to load its reference images, or upload photos above.</p>
+                        <button class="btn btn-warning" type="submit">Save / Load Reference Images</button>
                     </form>
 
                     {% if coin.obverse_image or coin.reverse_image %}
