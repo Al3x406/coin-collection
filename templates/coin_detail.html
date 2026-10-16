@@ -40,13 +40,11 @@
 
 {% if is_owner %}
 <div class="featured-coin-control">
-    {% if coin.featured %}
-        <div class="featured-current">★ Homepage Featured Coin</div>
-    {% else %}
-        <form method="post" action="{{ url_for('set_featured_coin', coin_id=coin.id) }}">
-            <button type="submit" class="featured-button">★ Set as Featured Coin</button>
-        </form>
-    {% endif %}
+    <form method="post" action="{{ url_for('set_featured_coin', coin_id=coin.id) }}">
+        <button type="submit" class="featured-button">
+            {% if coin.featured %}★ Remove from Favorites{% else %}☆ Add to Favorites{% endif %}
+        </button>
+    </form>
 </div>
 {% endif %}
 
