@@ -22,7 +22,7 @@
   </div>
   {% endif %}
  </div>
- <div class="row g-3">{% for photo in note.photos %}
+ <div class="row g-3">{% for photo in note.current_photos %}
   <div class="col-md-6"><div class="note-panel text-center"><div class="mb-2">{{ (photo.side or 'Photo')|title }}</div><img class="note-photo" src="{{ url_for('static',filename=photo.filename) }}" alt="{{ note.name }} {{ photo.side or 'photo' }}"></div></div>
  {% endfor %}</div>
  <div class="note-panel"><h3>Banknote Information</h3><dl>
