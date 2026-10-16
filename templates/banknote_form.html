@@ -39,6 +39,14 @@
 {% endfor %}
 <div class="col-md-6"><label class="form-label">Front photo</label><input type="file" name="front" accept="image/*" data-banknote-crop="front" class="form-control"></div>
 <div class="col-md-6"><label class="form-label">Back photo</label><input type="file" name="back" accept="image/*" data-banknote-crop="back" class="form-control"></div>
+{% if note.id %}
+<div class="col-12"><div class="d-flex flex-wrap gap-3">
+{% for photo in note.current_photos %}{% if photo.side in ['front','back'] %}
+<div><img src="{{ url_for('static',filename=photo.filename) }}" alt="Saved {{ photo.side }} photo" style="width:160px;height:90px;object-fit:contain;display:block;margin-bottom:8px">
+<button type="button" class="btn btn-outline-primary btn-sm" data-edit-saved-side="{{ photo.side }}" data-saved-url="{{ url_for('static',filename=photo.filename) }}">Edit saved {{ photo.side }} photo</button></div>
+{% endif %}{% endfor %}
+</div></div>
+{% endif %}
 <div class="col-12"><p class="small text-muted mb-1">After taking a photo, tap <strong>Use Photo</strong> on the iPhone screen to return here.</p>
 <button type="button" id="banknoteOpenCropAgain" class="btn btn-outline-secondary btn-sm" disabled>Crop selected photo again</button>
 <div id="banknoteCropFeedback" class="small mt-2" role="status"></div></div>
@@ -58,14 +66,14 @@
  <div class="modal-dialog modal-dialog-centered"><div class="modal-content">
  <div class="modal-header"><h5 class="modal-title" id="banknoteCropTitle">Crop banknote photo</h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div>
  <div class="modal-body">
- <p class="small text-muted">Drag the image to position the bill. Adjust its size with Zoom, straighten the tilt, and adjust the crop shape with Width. The guide stays level.</p>
+ <p class="small text-muted">Align the bill’s edges with the dashed rectangle. Only the area inside that rectangle is saved. Use Zoom, Width and Tilt for a tight fit.</p>
  <div id="banknoteCropFrame" style="width:100%;aspect-ratio:12/7;overflow:hidden;position:relative;touch-action:none;background:#151515;border:2px solid #b89a58;border-radius:8px;cursor:grab">
  <img id="banknoteCropImage" alt="Photo to crop" draggable="false" style="position:absolute;max-width:none;user-select:none;pointer-events:none;transform-origin:center center">
  <div aria-hidden="true" style="position:absolute;inset:5%;border:1px dashed rgba(255,255,255,.75);pointer-events:none;box-shadow:0 0 0 1px rgba(0,0,0,.35)"></div>
  <div aria-hidden="true" style="position:absolute;left:50%;top:0;bottom:0;border-left:1px dashed rgba(255,255,255,.35);pointer-events:none"></div>
  <div aria-hidden="true" style="position:absolute;top:50%;left:0;right:0;border-top:1px dashed rgba(255,255,255,.35);pointer-events:none"></div>
  </div>
- <label class="form-label mt-3" for="banknoteCropWidth">Crop width / shape</label><input id="banknoteCropWidth" class="form-range" type="range" min="1.2" max="2.8" step="0.05" value="1.7">
+ <label class="form-label mt-3" for="banknoteCropWidth">Crop width / shape</label><input id="banknoteCropWidth" class="form-range" type="range" min="0.8" max="3.5" step="0.05" value="1.7">
  <label class="form-label mt-3" for="banknoteCropZoom">Bill size / zoom</label><input id="banknoteCropZoom" class="form-range" type="range" min="0.35" max="3" step="0.01" value="1">
  <label class="form-label mt-3" for="banknoteCropAngle">Straighten / tilt: <output id="banknoteCropAngleValue">0°</output></label><input id="banknoteCropAngle" class="form-range" type="range" min="-25" max="25" step="0.5" value="0">
  <button type="button" id="banknoteResetAngle" class="btn btn-outline-secondary btn-sm">Reset tilt</button>
@@ -182,12 +190,25 @@
   img.style.width=iw+'px';img.style.height=ih+'px';
   img.style.left=((w-iw)/2+dx)+'px';img.style.top=((h-ih)/2+dy)+'px';
   img.style.transform='rotate('+Number(angle.value)+'deg)';
+  const valid=cropIsCovered(w,h);
+  document.getElementById('banknoteApplyCrop').disabled=!valid;
+  message.textContent=valid?'Only the dashed rectangle will be saved. Align it with the bill’s edges.':'Zoom in or reposition the photo to cover the entire dashed rectangle.';
+ }
+ function cropIsCovered(w,h){
+  const radians=Number(angle.value)*Math.PI/180;
+  const cos=Math.cos(radians),sin=Math.sin(radians);
+  const halfWidth=source.width*scale/2,halfHeight=source.height*scale/2;
+  return [[.05*w,.05*h],[.95*w,.05*h],[.95*w,.95*h],[.05*w,.95*h]].every(([x,y])=>{
+   const vx=x-w/2-dx,vy=y-h/2-dy;
+   return Math.abs(vx*cos+vy*sin)<=halfWidth+.01 && Math.abs(-vx*sin+vy*cos)<=halfHeight+.01;
+  });
  }
  function reset(){
   if(objectUrl)URL.revokeObjectURL(objectUrl);
   objectUrl=null;source=null;input=null;drag=null;
  }
  modalEl.addEventListener('hidden.bs.modal',reset);
+ modalEl.addEventListener('shown.bs.modal',layout);
  document.querySelectorAll('[data-banknote-crop]').forEach(el=>{
   el.addEventListener('change',()=>{
    const file=el.files?.[0];if(!file)return;
@@ -196,8 +217,8 @@
    objectUrl=URL.createObjectURL(file);
    const pic=new Image();
    pic.onload=()=>{
-    source=pic;img.src=objectUrl;zoom.value='1';cropWidth.value='1.7';angle.value='0';angleValue.textContent='0°';frame.style.aspectRatio=cropWidth.value+' / 1';dx=dy=0;
-    if(modal){modal.show();requestAnimationFrame(()=>{layout();message.textContent='Position the banknote inside the crop area.';});}
+    source=pic;img.src=objectUrl;zoom.value='1';cropWidth.value=String(clamp(pic.width/pic.height,.8,3.5));angle.value='0';angleValue.textContent='0°';frame.style.aspectRatio=cropWidth.value+' / 1';dx=dy=0;
+    if(modal){modal.show();requestAnimationFrame(layout);}
     else {modalEl.style.display='block';modalEl.classList.add('show');modalEl.removeAttribute('aria-hidden');layout();}
 
    };
@@ -205,6 +226,21 @@
    pic.src=objectUrl;
   });
  });
+ document.querySelectorAll('[data-edit-saved-side]').forEach(button=>{
+  button.addEventListener('click',async()=>{
+   button.disabled=true;feedback.textContent='Opening saved photo…';
+   try{
+    const response=await fetch(button.dataset.savedUrl,{credentials:'same-origin'});
+    if(!response.ok)throw new Error('Could not load the saved photo.');
+    const blob=await response.blob();
+    const dt=new DataTransfer();dt.items.add(new File([blob],button.dataset.editSavedSide+'.jpg',{type:blob.type}));
+    const field=document.querySelector('input[name="'+button.dataset.editSavedSide+'"]');
+    field.files=dt.files;field.dispatchEvent(new Event('change'));
+   }catch(error){feedback.textContent=error.message;}finally{button.disabled=false;}
+  });
+ });
+ const requestedSide=new URLSearchParams(location.search).get('edit_photo');
+ if(['front','back'].includes(requestedSide))document.querySelector('[data-edit-saved-side="'+requestedSide+'"]')?.click();
  zoom.addEventListener('input',layout);
  angle.addEventListener('input',()=>{angleValue.textContent=angle.value+'°';layout();});
  document.getElementById('banknoteResetAngle').addEventListener('click',()=>{angle.value='0';angleValue.textContent='0°';layout();});
@@ -221,10 +257,11 @@
   try{
    const canvas=document.createElement('canvas');canvas.width=1200;canvas.height=Math.round(1200/Number(cropWidth.value));
    const ctx=canvas.getContext('2d');
-   const factor=canvas.width/frame.clientWidth;
+   if(!cropIsCovered(frame.clientWidth,frame.clientHeight)){message.textContent='Cover the whole dashed rectangle before saving.';return;}
+   const factor=canvas.width/(frame.clientWidth*.9);
    ctx.fillStyle='#151515';ctx.fillRect(0,0,canvas.width,canvas.height);
    const drawWidth=source.width*scale*factor,drawHeight=source.height*scale*factor;
-   const centerX=(frame.clientWidth/2+dx)*factor,centerY=(frame.clientHeight/2+dy)*factor;
+   const centerX=(frame.clientWidth*.45+dx)*factor,centerY=(frame.clientHeight*.45+dy)*factor;
    ctx.translate(centerX,centerY);
    ctx.rotate(Number(angle.value)*Math.PI/180);
    ctx.drawImage(source,-drawWidth/2,-drawHeight/2,drawWidth,drawHeight);
@@ -233,7 +270,7 @@
     const dt=new DataTransfer();
     dt.items.add(new File([blob],(input.name||'banknote')+'-cropped.jpg',{type:'image/jpeg'}));
     input.files=dt.files;
-    feedback.textContent='Cropped photo ready to save.';closeCrop();
+    feedback.textContent='Cropped photo ready. Click Save banknote below to keep the change.';closeCrop();
    },'image/jpeg',0.92);
   }catch(e){message.textContent='Crop failed. You can use the original photo instead.';}
  });
