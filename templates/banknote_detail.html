@@ -4,14 +4,16 @@
 <style>
 body{background:#090d0c !important;color:#eee}
 .banknote-detail a{color:#e9bd65}
-.banknote-detail .reference-photo{width:100%;height:230px;object-fit:contain;background:#101614;border-radius:10px;padding:10px}
+.banknote-detail .reference-photo{width:100%;height:170px;object-fit:contain;background:#101614;border-radius:10px;padding:10px}
 .banknote-detail .reference-credit{color:#bfb6a5;font-size:.75rem;margin-top:8px}
 @media(max-width:575px){.banknote-detail{padding:.75rem !important}.banknote-detail dl{grid-template-columns:1fr !important;gap:5px !important}.banknote-detail dd{margin-bottom:12px !important}}
 
-.banknote-detail{max-width:1050px;margin:2rem auto;padding:1.5rem;color:#eee}
-.banknote-detail h1{color:#f1dfb0}
-.banknote-detail .note-photo{max-width:100%;max-height:450px;object-fit:contain;border-radius:12px;border:1px solid #8e784a;background:#15191b}
-.banknote-detail .note-panel{background:#161c1e;border:1px solid #534b37;border-radius:14px;padding:1.25rem;margin:1.5rem 0}
+.banknote-detail{max-width:1100px;margin:1rem auto;padding:1rem;color:#eee}
+.banknote-detail h1{color:#f1dfb0;font-size:clamp(1.4rem,2.2vw,2rem)}
+.banknote-detail h3{font-size:1.2rem}
+.banknote-detail .note-panel h4{font-size:.85rem}
+.banknote-detail .note-photo{max-width:100%;width:100%;height:clamp(140px,20vh,210px);object-fit:contain;border-radius:12px;border:1px solid #8e784a;background:#15191b}
+.banknote-detail .note-panel{background:#161c1e;border:1px solid #534b37;border-radius:14px;padding:1rem;margin:.8rem 0}
 .banknote-detail dl{display:grid;grid-template-columns:minmax(120px,180px) 1fr;gap:12px}
 .banknote-detail dt{color:#b6a783}
 .banknote-detail dd{margin:0;overflow-wrap:anywhere}
@@ -29,11 +31,14 @@ body{background:#090d0c !important;color:#eee}
   {% endif %}
  </div>
  <div class="row g-3">{% for photo in note.current_photos %}
-  <div class="col-md-6"><div class="note-panel text-center"><div class="mb-2">{{ (photo.side or 'Photo')|title }}</div><img class="note-photo" src="{{ url_for('static',filename=photo.filename) }}" alt="{{ note.name }} {{ photo.side or 'photo' }}"></div></div>
+  <div class="col-md-6"><div class="note-panel text-center"><div class="mb-2">{{ (photo.side or 'Photo')|title }}</div><a href="{{ url_for('static',filename=photo.filename) }}" target="_blank" rel="noopener" aria-label="View larger {{ photo.side or 'banknote' }} photo"><img class="note-photo" src="{{ url_for('static',filename=photo.filename) }}" alt="{{ note.name }} {{ photo.side or 'photo' }}"></a>
+   <div class="d-flex justify-content-center gap-2 mt-2"><a class="btn btn-sm btn-outline-secondary" href="{{ url_for('static',filename=photo.filename) }}" target="_blank" rel="noopener">View Larger</a>{% if is_owner and photo.side in ['front','back'] %}<a class="btn btn-sm btn-outline-warning" href="{{ url_for('banknotes.edit_note',note_id=note.id,edit_photo=photo.side) }}">Edit Photo</a>{% endif %}</div></div></div>
  {% endfor %}</div>
- <section class="note-panel" aria-labelledby="banknote-reference-title">
+ <details class="note-panel">
+  <summary id="banknote-reference-title" style="cursor:pointer;color:#f1dfb0;font-weight:600">Catalogue Reference · show / hide</summary>
+  <div class="mt-3">
   <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
-   <h3 id="banknote-reference-title" class="mb-0">Catalogue Reference</h3>
+
    {% if reference %}<a href="https://en.numista.com/{{ reference.id }}" target="_blank" rel="noopener noreferrer">View on Numista ↗</a>{% endif %}
   </div>
   {% if reference and (reference.front_image or reference.back_image) %}
@@ -47,7 +52,8 @@ body{background:#090d0c !important;color:#eee}
   </div>
   {% elif reference_error %}<p class="mb-0" role="status">{{ reference_error }}</p>
   {% else %}<p class="mb-0">No catalogue images available. {% if is_owner %}Select a Numista banknote reference in Edit Banknote to show its images here.{% endif %}</p>{% endif %}
- </section>
+  </div>
+ </details>
  <div class="note-panel"><h3>Banknote Information</h3><dl>
  {% for label,value in [('Name',note.name),('Issuing country',note.country),('Set country',note.set_country),('Denomination',note.denomination),('Currency',note.currency),('Year',note.year),('Issuing authority',note.issuing_authority),('Condition',note.condition),('Quantity',note.quantity or 1),('Catalog number',note.catalog_number),('Serial number',note.serial_number),('Front design',note.portrait),('Back design',note.reverse_design)] %}
  {% if value is not none and value != '' %}<dt>{{ label }}</dt><dd>{{ value }}</dd>{% endif %}
