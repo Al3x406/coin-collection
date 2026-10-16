@@ -4024,8 +4024,10 @@ def numista_banknote_details(type_id):
         "min_year": item.get("min_year"), "max_year": item.get("max_year"),
         "issuing_authority": issuing_entity.get("name"),
         "url": item.get("url"),
-        "front_image": (item.get("obverse") or {}).get("thumbnail"),
-        "back_image": (item.get("reverse") or {}).get("thumbnail")
+        "front_image": ((item.get("obverse") or {}).get("picture") or (item.get("obverse") or {}).get("image") or (item.get("obverse") or {}).get("thumbnail")),
+        "back_image": ((item.get("reverse") or {}).get("picture") or (item.get("reverse") or {}).get("image") or (item.get("reverse") or {}).get("thumbnail")),
+        "front_credit": ((item.get("obverse") or {}).get("picture_copyright") or (item.get("obverse") or {}).get("copyright")),
+        "back_credit": ((item.get("reverse") or {}).get("picture_copyright") or (item.get("reverse") or {}).get("copyright"))
     }
 
 

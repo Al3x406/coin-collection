@@ -2,6 +2,12 @@
 {% block title %}{{ note.name }} · Banknote Details{% endblock %}
 {% block content %}
 <style>
+body{background:#090d0c !important;color:#eee}
+.banknote-detail a{color:#e9bd65}
+.banknote-detail .reference-photo{width:100%;height:230px;object-fit:contain;background:#101614;border-radius:10px;padding:10px}
+.banknote-detail .reference-credit{color:#bfb6a5;font-size:.75rem;margin-top:8px}
+@media(max-width:575px){.banknote-detail{padding:.75rem !important}.banknote-detail dl{grid-template-columns:1fr !important;gap:5px !important}.banknote-detail dd{margin-bottom:12px !important}}
+
 .banknote-detail{max-width:1050px;margin:2rem auto;padding:1.5rem;color:#eee}
 .banknote-detail h1{color:#f1dfb0}
 .banknote-detail .note-photo{max-width:100%;max-height:450px;object-fit:contain;border-radius:12px;border:1px solid #8e784a;background:#15191b}
@@ -25,6 +31,23 @@
  <div class="row g-3">{% for photo in note.current_photos %}
   <div class="col-md-6"><div class="note-panel text-center"><div class="mb-2">{{ (photo.side or 'Photo')|title }}</div><img class="note-photo" src="{{ url_for('static',filename=photo.filename) }}" alt="{{ note.name }} {{ photo.side or 'photo' }}"></div></div>
  {% endfor %}</div>
+ <section class="note-panel" aria-labelledby="banknote-reference-title">
+  <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+   <h3 id="banknote-reference-title" class="mb-0">Catalogue Reference</h3>
+   {% if reference %}<a href="https://en.numista.com/{{ reference.id }}" target="_blank" rel="noopener noreferrer">View on Numista ↗</a>{% endif %}
+  </div>
+  {% if reference and (reference.front_image or reference.back_image) %}
+  <div class="row g-3">
+   {% for label,image,credit in [('Front',reference.front_image,reference.front_credit),('Back',reference.back_image,reference.back_credit)] %}
+   <div class="col-md-6"><h4 class="h6">{{ label }}</h4>
+    {% if image %}<img class="reference-photo" src="{{ image }}" alt="{{ label }} catalogue reference for {{ note.name }}" loading="lazy"><div class="reference-credit">{{ credit or 'Reference image via Numista' }}</div>
+    {% else %}<p>No {{ label|lower }} reference image available.</p>{% endif %}
+   </div>
+   {% endfor %}
+  </div>
+  {% elif reference_error %}<p class="mb-0" role="status">{{ reference_error }}</p>
+  {% else %}<p class="mb-0">No catalogue images available. {% if is_owner %}Select a Numista banknote reference in Edit Banknote to show its images here.{% endif %}</p>{% endif %}
+ </section>
  <div class="note-panel"><h3>Banknote Information</h3><dl>
  {% for label,value in [('Name',note.name),('Issuing country',note.country),('Set country',note.set_country),('Denomination',note.denomination),('Currency',note.currency),('Year',note.year),('Issuing authority',note.issuing_authority),('Condition',note.condition),('Quantity',note.quantity or 1),('Catalog number',note.catalog_number),('Serial number',note.serial_number),('Front design',note.portrait),('Back design',note.reverse_design)] %}
  {% if value is not none and value != '' %}<dt>{{ label }}</dt><dd>{{ value }}</dd>{% endif %}
