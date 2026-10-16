@@ -869,6 +869,7 @@
                     <h5>{{ note.name }}</h5>
                     <div class="coin-card-data">{{ note.year or note.date_start_year or 'Undated' }} · {{ note.country or 'Unknown issuer' }}</div>
                     <div class="coin-card-value mt-2">{{ '$%.2f'|format(note.estimated_value) if note.estimated_value is not none else 'Value not set' }}</div>
+                    <div class="coin-card-data mt-2">Qty: {{ note.quantity or 1 }}</div>
                 </div>
             </a>
         </article>
@@ -967,7 +968,7 @@
                         <td>{{ note.country or '—' }}</td>
                         <td>—</td><td>—</td><td>—</td>
                         <td>{{ '$%.2f'|format(note.estimated_value) if note.estimated_value is not none else '—' }}</td>
-                        <td>1</td>
+                        <td>{{ note.quantity or 1 }}</td>
                         <td><a class="collection-table-action" href="{{ url_for('banknotes.detail_note',note_id=note.id) }}">View</a></td>
                     </tr>
                     {% endif %}

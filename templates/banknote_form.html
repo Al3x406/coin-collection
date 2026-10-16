@@ -34,8 +34,8 @@
 </section>
 
 <form method="post" enctype="multipart/form-data" class="row g-3">
-{% for key,label in [('name','Name'),('country','Issuing country'),('denomination','Denomination'),('year','Year'),('condition','Condition'),('estimated_value','Estimated value (USD)'),('purchase_price','Price paid (USD)'),('date_acquired','Date acquired')] %}
-<div class="col-md-6"><label class="form-label" for="{{ key }}">{{ label }}</label><input class="form-control" id="{{ key }}" name="{{ key }}" {% if key=='date_acquired' %}type="date"{% endif %} value="{{ note|attr(key) if note|attr(key) is not none else '' }}" {% if key=='name' %}required{% endif %}></div>
+{% for key,label in [('name','Name'),('country','Issuing country'),('denomination','Denomination'),('year','Year'),('condition','Condition'),('quantity','Quantity'),('estimated_value','Estimated value per banknote (USD)'),('purchase_price','Price paid (USD)'),('date_acquired','Date acquired')] %}
+<div class="col-md-6"><label class="form-label" for="{{ key }}">{{ label }}</label><input class="form-control" id="{{ key }}" name="{{ key }}" {% if key=='date_acquired' %}type="date"{% elif key=='quantity' %}type="number" min="1" step="1" required{% endif %} value="{{ (note.quantity or 1) if key=='quantity' else (note|attr(key) if note|attr(key) is not none else '') }}" {% if key=='name' %}required{% endif %}></div>
 {% endfor %}
 <div class="col-md-6"><label class="form-label">Front photo</label><input type="file" name="front" accept="image/*" data-banknote-crop="front" class="form-control"></div>
 <div class="col-md-6"><label class="form-label">Back photo</label><input type="file" name="back" accept="image/*" data-banknote-crop="back" class="form-control"></div>
