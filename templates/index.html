@@ -382,7 +382,8 @@ body{
 }
 
 /* RECENT */
-.recent-panel{margin-top:16px;padding-bottom:16px}
+.favorite-grid{grid-template-columns:repeat(3,minmax(0,1fr)) !important;padding-bottom:18px !important}
+@media(max-width:560px){.favorite-grid{grid-template-columns:repeat(2,minmax(0,1fr)) !important}}
 .recent-strip{
     display:grid;
     grid-template-columns:repeat(6,minmax(0,1fr));
@@ -554,39 +555,37 @@ body{
 <div class="lower-grid">
     <section class="panel">
         <div class="panel-header">
-            <h2 class="panel-title">Featured Coin</h2>
-            {% if featured_coin %}
-            <a href="{{ url_for('coin_detail', coin_id=featured_coin.id) }}" class="btn btn-sm gold-button">View Coin →</a>
-            {% endif %}
+            <h2 class="panel-title">Favorite Coins</h2>
+            <a href="{{ url_for('coins') }}" class="btn btn-sm gold-button">View Collection →</a>
         </div>
-
-        {% if featured_coin %}
-        <div class="featured-body">
-            <div class="featured-image-wrap">
-                {% if featured_coin.obverse_image %}
-                    <img class="featured-image" src="{{ featured_coin.obverse_image }}" alt="{{ featured_coin.name }}">
-                {% elif featured_coin.reverse_image %}
-                    <img class="featured-image" src="{{ featured_coin.reverse_image }}" alt="{{ featured_coin.name }}">
-                {% elif featured_coin.personal_obverse_image %}
-                    <img class="featured-image" src="{{ url_for('static', filename='uploads/coins/' ~ featured_coin.personal_obverse_image) }}" alt="{{ featured_coin.name }}">
-                {% elif featured_coin.personal_reverse_image %}
-                    <img class="featured-image" src="{{ url_for('static', filename='uploads/coins/' ~ featured_coin.personal_reverse_image) }}" alt="{{ featured_coin.name }}">
+        {% if favorite_coins %}
+    <div class="recent-strip favorite-grid">
+        {% for coin in favorite_coins %}
+        <a href="{{ url_for('coin_detail', coin_id=coin.id) }}" class="recent-card">
+            <div class="recent-image-wrap">
+                {% if coin.obverse_image %}
+                    <img class="recent-image" src="{{ coin.obverse_image }}" alt="{{ coin.name }}">
+                {% elif coin.reverse_image %}
+                    <img class="recent-image" src="{{ coin.reverse_image }}" alt="{{ coin.name }}">
+                {% elif coin.personal_obverse_image %}
+                    <img class="recent-image" src="{{ url_for('static', filename='uploads/coins/' ~ coin.personal_obverse_image) }}" alt="{{ coin.name }}">
+                {% elif coin.personal_reverse_image %}
+                    <img class="recent-image" src="{{ url_for('static', filename='uploads/coins/' ~ coin.personal_reverse_image) }}" alt="{{ coin.name }}">
                 {% else %}
                     <div class="coin-placeholder">🪙</div>
                 {% endif %}
             </div>
-            <div>
-                <div class="featured-name">{{ featured_coin.name }}</div>
-                <div class="featured-meta">
-                    {% if featured_coin.year is not none %}{{ featured_coin.year }}{% endif %}
-                    {% if featured_coin.year is not none and featured_coin.country %} · {% endif %}
-                    {{ featured_coin.country or '' }}
-                </div>
-                {% if featured_coin.denomination %}<div class="featured-detail"><strong>Denomination:</strong> {{ featured_coin.denomination }}</div>{% endif %}
-                {% if featured_coin.mint_record %}<div class="featured-detail"><strong>Mint:</strong> {{ featured_coin.mint_record.name }}</div>{% elif featured_coin.mint %}<div class="featured-detail"><strong>Mint:</strong> {{ featured_coin.mint }}</div>{% endif %}
-                {% if featured_coin.mintage %}<div class="featured-detail"><strong>Mintage:</strong> {{ "{:,}".format(featured_coin.mintage) }}</div>{% endif %}
+            <div class="recent-name">{{ coin.name }}</div>
+            <div class="recent-meta">
+                {% if coin.year is not none %}{{ coin.year }}{% endif %}
+                {% if coin.year is not none and coin.country %} · {% endif %}
+                {{ coin.country or '' }}
             </div>
-        </div>
+        </a>
+        {% endfor %}
+    </div>
+        {% else %}
+        <p style="padding:18px;color:#cfc5b6">Choose up to six favorites using “Add to Favorites” on a coin’s page.</p>
         {% endif %}
     </section>
 
@@ -627,38 +626,7 @@ body{
     </section>
 </div>
 
-<section class="panel recent-panel">
-    <div class="panel-header">
-        <h2 class="panel-title">Recently Added</h2>
-        <a href="{{ url_for('coins') }}" class="btn btn-sm gold-button">View Collection →</a>
-    </div>
 
-    <div class="recent-strip">
-        {% for coin in recent_coins %}
-        <a href="{{ url_for('coin_detail', coin_id=coin.id) }}" class="recent-card">
-            <div class="recent-image-wrap">
-                {% if coin.obverse_image %}
-                    <img class="recent-image" src="{{ coin.obverse_image }}" alt="{{ coin.name }}">
-                {% elif coin.reverse_image %}
-                    <img class="recent-image" src="{{ coin.reverse_image }}" alt="{{ coin.name }}">
-                {% elif coin.personal_obverse_image %}
-                    <img class="recent-image" src="{{ url_for('static', filename='uploads/coins/' ~ coin.personal_obverse_image) }}" alt="{{ coin.name }}">
-                {% elif coin.personal_reverse_image %}
-                    <img class="recent-image" src="{{ url_for('static', filename='uploads/coins/' ~ coin.personal_reverse_image) }}" alt="{{ coin.name }}">
-                {% else %}
-                    <div class="coin-placeholder">🪙</div>
-                {% endif %}
-            </div>
-            <div class="recent-name">{{ coin.name }}</div>
-            <div class="recent-meta">
-                {% if coin.year is not none %}{{ coin.year }}{% endif %}
-                {% if coin.year is not none and coin.country %} · {% endif %}
-                {{ coin.country or '' }}
-            </div>
-        </a>
-        {% endfor %}
-    </div>
-</section>
 
 </div>
 

@@ -935,7 +935,6 @@ def home():
         + artifact_estimated_value
     )
 
-    recent_coins = all_coins[:6]
 
     collection_mint_points = []
     seen_mint_ids = set()
@@ -956,27 +955,8 @@ def home():
                 "lng": mint.longitude
             })
 
-    # Prefer the coin manually selected by the owner.
-    featured_coin = next(
-        (
-            coin for coin in all_coins
-            if getattr(coin, "featured", False)
-        ),
-        None
-    )
-
-    # Fall back to the previous automatic behavior until one is selected.
-    if featured_coin is None:
-        featured_coin = next(
-            (
-                coin for coin in all_coins
-                if coin.obverse_image
-                or coin.reverse_image
-                or coin.personal_obverse_image
-                or coin.personal_reverse_image
-            ),
-            all_coins[0] if all_coins else None
-        )
+    # Preserve existing featured selections as homepage favorites.
+    favorite_coins = [coin for coin in all_coins if coin.featured][:6]
 
     dated_coins = [coin for coin in all_coins if coin.year is not None]
     oldest_coin = min(dated_coins, key=lambda c: c.year) if dated_coins else None
@@ -1051,8 +1031,7 @@ def home():
         estimated_value=estimated_value,
         coin_estimated_value=coin_estimated_value,
         artifact_estimated_value=artifact_estimated_value,
-        recent_coins=recent_coins,
-        featured_coin=featured_coin,
+        favorite_coins=favorite_coins,
         collection_mint_points=collection_mint_points,
         oldest_coin=oldest_coin,
         newest_coin=newest_coin,
@@ -1839,12 +1818,14 @@ def collection_value():
 def set_featured_coin(coin_id):
     coin = Coin.query.get_or_404(coin_id)
 
-    Coin.query.update(
-        {Coin.featured: False},
-        synchronize_session=False
-    )
-
-    coin.featured = True
+    if coin.featured:
+        coin.featured = False
+        flash("Removed from Favorite Coins.", "success")
+    elif Coin.query.filter_by(featured=True).count() >= 6:
+        flash("You can choose up to six favorite coins. Remove a favorite before adding another.", "warning")
+    else:
+        coin.featured = True
+        flash("Added to Favorite Coins.", "success")
     db.session.commit()
 
     return redirect(
