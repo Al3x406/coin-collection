@@ -3417,6 +3417,38 @@ def save_reference_image_upload(file_storage, coin_id, side):
     return url_for("static", filename=f"uploads/coins/{filename}")
 
 
+def import_numista_reference_images(coin, reference_url, uploaded_sides):
+    """Resolve catalogue URLs through the existing API, never fetch arbitrary URLs."""
+    parsed = urlsplit(reference_url)
+    if parsed.scheme not in {"http", "https"} or parsed.hostname not in {
+        "numista.com", "www.numista.com", "en.numista.com", "fr.numista.com", "es.numista.com"
+    }:
+        return "Link saved. To load images automatically, use a Numista catalogue URL or upload reference photos."
+    match = re.fullmatch(r"/(?:catalogue/pieces)?([0-9]+)(?:\.html)?/?", parsed.path)
+    if not match:
+        return "Link saved, but the Numista catalogue number could not be read. Use a link such as https://en.numista.com/922."
+    headers = get_numista_headers()
+    if not headers:
+        return "Link saved, but Numista image lookup is unavailable because the API key is not configured. You can upload reference photos."
+    item, error = _numista_get(f"/types/{int(match.group(1))}", headers, {"lang": "en"})
+    if error:
+        return "Link saved, but Numista could not load the reference images. Please try again later or upload reference photos."
+    found = False
+    for side in ("obverse", "reverse"):
+        if side in uploaded_sides:
+            continue
+        details = item.get(side) or {}
+        image_url = details.get("picture") or details.get("image") or details.get("thumbnail")
+        if image_url:
+            setattr(coin, side + "_image", image_url)
+            setattr(coin, side + "_copyright", details.get("picture_copyright") or details.get("copyright"))
+            setattr(coin, side + "_license", details.get("picture_license_name") or details.get("license"))
+            found = True
+    if not found:
+        return "Link saved, but no reference images were available from Numista. You can upload reference photos instead."
+    return None
+
+
 @app.route("/coin/<int:coin_id>/reference-images", methods=["POST"])
 def update_reference_images(coin_id):
     coin = Coin.query.get_or_404(coin_id)
@@ -3430,9 +3462,21 @@ def update_reference_images(coin_id):
     if reverse_file and reverse_file.filename:
         coin.reverse_image = save_reference_image_upload(reverse_file, coin.id, "reverse")
 
-    coin.numista_url = (request.form.get("numista_url") or "").strip() or coin.numista_url
+    reference_url = (request.form.get("numista_url") or "").strip()
+    lookup_error = None
+    if reference_url:
+        coin.numista_url = reference_url
+        uploaded_sides = {
+            side for side, upload in (("obverse", obverse_file), ("reverse", reverse_file))
+            if upload and upload.filename
+        }
+        if len(uploaded_sides) < 2:
+            lookup_error = import_numista_reference_images(coin, reference_url, uploaded_sides)
     db.session.commit()
-    flash("Catalogue reference images updated.", "success")
+    if lookup_error:
+        flash(lookup_error, "warning")
+    else:
+        flash("Catalogue reference images updated.", "success")
 
     next_url = (request.form.get("next") or "").strip()
     if is_safe_local_path(next_url):

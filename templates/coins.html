@@ -796,13 +796,9 @@
                     <h2 class="coin-card-title">{{ coin.name }}</h2>
 
                     {% if is_owner and not coin.obverse_image and not coin.reverse_image %}
-                    <a
-                        href="{{ url_for('coin_detail', coin_id=coin.id) }}#catalogue-reference"
-                        class="btn btn-sm btn-outline-warning mt-2"
-                        onclick="event.stopPropagation();"
-                    >
+                    <span class="btn btn-sm btn-outline-warning mt-2">
                         + Add Reference Image
-                    </a>
+                    </span>
                     {% endif %}
 
                     <div class="coin-card-subtitle">
