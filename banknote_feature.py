@@ -4,6 +4,8 @@ from flask import Blueprint, abort, redirect, render_template, request, session,
 from werkzeug.utils import secure_filename
 from pathlib import Path
 import uuid
+import re
+from urllib.parse import urlsplit
 
 def current_banknote_photos(photos):
     """Show the newest saved front/back while retaining other labelled photos."""
@@ -17,6 +19,25 @@ def current_banknote_photos(photos):
         else:
             extras.append(photo)
     return [latest[side] for side in ("front", "back") if side in latest] + extras
+
+
+def banknote_reference_id(note):
+    """Read a Numista ID without requesting an arbitrary saved source URL."""
+    match = re.fullmatch(r"N#\s*(\d+)", (note.catalog_number or "").strip(), re.I)
+    if match:
+        return int(match.group(1))
+    parsed = urlsplit(note.source or "")
+    if parsed.hostname not in {"numista.com", "www.numista.com", "en.numista.com", "fr.numista.com", "es.numista.com"}:
+        return None
+    match = re.fullmatch(r"/(?:catalogue/(?:note|pieces))?(\d+)(?:\.html)?/?", parsed.path)
+    if match:
+        return int(match.group(1))
+    if parsed.path == "/catalogue/note.php":
+        from urllib.parse import parse_qs
+        value = parse_qs(parsed.query).get("id", [""])[0]
+        if value.isdigit():
+            return int(value)
+    return None
 
 
 def register_banknotes(app, db):
@@ -131,7 +152,20 @@ def register_banknotes(app, db):
     @bp.route("/banknotes/<int:note_id>")
     def detail_note(note_id):
         note = db.get_or_404(Banknote, note_id)
-        return render_template("banknote_detail.html", note=note, is_owner=bool(session.get("is_owner")))
+        reference = None
+        reference_error = None
+        type_id = banknote_reference_id(note)
+        if type_id:
+            # Reuse the cached Numista API lookup for existing saved references.
+            result = app.view_functions["numista_banknote_details"](type_id)
+            if isinstance(result, dict) and not result.get("error"):
+                reference = result
+            else:
+                reference_error = "Reference images could not be loaded from Numista. Please try again later."
+        return render_template(
+            "banknote_detail.html", note=note, reference=reference,
+            reference_error=reference_error, is_owner=bool(session.get("is_owner"))
+        )
 
     @bp.route("/banknotes/add", methods=["GET","POST"])
     def add_note():
