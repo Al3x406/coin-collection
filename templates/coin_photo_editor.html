@@ -39,6 +39,7 @@ Edit {{ side|title }} Photo - {{ coin.name }}
 .crop-box{
     position:absolute;
     border:2px solid #e2b55f;
+    box-sizing:content-box;
     box-shadow:0 0 0 9999px rgba(0,0,0,.52),0 0 0 1px rgba(0,0,0,.6);
     cursor:move;
     touch-action:none;
@@ -66,7 +67,7 @@ Edit {{ side|title }} Photo - {{ coin.name }}
 }
 .circle-guide{
     position:absolute;
-    inset:12px;
+    inset:0;
     border:4px solid rgba(126,83,25,.98);
     border-radius:50%;
     box-shadow:
@@ -181,8 +182,8 @@ Edit {{ side|title }} Photo - {{ coin.name }}
 
                 <p class="crop-tip">
                     Drag the gold corners or side handles to frame the coin.
-                    The dashed circle shows the part that will stay visible.
-                    Everything outside it saves as black.
+                    Fit the coin’s edge to the round guide.
+                    Everything outside the guide is removed and saved transparent.
                 </p>
             </section>
 
@@ -226,7 +227,7 @@ Edit {{ side|title }} Photo - {{ coin.name }}
 
                 <p class="original-note">
                     The original upload stays untouched.
-                    Saved photos now use a black background with a circular coin cutout.
+                    Saved photos use a transparent background with a circular coin cutout.
                 </p>
             </aside>
 

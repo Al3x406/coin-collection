@@ -5245,29 +5245,29 @@ def edit_coin_photo(coin_id, side):
             Image.Resampling.LANCZOS
         )
 
-        canvas = Image.new(
-            "RGB",
-            (1000, 1000),
-            (12, 12, 12)
-        )
+        image = ImageEnhance.Brightness(image).enhance(brightness)
+        image = ImageEnhance.Contrast(image).enhance(contrast)
+        image = ImageEnhance.Sharpness(image).enhance(sharpness)
 
+        # Match the ellipse shown by the editor; discard the outside pixels.
+        # Draw at higher resolution for a smooth edge after downsampling.
+        mask_scale = 4
+        mask = Image.new("L", (image.width * mask_scale, image.height * mask_scale), 0)
+        ImageDraw.Draw(mask).ellipse(
+            (0, 0, mask.width - 1, mask.height - 1), fill=255
+        )
+        mask = mask.resize(image.size, Image.Resampling.LANCZOS)
+        image = image.convert("RGBA")
+        image.putalpha(mask)
+        canvas = Image.new("RGBA", (1000, 1000), (0, 0, 0, 0))
         x = (1000 - image.width) // 2
         y = (1000 - image.height) // 2
-
         canvas.paste(image, (x, y))
 
-        canvas = ImageEnhance.Brightness(canvas).enhance(brightness)
-        canvas = ImageEnhance.Contrast(canvas).enhance(contrast)
-        canvas = ImageEnhance.Sharpness(canvas).enhance(sharpness)
-
-        processed_filename = f"coin_{coin.id}_{side}_processed.jpg"
+        # A new URL prevents browsers and object storage from serving an old crop.
+        processed_filename = f"coin_{coin.id}_{side}_processed_{uuid.uuid4().hex}.png"
         processed_path = Path(UPLOAD_FOLDER) / processed_filename
-
-        canvas.save(
-            processed_path,
-            "JPEG",
-            quality=95
-        )
+        canvas.save(processed_path, "PNG")
 
         r2_upload_file(
             processed_path,
