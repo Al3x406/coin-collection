@@ -88,6 +88,8 @@ OWNER_ONLY_ENDPOINTS = {
     "numista_banknote_details",
     "numista_type_details",
     "numista_type_issues",
+    "identify_banknote",
+    "identify_banknote_ocr",
     "identify_coin_ocr",
     "identify_coin",
     "create_set",
@@ -6496,6 +6498,37 @@ def identify_coin_ocr():
 
     return results
 
+
+
+@app.route("/identify/banknotes")
+def identify_banknote():
+    return render_template("identify_banknote.html")
+
+
+@app.route("/api/identify/banknotes/ocr", methods=["POST"])
+def identify_banknote_ocr():
+    photos = [(side, request.files.get(side)) for side in ("front", "back")]
+    if not any(photo and photo.filename for _, photo in photos):
+        return {"error": "Choose at least one banknote photo."}, 400
+    _load_image_tools()
+    texts = {}
+    try:
+        for side, photo in photos:
+            if not photo or not photo.filename:
+                continue
+            # Keep the whole rectangular banknote rather than coin text bands.
+            image = ImageOps.exif_transpose(Image.open(photo.stream))
+            image.thumbnail((2000, 2000), Image.Resampling.LANCZOS)
+            image = ImageOps.autocontrast(image.convert("L"))
+            texts[side + "_text"] = pytesseract.image_to_string(
+                image, config="--psm 11", timeout=20
+            ).strip()[:6000]
+    except (pytesseract.TesseractNotFoundError, FileNotFoundError):
+        return {"error": "Text recognition is unavailable. Enter the visible text below to search."}, 503
+    except Exception:
+        return {"error": "Could not read that photo. Try a clear JPG, PNG or WEBP, or enter the text manually."}, 400
+    combined = "\n".join(texts.values())
+    return {**texts, "combined_text": combined, "suggested_year": find_possible_year(combined)}
 
 
 @app.route("/identify", methods=["GET", "POST"])
