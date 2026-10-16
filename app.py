@@ -3993,16 +3993,27 @@ def numista_banknote_search():
     data, error = _numista_get("/types", headers, params)
     if error:
         return error
-    results = []
-    for item in data.get("types", []):
-        if item.get("category") not in (None, "banknote"):
-            continue
-        results.append({
-            "id": item.get("id"), "title": item.get("title"),
-            "issuer": (item.get("issuer") or {}).get("name"),
-            "min_year": item.get("min_year"), "max_year": item.get("max_year")
-        })
-    return {"results": results, "count": data.get("count", len(results))}
+    def banknote_results(payload):
+        return [item for item in payload.get("types", [])
+                if item.get("category") in (None, "banknote")]
+
+    items = banknote_results(data)
+    year_relaxed = False
+    if not items and year:
+        # Catalogue types can span issues or omit a printed year entirely.
+        broader_params = {key: value for key, value in params.items() if key != "year"}
+        broader_data, broader_error = _numista_get("/types", headers, broader_params)
+        if broader_error:
+            return broader_error
+        items = banknote_results(broader_data)
+        year_relaxed = True
+    results = [{
+        "id": item.get("id"), "title": item.get("title"),
+        "issuer": (item.get("issuer") or {}).get("name"),
+        "min_year": item.get("min_year"), "max_year": item.get("max_year")
+    } for item in items]
+    return {"results": results, "count": len(results), "year_relaxed": year_relaxed}
+
 
 
 @app.route("/api/numista/banknotes/type/<int:type_id>")

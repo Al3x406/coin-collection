@@ -82,7 +82,9 @@
    try {
      const params=new URLSearchParams({q});if($('note-year').value)params.set('year',$('note-year').value);
      const data=await json('/api/numista/banknotes/search?'+params);
-     $('search-status').textContent=data.results.length?'Possible matches. Open a reference to compare both sides.':'No matches. Try fewer words or remove the year.';
+     $('search-status').textContent=data.results.length
+       ? (data.year_relaxed?'No matches for that year. Showing banknotes without a year restriction; check the issue date carefully.':'Possible matches. Open a reference to compare both sides.')
+       : 'No matches, including without the year. Try adding the country or issuing bank, or use fewer search words.';
      for(const item of data.results){
        const col=document.createElement('div');col.className='col-md-6';
        const card=document.createElement('div');card.className='card h-100';const body=document.createElement('div');body.className='card-body';card.append(body);col.append(card);
@@ -101,7 +103,7 @@
            const select=document.createElement('button');select.className='btn btn-primary';select.type='button';select.textContent='Use This Banknote';body.append(select);
            select.addEventListener('click',async()=>{
              await Promise.all(Object.values(pending));
-             try{sessionStorage.setItem('banknoteIdentifierDraft',JSON.stringify({id:item.id,year:$('note-year').value,...photos}));}
+             try{sessionStorage.setItem('banknoteIdentifierDraft',JSON.stringify({id:item.id,year:data.year_relaxed?'':$('note-year').value,...photos}));}
              catch(e){$('search-status').textContent='Your browser could not transfer the photos. Reattach them on the Add Banknote form.';if(!confirm('The reference will transfer, but you will need to reattach your photos. Continue?'))return;}
              location.href={{ url_for('banknotes.add_note')|tojson }}+'?numista_id='+encodeURIComponent(item.id);
            });
