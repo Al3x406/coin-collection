@@ -1675,7 +1675,7 @@ def coins():
         "total_coins": total_coins,
         "countries": len(countries),
         "unique_types": len(unique_types),
-        "estimated_value": estimated_value + sum(n.estimated_value or 0 for n in complete_banknotes),
+        "estimated_value": estimated_value + sum((n.estimated_value or 0) * (n.quantity or 1) for n in complete_banknotes),
         "displayed_records": len(all_coins) + len(all_banknotes),
     }
 
@@ -7062,6 +7062,11 @@ Banknote = register_banknotes(app, db)
 # Gunicorn does not execute the __main__ block; initialize additive tables on startup.
 with app.app_context():
     db.create_all()
+    # Additive migration for existing SQLite and Turso banknote collections.
+    banknote_columns = {row[1] for row in db.session.execute(text("PRAGMA table_info(banknote)")).fetchall()}
+    if "quantity" not in banknote_columns:
+        db.session.execute(text("ALTER TABLE banknote ADD COLUMN quantity INTEGER NOT NULL DEFAULT 1"))
+        db.session.commit()
 
 if __name__ == "__main__":
     with app.app_context():

@@ -38,6 +38,7 @@ def register_banknotes(app, db):
         portrait = db.Column(db.String(180))
         reverse_design = db.Column(db.String(180))
         condition = db.Column(db.String(100))
+        quantity = db.Column(db.Integer, nullable=False, default=1, server_default="1")
         estimated_value = db.Column(db.Float)
         purchase_price = db.Column(db.Float)
         date_acquired = db.Column(db.String(30))
@@ -82,6 +83,14 @@ def register_banknotes(app, db):
             setattr(note, field, number(request.form.get(field), int))
         for field in ("estimated_value","purchase_price"):
             setattr(note, field, number(request.form.get(field), float))
+        quantity_raw = request.form.get("quantity", "1").strip()
+        try:
+            quantity = int(quantity_raw)
+        except (TypeError, ValueError):
+            raise ValueError("Quantity must be a whole number of at least 1")
+        if quantity < 1:
+            raise ValueError("Quantity must be a whole number of at least 1")
+        note.quantity = quantity
         note.date_is_approx = request.form.get("date_is_approx") == "on"
         if note.date_start_year is not None and note.date_end_year is not None and note.date_start_year > note.date_end_year:
             raise ValueError("Start year must not exceed end year")

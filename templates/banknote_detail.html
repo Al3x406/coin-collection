@@ -26,11 +26,11 @@
   <div class="col-md-6"><div class="note-panel text-center"><div class="mb-2">{{ (photo.side or 'Photo')|title }}</div><img class="note-photo" src="{{ url_for('static',filename=photo.filename) }}" alt="{{ note.name }} {{ photo.side or 'photo' }}"></div></div>
  {% endfor %}</div>
  <div class="note-panel"><h3>Banknote Information</h3><dl>
- {% for label,value in [('Name',note.name),('Issuing country',note.country),('Set country',note.set_country),('Denomination',note.denomination),('Currency',note.currency),('Year',note.year),('Issuing authority',note.issuing_authority),('Condition',note.condition),('Catalog number',note.catalog_number),('Serial number',note.serial_number),('Front design',note.portrait),('Back design',note.reverse_design)] %}
+ {% for label,value in [('Name',note.name),('Issuing country',note.country),('Set country',note.set_country),('Denomination',note.denomination),('Currency',note.currency),('Year',note.year),('Issuing authority',note.issuing_authority),('Condition',note.condition),('Quantity',note.quantity or 1),('Catalog number',note.catalog_number),('Serial number',note.serial_number),('Front design',note.portrait),('Back design',note.reverse_design)] %}
  {% if value is not none and value != '' %}<dt>{{ label }}</dt><dd>{{ value }}</dd>{% endif %}
  {% endfor %}
  {% if note.date_start_year is not none or note.date_end_year is not none %}<dt>Date range</dt><dd>{{ note.date_start_year if note.date_start_year is not none else '?' }}–{{ note.date_end_year if note.date_end_year is not none else '?' }}</dd>{% endif %}
- {% if note.estimated_value is not none %}<dt>Estimated value</dt><dd>${{ '%.2f'|format(note.estimated_value) }}</dd>{% endif %}
+ {% if note.estimated_value is not none %}<dt>Value per banknote</dt><dd>${{ '%.2f'|format(note.estimated_value) }}</dd><dt>Total estimated value</dt><dd>${{ '%.2f'|format(note.estimated_value * (note.quantity or 1)) }}</dd>{% endif %}
  {% if note.purchase_price is not none %}<dt>Price paid</dt><dd>${{ '%.2f'|format(note.purchase_price) }}</dd>{% endif %}
  {% if note.date_acquired %}<dt>Date acquired</dt><dd>{{ note.date_acquired }}</dd>{% endif %}
  {% if note.source %}<dt>Reference</dt><dd><a href="{{ note.source }}" rel="noopener noreferrer" target="_blank">View reference</a></dd>{% endif %}
