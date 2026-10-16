@@ -116,7 +116,7 @@
       const params = new URLSearchParams({q});
       if (year.value.trim()) params.set('year',year.value.trim());
       const data = await get('/api/numista/banknotes/search?' + params);
-      status.textContent = data.results.length ? 'Choose the matching N# reference:' : 'No matching banknotes found.';
+      status.textContent = data.results.length ? (data.year_relaxed ? 'No matches for that year. Showing other issues; verify the date before selecting:' : 'Choose the matching N# reference:') : 'No matching banknotes found. Try adding the country or using fewer words.';
       data.results.forEach(item => {
         const option = document.createElement('button');
         option.type='button'; option.className='list-group-item list-group-item-action';
