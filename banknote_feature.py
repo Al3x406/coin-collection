@@ -5,6 +5,20 @@ from werkzeug.utils import secure_filename
 from pathlib import Path
 import uuid
 
+def current_banknote_photos(photos):
+    """Show the newest saved front/back while retaining other labelled photos."""
+    latest = {}
+    extras = []
+    for photo in photos:
+        if photo.side in ("front", "back"):
+            previous = latest.get(photo.side)
+            if previous is None or (photo.id or 0) >= (previous.id or 0):
+                latest[photo.side] = photo
+        else:
+            extras.append(photo)
+    return [latest[side] for side in ("front", "back") if side in latest] + extras
+
+
 def register_banknotes(app, db):
     class Banknote(db.Model):
         __tablename__ = "banknote"
@@ -31,6 +45,10 @@ def register_banknotes(app, db):
         notes = db.Column(db.Text)
         created_at = db.Column(db.DateTime, default=datetime.utcnow)
         photos = db.relationship("BanknotePhoto", back_populates="banknote", cascade="all, delete-orphan", order_by="BanknotePhoto.sort_order")
+
+        @property
+        def current_photos(self):
+            return current_banknote_photos(self.photos)
 
     class BanknotePhoto(db.Model):
         __tablename__ = "banknote_photo"
@@ -84,11 +102,22 @@ def register_banknotes(app, db):
             file.save(local)
             if r2_is_configured():
                 r2_upload_file(str(local), key)
-            db.session.add(BanknotePhoto(banknote=note, filename=key, side=side, sort_order=idx))
+            existing = [photo for photo in note.photos if photo.side == side]
+            if existing:
+                target = max(existing, key=lambda photo: photo.id or 0)
+                target.filename = key
+                target.sort_order = idx
+            else:
+                db.session.add(BanknotePhoto(banknote=note, filename=key, side=side, sort_order=idx))
+        # Repair duplicate side records on save. Keep original files in storage.
+        keep = current_banknote_photos(note.photos)
+        for photo in list(note.photos):
+            if photo not in keep:
+                note.photos.remove(photo)
 
     @bp.route("/banknotes")
     def list_notes():
-        return render_template("banknotes.html", notes=Banknote.query.order_by(Banknote.id.desc()).all())
+        return redirect(url_for("coins"))
 
     @bp.route("/banknotes/<int:note_id>")
     def detail_note(note_id):
@@ -132,7 +161,7 @@ def register_banknotes(app, db):
                 save_fields(note)
                 save_photos(note)
                 db.session.commit()
-                return redirect(url_for("banknotes.list_notes"))
+                return redirect(url_for("banknotes.detail_note", note_id=note.id))
             except (ValueError, TypeError) as exc:
                 db.session.rollback()
                 error = str(exc)
