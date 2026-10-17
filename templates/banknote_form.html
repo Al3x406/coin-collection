@@ -66,15 +66,12 @@
  <div class="modal-dialog modal-dialog-centered"><div class="modal-content">
  <div class="modal-header"><h5 class="modal-title" id="banknoteCropTitle">Crop banknote photo</h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div>
  <div class="modal-body">
- <p class="small text-muted">Align the bill’s edges with the dashed rectangle. Only the area inside that rectangle is saved. Use Zoom, Width and Tilt for a tight fit.</p>
- <div id="banknoteCropFrame" style="width:100%;aspect-ratio:12/7;overflow:hidden;position:relative;touch-action:none;background:#151515;border:2px solid #b89a58;border-radius:8px;cursor:grab">
- <img id="banknoteCropImage" alt="Photo to crop" draggable="false" style="position:absolute;max-width:none;user-select:none;pointer-events:none;transform-origin:center center">
- <div aria-hidden="true" style="position:absolute;inset:5%;border:1px dashed rgba(255,255,255,.75);pointer-events:none;box-shadow:0 0 0 1px rgba(0,0,0,.35)"></div>
- <div aria-hidden="true" style="position:absolute;left:50%;top:0;bottom:0;border-left:1px dashed rgba(255,255,255,.35);pointer-events:none"></div>
- <div aria-hidden="true" style="position:absolute;top:50%;left:0;right:0;border-top:1px dashed rgba(255,255,255,.35);pointer-events:none"></div>
- </div>
- <label class="form-label mt-3" for="banknoteCropWidth">Crop width / shape</label><input id="banknoteCropWidth" class="form-range" type="range" min="0.8" max="3.5" step="0.05" value="1.7">
- <label class="form-label mt-3" for="banknoteCropZoom">Bill size / zoom</label><input id="banknoteCropZoom" class="form-range" type="range" min="0.35" max="3" step="0.01" value="1">
+ <p class="small text-muted">Drag the corners or sides of the crop box to fit the banknote. Drag inside the box to move it.</p>
+ <div id="banknoteCropFrame" style="width:100%;aspect-ratio:12/8;position:relative;overflow:hidden;touch-action:none;background:#151515;border-radius:8px">
+ <img id="banknoteCropImage" alt="Photo to crop" draggable="false" style="position:absolute;max-width:none;user-select:none;pointer-events:none;transform-origin:center">
+ <div id="banknoteCropSelection" style="position:absolute;border:2px solid #fff;box-shadow:0 0 0 2000px rgba(0,0,0,.55);touch-action:none;cursor:move">
+ <span data-crop-handle="nw" style="position:absolute;width:18px;height:18px;background:#fff;border:2px solid #876a36;border-radius:4px;touch-action:none;top:-9px;left:-9px;cursor:nw-resize"></span><span data-crop-handle="n" style="position:absolute;width:18px;height:18px;background:#fff;border:2px solid #876a36;border-radius:4px;touch-action:none;top:-9px;left:calc(50% - 9px);cursor:n-resize"></span><span data-crop-handle="ne" style="position:absolute;width:18px;height:18px;background:#fff;border:2px solid #876a36;border-radius:4px;touch-action:none;top:-9px;right:-9px;cursor:ne-resize"></span><span data-crop-handle="e" style="position:absolute;width:18px;height:18px;background:#fff;border:2px solid #876a36;border-radius:4px;touch-action:none;right:-9px;top:calc(50% - 9px);cursor:e-resize"></span><span data-crop-handle="se" style="position:absolute;width:18px;height:18px;background:#fff;border:2px solid #876a36;border-radius:4px;touch-action:none;bottom:-9px;right:-9px;cursor:se-resize"></span><span data-crop-handle="s" style="position:absolute;width:18px;height:18px;background:#fff;border:2px solid #876a36;border-radius:4px;touch-action:none;bottom:-9px;left:calc(50% - 9px);cursor:s-resize"></span><span data-crop-handle="sw" style="position:absolute;width:18px;height:18px;background:#fff;border:2px solid #876a36;border-radius:4px;touch-action:none;bottom:-9px;left:-9px;cursor:sw-resize"></span><span data-crop-handle="w" style="position:absolute;width:18px;height:18px;background:#fff;border:2px solid #876a36;border-radius:4px;touch-action:none;left:-9px;top:calc(50% - 9px);cursor:w-resize"></span>
+ </div></div>
  <label class="form-label mt-3" for="banknoteCropAngle">Straighten / tilt: <output id="banknoteCropAngleValue">0°</output></label><input id="banknoteCropAngle" class="form-range" type="range" min="-25" max="25" step="0.5" value="0">
  <button type="button" id="banknoteResetAngle" class="btn btn-outline-secondary btn-sm">Reset tilt</button>
  <div id="banknoteCropMessage" class="small" role="status"></div>
@@ -165,114 +162,74 @@
 </script>
 <script>
 (() => {
- const modalEl=document.getElementById('banknoteCropModal');
- const frame=document.getElementById('banknoteCropFrame');
- const img=document.getElementById('banknoteCropImage');
- const zoom=document.getElementById('banknoteCropZoom');
- const cropWidth=document.getElementById('banknoteCropWidth');
- const angle=document.getElementById('banknoteCropAngle');
- const angleValue=document.getElementById('banknoteCropAngleValue');
- const message=document.getElementById('banknoteCropMessage');
- const modal=window.bootstrap?.Modal ? new bootstrap.Modal(modalEl) : null;
- const retry=document.getElementById('banknoteOpenCropAgain');
- const feedback=document.getElementById('banknoteCropFeedback');
- let lastInput=null;
- let input=null, source=null, objectUrl=null, scale=1, dx=0, dy=0, drag=null;
- const clamp=(n,a,b)=>Math.min(b,Math.max(a,n));
+ const modalEl=document.getElementById('banknoteCropModal'),frame=document.getElementById('banknoteCropFrame'),img=document.getElementById('banknoteCropImage'),selection=document.getElementById('banknoteCropSelection');
+ const angle=document.getElementById('banknoteCropAngle'),angleValue=document.getElementById('banknoteCropAngleValue'),message=document.getElementById('banknoteCropMessage'),feedback=document.getElementById('banknoteCropFeedback'),retry=document.getElementById('banknoteOpenCropAgain');
+ const modal=window.bootstrap?.Modal?new bootstrap.Modal(modalEl):null;
+ let input=null,lastInput=null,source=null,objectUrl=null,rect=null,drag=null;
+ const clamp=(v,min,max)=>Math.min(max,Math.max(min,v));
  function layout(){
   if(!source)return;
   const w=frame.clientWidth,h=frame.clientHeight;
-  const base=Math.max(w/source.width,h/source.height);
-  scale=base*Number(zoom.value);
-  const iw=source.width*scale,ih=source.height*scale;
-  dx=clamp(dx,-w/2-iw/2,w/2+iw/2);
-  dy=clamp(dy,-h/2-ih/2,h/2+ih/2);
-  img.style.width=iw+'px';img.style.height=ih+'px';
-  img.style.left=((w-iw)/2+dx)+'px';img.style.top=((h-ih)/2+dy)+'px';
-  img.style.transform='rotate('+Number(angle.value)+'deg)';
-  const valid=cropIsCovered(w,h);
-  document.getElementById('banknoteApplyCrop').disabled=!valid;
-  message.textContent=valid?'Only the dashed rectangle will be saved. Align it with the bill’s edges.':'Zoom in or reposition the photo to cover the entire dashed rectangle.';
+  const scale=Math.min(w/source.width,h/source.height),iw=source.width*scale,ih=source.height*scale;
+  img.style.width=iw+'px';img.style.height=ih+'px';img.style.left=(w-iw)/2+'px';img.style.top=(h-ih)/2+'px';img.style.transform='rotate('+angle.value+'deg)';
+  if(!rect)rect={x:(w-iw)/2,y:(h-ih)/2,w:iw,h:ih};
+  rect.x=clamp(rect.x,0,w-24);rect.y=clamp(rect.y,0,h-24);rect.w=clamp(rect.w,24,w-rect.x);rect.h=clamp(rect.h,24,h-rect.y);
+  Object.assign(selection.style,{left:rect.x+'px',top:rect.y+'px',width:rect.w+'px',height:rect.h+'px'});
  }
- function cropIsCovered(w,h){
-  const radians=Number(angle.value)*Math.PI/180;
-  const cos=Math.cos(radians),sin=Math.sin(radians);
-  const halfWidth=source.width*scale/2,halfHeight=source.height*scale/2;
-  return [[.05*w,.05*h],[.95*w,.05*h],[.95*w,.95*h],[.05*w,.95*h]].every(([x,y])=>{
-   const vx=x-w/2-dx,vy=y-h/2-dy;
-   return Math.abs(vx*cos+vy*sin)<=halfWidth+.01 && Math.abs(-vx*sin+vy*cos)<=halfHeight+.01;
-  });
- }
- function reset(){
+ function openFile(el){
+  const file=el.files?.[0];if(!file)return;
+  if(!file.type.startsWith('image/')){feedback.textContent='Choose an image file.';return;}
   if(objectUrl)URL.revokeObjectURL(objectUrl);
-  objectUrl=null;source=null;input=null;drag=null;
+  input=el;lastInput=el;retry.disabled=false;objectUrl=URL.createObjectURL(file);
+  const pic=new Image();
+  pic.onload=()=>{source=pic;img.src=objectUrl;rect=null;angle.value='0';angleValue.textContent='0°';if(modal)modal.show();else{modalEl.style.display='block';modalEl.classList.add('show');}requestAnimationFrame(layout);};
+  pic.onerror=()=>{feedback.textContent='Unable to load photo.';};
+  pic.src=objectUrl;
  }
- modalEl.addEventListener('hidden.bs.modal',reset);
- modalEl.addEventListener('shown.bs.modal',layout);
- document.querySelectorAll('[data-banknote-crop]').forEach(el=>{
-  el.addEventListener('change',()=>{
-   const file=el.files?.[0];if(!file)return;
-   if(!file.type.startsWith('image/')){message.textContent='Choose an image file.';return;}
-   input=el;lastInput=el;retry.disabled=false;feedback.textContent='Photo selected. Crop editor should open now.';message.textContent='Loading photo…';
-   objectUrl=URL.createObjectURL(file);
-   const pic=new Image();
-   pic.onload=()=>{
-    source=pic;img.src=objectUrl;zoom.value='1';cropWidth.value=String(clamp(pic.width/pic.height,.8,3.5));angle.value='0';angleValue.textContent='0°';frame.style.aspectRatio=cropWidth.value+' / 1';dx=dy=0;
-    if(modal){modal.show();requestAnimationFrame(layout);}
-    else {modalEl.style.display='block';modalEl.classList.add('show');modalEl.removeAttribute('aria-hidden');layout();}
-
-   };
-   pic.onerror=()=>{message.textContent='Unable to open this photo.';reset();};
-   pic.src=objectUrl;
-  });
+ document.querySelectorAll('[data-banknote-crop]').forEach(el=>el.addEventListener('change',()=>openFile(el)));
+ document.querySelectorAll('[data-edit-saved-side]').forEach(button=>button.addEventListener('click',async()=>{
+  button.disabled=true;feedback.textContent='Opening saved photo…';
+  try{const response=await fetch(button.dataset.savedUrl,{credentials:'same-origin'});if(!response.ok)throw Error('Could not load saved photo.');
+   const blob=await response.blob(),dt=new DataTransfer();dt.items.add(new File([blob],button.dataset.editSavedSide+'.jpg',{type:blob.type}));
+   const field=document.querySelector('input[name="'+button.dataset.editSavedSide+'"]');field.files=dt.files;field.dispatchEvent(new Event('change'));
+  }catch(e){feedback.textContent=e.message;}finally{button.disabled=false;}
+ }));
+ const requestedSide=new URLSearchParams(location.search).get('edit_photo');if(['front','back'].includes(requestedSide))document.querySelector('[data-edit-saved-side="'+requestedSide+'"]')?.click();
+ selection.addEventListener('pointerdown',e=>{if(!rect)return;e.preventDefault();drag={x:e.clientX,y:e.clientY,rect:{...rect},handle:e.target.dataset.cropHandle||'move'};selection.setPointerCapture(e.pointerId);});
+ selection.addEventListener('pointermove',e=>{
+  if(!drag)return;e.preventDefault();
+  const dx=e.clientX-drag.x,dy=e.clientY-drag.y,r=drag.rect,h=drag.handle,W=frame.clientWidth,H=frame.clientHeight;
+  if(h==='move'){rect.x=clamp(r.x+dx,0,W-r.w);rect.y=clamp(r.y+dy,0,H-r.h);}
+  else{
+   let left=r.x,top=r.y,right=r.x+r.w,bottom=r.y+r.h;
+   if(h.includes('w'))left=clamp(r.x+dx,0,right-24);
+   if(h.includes('e'))right=clamp(r.x+r.w+dx,left+24,W);
+   if(h.includes('n'))top=clamp(r.y+dy,0,bottom-24);
+   if(h.includes('s'))bottom=clamp(r.y+r.h+dy,top+24,H);
+   rect={x:left,y:top,w:right-left,h:bottom-top};
+  }layout();
  });
- document.querySelectorAll('[data-edit-saved-side]').forEach(button=>{
-  button.addEventListener('click',async()=>{
-   button.disabled=true;feedback.textContent='Opening saved photo…';
-   try{
-    const response=await fetch(button.dataset.savedUrl,{credentials:'same-origin'});
-    if(!response.ok)throw new Error('Could not load the saved photo.');
-    const blob=await response.blob();
-    const dt=new DataTransfer();dt.items.add(new File([blob],button.dataset.editSavedSide+'.jpg',{type:blob.type}));
-    const field=document.querySelector('input[name="'+button.dataset.editSavedSide+'"]');
-    field.files=dt.files;field.dispatchEvent(new Event('change'));
-   }catch(error){feedback.textContent=error.message;}finally{button.disabled=false;}
-  });
- });
- const requestedSide=new URLSearchParams(location.search).get('edit_photo');
- if(['front','back'].includes(requestedSide))document.querySelector('[data-edit-saved-side="'+requestedSide+'"]')?.click();
- zoom.addEventListener('input',layout);
+ selection.addEventListener('pointerup',()=>drag=null);selection.addEventListener('pointercancel',()=>drag=null);
  angle.addEventListener('input',()=>{angleValue.textContent=angle.value+'°';layout();});
  document.getElementById('banknoteResetAngle').addEventListener('click',()=>{angle.value='0';angleValue.textContent='0°';layout();});
- cropWidth.addEventListener('input',()=>{frame.style.aspectRatio=cropWidth.value+' / 1';layout();});
- frame.addEventListener('pointerdown',e=>{if(!source)return;drag={x:e.clientX,y:e.clientY,dx,dy};frame.setPointerCapture(e.pointerId);});
- frame.addEventListener('pointermove',e=>{if(!drag)return;dx=drag.dx+e.clientX-drag.x;dy=drag.dy+e.clientY-drag.y;layout();});
- frame.addEventListener('pointerup',()=>drag=null);
- frame.addEventListener('pointercancel',()=>drag=null);
- function closeCrop(){if(modal)modal.hide();else {modalEl.style.display='none';modalEl.classList.remove('show');modalEl.setAttribute('aria-hidden','true');reset();}}
- retry.addEventListener('click',()=>{if(lastInput?.files?.length){lastInput.dispatchEvent(new Event('change'));}else feedback.textContent='Take or select a photo first.';});
- document.getElementById('banknoteKeepOriginal').addEventListener('click',()=>{feedback.textContent='Original photo selected.';closeCrop();});
+ modalEl.addEventListener('shown.bs.modal',layout);
+ modalEl.addEventListener('hidden.bs.modal',()=>{if(objectUrl)URL.revokeObjectURL(objectUrl);objectUrl=null;source=null;drag=null;});
+ function close(){if(modal)modal.hide();else{modalEl.style.display='none';modalEl.classList.remove('show');}}
+ retry.addEventListener('click',()=>{if(lastInput?.files?.length)openFile(lastInput);else feedback.textContent='Select a photo first.';});
+ document.getElementById('banknoteKeepOriginal').addEventListener('click',()=>{feedback.textContent='Original photo selected.';close();});
  document.getElementById('banknoteApplyCrop').addEventListener('click',()=>{
-  if(!source||!input)return;
-  try{
-   const canvas=document.createElement('canvas');canvas.width=1200;canvas.height=Math.round(1200/Number(cropWidth.value));
-   const ctx=canvas.getContext('2d');
-   if(!cropIsCovered(frame.clientWidth,frame.clientHeight)){message.textContent='Cover the whole dashed rectangle before saving.';return;}
-   const factor=canvas.width/(frame.clientWidth*.9);
-   ctx.fillStyle='#151515';ctx.fillRect(0,0,canvas.width,canvas.height);
-   const drawWidth=source.width*scale*factor,drawHeight=source.height*scale*factor;
-   const centerX=(frame.clientWidth*.45+dx)*factor,centerY=(frame.clientHeight*.45+dy)*factor;
-   ctx.translate(centerX,centerY);
-   ctx.rotate(Number(angle.value)*Math.PI/180);
-   ctx.drawImage(source,-drawWidth/2,-drawHeight/2,drawWidth,drawHeight);
-   canvas.toBlob(blob=>{
-    if(!blob){message.textContent='Could not crop this image.';return;}
-    const dt=new DataTransfer();
-    dt.items.add(new File([blob],(input.name||'banknote')+'-cropped.jpg',{type:'image/jpeg'}));
-    input.files=dt.files;
-    feedback.textContent='Cropped photo ready. Click Save banknote below to keep the change.';closeCrop();
-   },'image/jpeg',0.92);
-  }catch(e){message.textContent='Crop failed. You can use the original photo instead.';}
+  if(!source||!input||!rect)return;
+  const W=frame.clientWidth,H=frame.clientHeight,scale=Math.min(W/source.width,H/source.height);
+  const canvas=document.createElement('canvas'),multiplier=Math.min(3,Math.max(1,1200/rect.w));
+  canvas.width=Math.round(rect.w*multiplier);canvas.height=Math.round(rect.h*multiplier);
+  const ctx=canvas.getContext('2d');
+  ctx.translate(((W/2)-rect.x)*multiplier,((H/2)-rect.y)*multiplier);
+  ctx.rotate(Number(angle.value)*Math.PI/180);
+  ctx.drawImage(source,-source.width*scale*multiplier/2,-source.height*scale*multiplier/2,source.width*scale*multiplier,source.height*scale*multiplier);
+  canvas.toBlob(blob=>{if(!blob){message.textContent='Could not crop photo.';return;}
+   const dt=new DataTransfer();dt.items.add(new File([blob],input.name+'-cropped.jpg',{type:'image/jpeg'}));input.files=dt.files;
+   feedback.textContent='Cropped photo ready. Save banknote to keep the change.';close();
+  },'image/jpeg',.92);
  });
 })();
 </script>
