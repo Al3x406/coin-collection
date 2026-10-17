@@ -1921,14 +1921,14 @@ html,body{
 
     <div class="category-shelves">
 
-        <a class="category-shelf {% if selected_category=='Paper Money' %}active{% endif %}"
-           href="{{ url_for('artifacts', category='Paper Money') }}">
+        <a class="category-shelf {% if selected_category=='Collectors Cards' %}active{% endif %}"
+           href="{{ url_for('artifacts', category='Collectors Cards') }}">
             <div class="scene">
                 <img class="shelf-stock-image"
                      src="{{ url_for('static', filename='cabinet_art/paper_money_shelf.png') }}"
-                     alt="Paper money display shelf">
+                     alt="Collectors cards display shelf">
             </div>
-            <div class="plaque">Paper Money<small>{{ stats.paper_money }} items</small></div>
+            <div class="plaque">Collectors Cards<small>{{ stats.collectors_cards }} items</small></div>
         </a>
 
         <a class="category-shelf {% if selected_category=='Books' %}active{% endif %}"
@@ -1992,7 +1992,7 @@ html,body{
                         <img src="{{ url_for('static',filename='uploads/artifacts/' ~ artifact.image_filename) }}" alt="{{ artifact.name }}">
                         {% else %}
                         <div class="artifact-placeholder">
-                            {% if artifact.category=='Paper Money' %}${% elif artifact.category=='Books' %}B{% elif artifact.category=='Medals & Tokens' %}✦{% else %}◆{% endif %}
+                            {% if artifact.category=='Collectors Cards' %}${% elif artifact.category=='Books' %}B{% elif artifact.category=='Medals & Tokens' %}✦{% else %}◆{% endif %}
                         </div>
                         {% endif %}
                     </div>
