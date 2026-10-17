@@ -2700,7 +2700,7 @@ def delete_set(set_id):
 
 # --- CABINET OF CURIOSITIES ROUTES ---
 ARTIFACT_CATEGORIES = [
-    "Paper Money",
+    "Collectors Cards",
     "Books",
     "Medals & Tokens",
     "Antiques",
@@ -3002,7 +3002,7 @@ def artifacts():
         "total": len(all_items),
         "categories": len({a.category for a in all_items if a.category}),
         "estimated_value": sum(a.estimated_value or 0 for a in all_items),
-        "paper_money": category_counts.get("Paper Money", 0),
+        "collectors_cards": category_counts.get("Collectors Cards", 0),
         "books": category_counts.get("Books", 0),
         "medals": category_counts.get("Medals & Tokens", 0),
         "antiques": category_counts.get("Antiques", 0),
