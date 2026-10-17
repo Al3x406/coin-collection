@@ -170,6 +170,7 @@
  function layout(){
   if(!source)return;
   const w=frame.clientWidth,h=frame.clientHeight;
+  if(w<30||h<30)return;
   const scale=Math.min(w/source.width,h/source.height),iw=source.width*scale,ih=source.height*scale;
   img.style.width=iw+'px';img.style.height=ih+'px';img.style.left=(w-iw)/2+'px';img.style.top=(h-ih)/2+'px';img.style.transform='rotate('+angle.value+'deg)';
   if(!rect)rect={x:(w-iw)/2,y:(h-ih)/2,w:iw,h:ih};
@@ -182,7 +183,7 @@
   if(objectUrl)URL.revokeObjectURL(objectUrl);
   input=el;lastInput=el;retry.disabled=false;objectUrl=URL.createObjectURL(file);
   const pic=new Image();
-  pic.onload=()=>{source=pic;img.src=objectUrl;rect=null;angle.value='0';angleValue.textContent='0°';if(modal)modal.show();else{modalEl.style.display='block';modalEl.classList.add('show');}requestAnimationFrame(layout);};
+  pic.onload=()=>{source=pic;img.src=objectUrl;rect=null;angle.value='0';angleValue.textContent='0°';if(modal)modal.show();else{modalEl.style.display='block';modalEl.classList.add('show');requestAnimationFrame(layout);}};
   pic.onerror=()=>{feedback.textContent='Unable to load photo.';};
   pic.src=objectUrl;
  }
@@ -212,7 +213,7 @@
  selection.addEventListener('pointerup',()=>drag=null);selection.addEventListener('pointercancel',()=>drag=null);
  angle.addEventListener('input',()=>{angleValue.textContent=angle.value+'°';layout();});
  document.getElementById('banknoteResetAngle').addEventListener('click',()=>{angle.value='0';angleValue.textContent='0°';layout();});
- modalEl.addEventListener('shown.bs.modal',layout);
+ modalEl.addEventListener('shown.bs.modal',()=>{rect=null;requestAnimationFrame(layout);});
  modalEl.addEventListener('hidden.bs.modal',()=>{if(objectUrl)URL.revokeObjectURL(objectUrl);objectUrl=null;source=null;drag=null;});
  function close(){if(modal)modal.hide();else{modalEl.style.display='none';modalEl.classList.remove('show');}}
  retry.addEventListener('click',()=>{if(lastInput?.files?.length)openFile(lastInput);else feedback.textContent='Select a photo first.';});
