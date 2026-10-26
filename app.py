@@ -4180,6 +4180,21 @@ def numista_type_details(type_id):
         )
 
 
+        # Recover a local mint with a missing Numista link only when unique.
+        if local_mint is None:
+            remote_name = (numista_mint.get("name") or "").strip().casefold()
+            issuer_name = (issuer.get("name") or "").casefold()
+            if remote_name:
+                candidates = Mint.query.filter(Mint.numista_id.is_(None)).all()
+                matches = [m for m in candidates if
+                    (m.name or "").strip().casefold() == remote_name or
+                    (m.city or "").strip().casefold() == remote_name]
+                matches = [m for m in matches if
+                    (m.country or "").casefold() in issuer_name or
+                    ("german" in issuer_name and "german" in (m.country or "").casefold())]
+                if len(matches) == 1:
+                    local_mint = matches[0]
+
         mint_results.append({
 
             "numista_id":
