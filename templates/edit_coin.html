@@ -1391,7 +1391,12 @@ function getExpectedMintMark(
             "O",
 
         "west point":
-            "W"
+            "W",
+        "munich": "D",
+        "stuttgart": "F",
+        "karlsruhe": "G",
+        "hamburg": "J",
+        "berlin": "A"
 
     };
 
@@ -1498,25 +1503,12 @@ function showSelectedCoin(
             during that year.
         */
 
-        if (
-            yearIssues.length > 0
-            &&
-            expectedMark !== null
-            &&
-            !availableMarks.has(
-                expectedMark
-            )
-        ) {
-
-            continue;
-
-        }
+        // Do not hide possible mints when year-specific catalogue data is incomplete.
 
 
-        if (
-            mint.local_mint_id
-            !== null
-        ) {
+        const matchingLocalOption = Array.from(mintSelect.options).find(option => option.value && [option.dataset.name, option.dataset.city, option.textContent].some(v => (v || "").trim().toLowerCase() === name.trim().toLowerCase()));
+        const resolvedMintId = mint.local_mint_id || (matchingLocalOption && matchingLocalOption.value);
+        if (resolvedMintId) {
 
             mintButtons += `
 
