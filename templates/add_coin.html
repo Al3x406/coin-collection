@@ -1866,14 +1866,7 @@ const issuesForSelectedYear =
 // No mint_letter becomes an empty string,
 // which represents a no-mint-mark issue.
 
-const availableMintMarks =
-    new Set(
-        issuesForSelectedYear.map(
-            issue =>
-                issue.mint_letter
-                || ""
-        )
-    );
+const availableMintMarks = new Set(issuesForSelectedYear.map(issue => String(issue.mint_letter || "").trim().toUpperCase()));
 
 
 // Mapping between our mint names
@@ -1998,19 +1991,8 @@ if (
             accidentally hide foreign or unusual mints.
         */
 
-        if (
-            issuesForSelectedYear.length > 0
-            &&
-            expectedMark !== null
-            &&
-            !availableMintMarks.has(
-                expectedMark
-            )
-        ) {
-
-            continue;
-
-        }
+        // Keep all Numista mints selectable; issue-year data may be incomplete.
+        const mintUnconfirmed = issuesForSelectedYear.length > 0 && expectedMark !== null && !availableMintMarks.has(expectedMark);
 
 
         visibleMintCount +=
@@ -2021,10 +2003,9 @@ if (
         // LINKED LOCAL MINT
         // ====================================================
 
-        if (
-            mint.local_mint_id
-            !== null
-        ) {
+        const matchingLocalOption = Array.from(mintSelect.options).find(option => option.value && [option.dataset.name, option.dataset.city, option.textContent].some(v => (v || "").trim().toLowerCase().includes(mintName) || (v || "").trim().toLowerCase() === mintName));
+        const resolvedMintId = mint.local_mint_id || (matchingLocalOption && matchingLocalOption.value);
+        if (resolvedMintId) {
 
             mintHtml += `
 
@@ -2111,8 +2092,7 @@ if (
                     mt-2
                 ">
 
-                Showing mints available
-                for ${selectedYear}.
+                Showing possible mints for ${selectedYear}; verify the mint mark on your coin.
 
             </div>
         `;
