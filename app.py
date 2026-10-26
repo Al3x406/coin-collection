@@ -4180,18 +4180,40 @@ def numista_type_details(type_id):
         )
 
 
-        # Recover a local mint with a missing Numista link only when unique.
+        # Match an existing local mint even if its Numista ID was not
+        # imported, or an older import assigned a different Numista ID.
+        # Never create duplicate mint rows or overwrite existing IDs here.
         if local_mint is None:
-            remote_name = (numista_mint.get("name") or "").strip().casefold()
+            def normalized_mint_place(value):
+                value = (value or "").strip().casefold()
+                value = re.sub(r"[^\\w ]+", " ", value)
+                value = re.sub(r"\\s+", " ", value).strip()
+                aliases = {"münchen": "munich", "muenchen": "munich",
+                           "münchen germany": "munich",
+                           "munich germany": "munich",
+                           "berlin germany": "berlin",
+                           "hamburg germany": "hamburg",
+                           "karlsruhe germany": "karlsruhe",
+                           "stuttgart germany": "stuttgart"}
+                return aliases.get(value, value)
+
+            remote_name = normalized_mint_place(numista_mint.get("name"))
             issuer_name = (issuer.get("name") or "").casefold()
             if remote_name:
-                candidates = Mint.query.filter(Mint.numista_id.is_(None)).all()
-                matches = [m for m in candidates if
-                    (m.name or "").strip().casefold() == remote_name or
-                    (m.city or "").strip().casefold() == remote_name]
-                matches = [m for m in matches if
-                    (m.country or "").casefold() in issuer_name or
-                    ("german" in issuer_name and "german" in (m.country or "").casefold())]
+                matches = []
+                for candidate in Mint.query.all():
+                    places = {normalized_mint_place(candidate.name),
+                              normalized_mint_place(candidate.city)}
+                    if remote_name not in places:
+                        continue
+                    country = (candidate.country or "").casefold()
+                    if not country:
+                        continue
+                    country_ok = (country in issuer_name or
+                                  ("german" in issuer_name and
+                                   ("german" in country or country == "deutschland")))
+                    if country_ok:
+                        matches.append(candidate)
                 if len(matches) == 1:
                     local_mint = matches[0]
 
