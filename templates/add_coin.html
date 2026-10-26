@@ -1897,7 +1897,13 @@ const mintMarkMap = {
         "O",
 
     "west point":
-        "W"
+        "W",
+    ...(/german/i.test(coin.issuer || "") ? {
+        "munich": "D",
+        "stuttgart": "F",
+        "karlsruhe": "G",
+        "hamburg": "J"
+    } : {})
 
 };
 
@@ -2319,7 +2325,13 @@ const mintMarkMap = {
         "O",
 
     "west point":
-        "W"
+        "W",
+    ...(/german/i.test(coin.issuer || "") ? {
+        "munich": "D",
+        "stuttgart": "F",
+        "karlsruhe": "G",
+        "hamburg": "J"
+    } : {})
 
 };
 
