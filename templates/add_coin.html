@@ -2016,9 +2016,7 @@ if (
                         btn-outline-secondary
                         numista-mint-button
                     "
-                    data-local-mint-id="${
-                        mint.local_mint_id
-                    }">
+                    data-local-mint-id="${resolvedMintId}">
 
                     ${escapeHtml(
                         mint.local_mint_name
@@ -2041,16 +2039,9 @@ if (
 
                 <button
                     type="button"
-                    class="
-                        btn
-                        btn-outline-secondary
-                    "
-                    disabled
-                    title="
-                        This Numista mint
-                        is not linked to
-                        a local mint yet.
-                    ">
+                    class="btn btn-outline-secondary numista-unlinked-mint-button"
+                    data-mint-name="${escapeHtml(mint.name || '')}"
+                    title="Search for this mint in the local mint picker.">
 
                     ${escapeHtml(
                         mint.name
@@ -2231,6 +2222,20 @@ ${images}
     // ========================================================
     // CONNECT MINT BUTTONS
     // ========================================================
+
+    // Unlinked Numista mints can still initiate a manual mint search.
+    // Do not assign an invalid foreign-key ID to the form.
+    box.querySelectorAll(".numista-unlinked-mint-button").forEach(button => {
+        button.addEventListener("click", () => {
+            const search = document.getElementById("mintSearchInput");
+            if (search) {
+                search.value = button.dataset.mintName || "";
+                search.dispatchEvent(new Event("input", { bubbles: true }));
+                search.scrollIntoView({ behavior: "smooth", block: "center" });
+                search.focus();
+            }
+        });
+    });
 
     const mintButtons =
         box.querySelectorAll(
