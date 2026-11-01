@@ -4056,20 +4056,41 @@ def numista_search():
             "error": "A search term is required."
         }, 400
 
-    params = {
-        "q": f'"{query}"',
-        "category": "coin",
-        "lang": "en",
-        "page": 1,
-        "count": 20
-    }
+    # Try an exact phrase first, then relax the text and year constraints.
+    # Numista type titles do not always match a coin's denomination verbatim.
+    attempts = [
+        (f'"{query}"', year),
+        (query, year),
+        (query, ""),
+    ]
+    # Allow a direct Numista catalogue number (N#661 or 661).
+    match = re.fullmatch(r"(?:N\\s*#?\\s*)?(\\d+)", query, re.IGNORECASE)
+    if match:
+        item, api_error = _numista_get(f"/types/{int(match.group(1))}", headers, {"lang": "en"})
+        if api_error:
+            return api_error
+        issuer = item.get("issuer") or {}
+        return {"count": 1, "results": [{
+            "id": item.get("id"), "title": item.get("title"),
+            "issuer": issuer.get("name"), "min_year": item.get("min_year"),
+            "max_year": item.get("max_year")
+        }]}
 
-    if year:
-        params["year"] = year
-
-    data, api_error = _numista_get("/types", headers, params)
-    if api_error:
-        return api_error
+    data = {"types": [], "count": 0}
+    seen_attempts = set()
+    for term, search_year in attempts:
+        key = (term, search_year)
+        if key in seen_attempts:
+            continue
+        seen_attempts.add(key)
+        params = {"q": term, "category": "coin", "lang": "en", "page": 1, "count": 30}
+        if search_year:
+            params["year"] = search_year
+        data, api_error = _numista_get("/types", headers, params)
+        if api_error:
+            return api_error
+        if data.get("types"):
+            break
 
     results = []
 
