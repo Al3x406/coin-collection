@@ -4076,6 +4076,7 @@ def numista_search():
             "max_year": item.get("max_year")
         }]}
 
+    country = request.args.get("country", "").strip()
     data = {"types": [], "count": 0}
     seen_attempts = set()
     for term, search_year in attempts:
@@ -4091,6 +4092,22 @@ def numista_search():
             return api_error
         if data.get("types"):
             break
+
+    # If a country is supplied, search Numista using the country and
+    # denomination together before returning unrelated global matches.
+    if country:
+        country_results = []
+        for term, search_year in [(f"{country} {query}", year), (f"{country} {query}", ""), (country, year)]:
+            params = {"q": term, "category": "coin", "lang": "en", "page": 1, "count": 100}
+            if search_year:
+                params["year"] = search_year
+            response_data, api_error = _numista_get("/types", headers, params)
+            if api_error:
+                return api_error
+            country_results.extend(response_data.get("types", []))
+            if country_results:
+                break
+        data = {"types": country_results}
 
     results = []
 
@@ -4112,13 +4129,15 @@ def numista_search():
             "max_year": coin.get("max_year")
         })
 
-    return {
-        "count": data.get(
-            "count",
-            len(results)
-        ),
-        "results": results
-    }
+    if country:
+        results = [r for r in results if country.casefold() in (r.get("issuer") or "").casefold()]
+    if year and year.lstrip("-").isdigit():
+        target_year = int(year)
+        results = [r for r in results if r.get("min_year") is None or r.get("max_year") is None or (int(r["min_year"]) <= target_year <= int(r["max_year"]))]
+    words = query.casefold().split()
+    results.sort(key=lambda r: (-sum(w in (r.get("title") or "").casefold() for w in words), r.get("title") or ""))
+    results = results[:30]
+    return {"count": len(results), "results": results}
 
 
 @app.route("/api/numista/type/<int:type_id>")
