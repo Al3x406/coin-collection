@@ -1292,6 +1292,7 @@ async function searchNumista() {
             '<div class="alert alert-success">'
             + data.count
             + ' result(s) found.'
+            + (data.fallback_used ? ' Showing country/year matches because no exact denomination was found.' : '')
             + '</div>';
 
 
