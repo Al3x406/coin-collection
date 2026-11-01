@@ -4079,6 +4079,8 @@ def numista_search():
                       "page": page, "count": 100 if country else 30}
             if search_year:
                 params["year"] = search_year
+            if country:
+                params["issuer"] = country.lower().replace(" ", "-")
             data, error = _numista_get("/types", headers, params)
             if error:
                 return error
