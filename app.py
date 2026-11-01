@@ -3951,7 +3951,9 @@ def _numista_get(path, headers, params=None):
                 "error": f"Numista is temporarily limiting searches. Search has been paused for about {minutes} minutes so repeated taps do not send more requests."
             }, 429)
 
-        response.raise_for_status()
+        if response.status_code >= 400:
+            app.logger.error("Numista API HTTP %s path=%s params=%r body=%r", response.status_code, path, params, response.text[:500])
+            return None, ({"error": f"Numista rejected the search request (HTTP {response.status_code})."}, 502)
         data = response.json()
         _numista_cache[cache_key] = (time.time(), data)
         return data, None
