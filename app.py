@@ -4057,7 +4057,7 @@ def numista_search():
         }, 400
 
     country = request.args.get("country", "").strip()
-    match = re.fullmatch(r"(?:N\\s*#?\\s*)?(\\d+)", query, re.IGNORECASE)
+    match = re.fullmatch(r"N\\s*#\\s*(\\d+)", query, re.IGNORECASE)
     if match:
         item, error = _numista_get(f"/types/{int(match.group(1))}", headers, {"lang": "en"})
         if error:
