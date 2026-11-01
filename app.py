@@ -4070,13 +4070,16 @@ def numista_search():
             "issuer": issuer.get("name"), "min_year": item.get("min_year"),
             "max_year": item.get("max_year")}]}
 
-    # Search the denomination itself. Combining the issuer name with the
-    # Numista free-text query can cause otherwise valid types to disappear.
-    attempts = [(query, year), (query, "")]
+    # First find the denomination. If it fails, look for coins from
+    # the specified country and year without requiring a denomination match.
+    stages = [(query, year, "denomination"), (query, "", "denomination")]
+    if country:
+        stages.extend([(country, year, "country_year"), (country, "", "country_year")])
     results = []
     seen_ids = set()
-    for term, search_year in attempts:
-        for page in range(1, 6 if country else 2):
+    stage_used = None
+    for term, search_year, stage in stages:
+        for page in range(1, 6):
             params = {"q": term, "category": "coin", "lang": "en",
                       "page": page, "count": 20}
             if search_year:
@@ -4089,25 +4092,31 @@ def numista_search():
                 issuer = (item.get("issuer") or {}).get("name") or ""
                 if country and country.casefold() not in issuer.casefold():
                     continue
-                low = item.get("min_year")
-                high = item.get("max_year")
-                if year and year.lstrip("-").isdigit() and low is not None and high is not None:
+                low, high = item.get("min_year"), item.get("max_year")
+                if year.lstrip("-").isdigit() and low is not None and high is not None:
                     if not (int(low) <= int(year) <= int(high)):
                         continue
+                title = item.get("title") or ""
+                if stage == "denomination" and not all(
+                        word in title.casefold() for word in query.casefold().split()):
+                    continue
                 if item.get("id") in seen_ids:
                     continue
                 seen_ids.add(item.get("id"))
-                results.append({"id": item.get("id"), "title": item.get("title"),
+                results.append({"id": item.get("id"), "title": title,
                                 "issuer": issuer, "min_year": low, "max_year": high})
-            if results or len(types) < params["count"]:
+            if len(results) >= 30 or len(types) < 20:
                 break
         if results:
+            stage_used = stage
             break
 
     words = query.casefold().split()
-    results.sort(key=lambda r: (-sum(w in (r.get("title") or "").casefold() for w in words), r.get("title") or ""))
+    results.sort(key=lambda item: (-sum(word in (item.get("title") or "").casefold()
+                                        for word in words), item.get("title") or ""))
     results = results[:30]
-    return {"count": len(results), "results": results}
+    return {"count": len(results), "results": results,
+            "fallback_used": stage_used == "country_year"}
 
 
 @app.route("/api/numista/type/<int:type_id>")
