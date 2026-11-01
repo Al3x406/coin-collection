@@ -4056,84 +4056,52 @@ def numista_search():
             "error": "A search term is required."
         }, 400
 
-    # Try an exact phrase first, then relax the text and year constraints.
-    # Numista type titles do not always match a coin's denomination verbatim.
-    attempts = [
-        (f'"{query}"', year),
-        (query, year),
-        (query, ""),
-    ]
-    # Allow a direct Numista catalogue number (N#661 or 661).
+    country = request.args.get("country", "").strip()
     match = re.fullmatch(r"(?:N\\s*#?\\s*)?(\\d+)", query, re.IGNORECASE)
     if match:
-        item, api_error = _numista_get(f"/types/{int(match.group(1))}", headers, {"lang": "en"})
-        if api_error:
-            return api_error
+        item, error = _numista_get(f"/types/{int(match.group(1))}", headers, {"lang": "en"})
+        if error:
+            return error
         issuer = item.get("issuer") or {}
         return {"count": 1, "results": [{
             "id": item.get("id"), "title": item.get("title"),
             "issuer": issuer.get("name"), "min_year": item.get("min_year"),
-            "max_year": item.get("max_year")
-        }]}
+            "max_year": item.get("max_year")}]}
 
-    country = request.args.get("country", "").strip()
-    data = {"types": [], "count": 0}
-    seen_attempts = set()
+    # Search the denomination itself. Combining the issuer name with the
+    # Numista free-text query can cause otherwise valid types to disappear.
+    attempts = [(query, year), (query, "")]
+    results = []
+    seen_ids = set()
     for term, search_year in attempts:
-        key = (term, search_year)
-        if key in seen_attempts:
-            continue
-        seen_attempts.add(key)
-        params = {"q": term, "category": "coin", "lang": "en", "page": 1, "count": 30}
-        if search_year:
-            params["year"] = search_year
-        data, api_error = _numista_get("/types", headers, params)
-        if api_error:
-            return api_error
-        if data.get("types"):
-            break
-
-    # If a country is supplied, search Numista using the country and
-    # denomination together before returning unrelated global matches.
-    if country:
-        country_results = []
-        for term, search_year in [(f"{country} {query}", year), (f"{country} {query}", ""), (country, year)]:
-            params = {"q": term, "category": "coin", "lang": "en", "page": 1, "count": 100}
+        for page in range(1, 6 if country else 2):
+            params = {"q": term, "category": "coin", "lang": "en",
+                      "page": page, "count": 100 if country else 30}
             if search_year:
                 params["year"] = search_year
-            response_data, api_error = _numista_get("/types", headers, params)
-            if api_error:
-                return api_error
-            country_results.extend(response_data.get("types", []))
-            if country_results:
+            data, error = _numista_get("/types", headers, params)
+            if error:
+                return error
+            types = data.get("types") or []
+            for item in types:
+                issuer = (item.get("issuer") or {}).get("name") or ""
+                if country and country.casefold() not in issuer.casefold():
+                    continue
+                low = item.get("min_year")
+                high = item.get("max_year")
+                if year and year.lstrip("-").isdigit() and low is not None and high is not None:
+                    if not (int(low) <= int(year) <= int(high)):
+                        continue
+                if item.get("id") in seen_ids:
+                    continue
+                seen_ids.add(item.get("id"))
+                results.append({"id": item.get("id"), "title": item.get("title"),
+                                "issuer": issuer, "min_year": low, "max_year": high})
+            if results or len(types) < params["count"]:
                 break
-        data = {"types": country_results}
+        if results:
+            break
 
-    results = []
-
-    for coin in data.get(
-        "types",
-        []
-    ):
-
-        issuer = (
-            coin.get("issuer")
-            or {}
-        )
-
-        results.append({
-            "id": coin.get("id"),
-            "title": coin.get("title"),
-            "issuer": issuer.get("name"),
-            "min_year": coin.get("min_year"),
-            "max_year": coin.get("max_year")
-        })
-
-    if country:
-        results = [r for r in results if country.casefold() in (r.get("issuer") or "").casefold()]
-    if year and year.lstrip("-").isdigit():
-        target_year = int(year)
-        results = [r for r in results if r.get("min_year") is None or r.get("max_year") is None or (int(r["min_year"]) <= target_year <= int(r["max_year"]))]
     words = query.casefold().split()
     results.sort(key=lambda r: (-sum(w in (r.get("title") or "").casefold() for w in words), r.get("title") or ""))
     results = results[:30]
