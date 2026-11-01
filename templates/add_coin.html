@@ -81,6 +81,13 @@ Add Currency
             </div>
 
 
+            <div class="col-md-3 mb-3">
+                <label class="form-label" for="numistaSearchCountry">Country</label>
+                <input type="text" id="numistaSearchCountry" class="form-control"
+                       placeholder="e.g. Morocco" list="numistaCountrySuggestions">
+                <datalist id="numistaCountrySuggestions"></datalist>
+            </div>
+
             <div class="col-md-3 mb-3 d-flex align-items-end">
 
                 <button
@@ -1214,6 +1221,7 @@ async function searchNumista() {
 
     const year =
         searchYear.value.trim();
+    const country = document.getElementById("numistaSearchCountry").value.trim();
 
 
     if (!name) {
@@ -1253,6 +1261,8 @@ async function searchNumista() {
         );
 
     }
+    if (country) params.set("country", country);
+
 
 
     try {
