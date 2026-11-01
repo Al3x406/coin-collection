@@ -4076,11 +4076,11 @@ def numista_search():
     for term, search_year in attempts:
         for page in range(1, 6 if country else 2):
             params = {"q": term, "category": "coin", "lang": "en",
-                      "page": page, "count": 100 if country else 30}
+                      "page": page, "count": 20}
             if search_year:
                 params["year"] = search_year
             if country:
-                params["issuer"] = country.lower().replace(" ", "-")
+                params["issuer"] = country.strip().lower().replace(" ", "-")
             data, error = _numista_get("/types", headers, params)
             if error:
                 return error
