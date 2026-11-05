@@ -4033,33 +4033,27 @@ def numista_banknote_details(type_id):
     }
 
 
+def _numista_normalize(value):
+    """Normalize denomination spelling for matching (ore == öre)."""
+    import unicodedata
+    value = unicodedata.normalize("NFKD", str(value or "").casefold())
+    value = "".join(ch for ch in value if not unicodedata.combining(ch))
+    return " ".join(re.findall(r"[a-z0-9]+", value))
+
+
 @app.route("/api/numista/search")
 def numista_search():
-
     headers = get_numista_headers()
-
     if not headers:
-        return {
-            "error": "NUMISTA_API_KEY was not found."
-        }, 500
+        return {"error": "NUMISTA_API_KEY was not found."}, 500
 
-    query = request.args.get(
-        "q",
-        ""
-    ).strip()
-
-    year = request.args.get(
-        "year",
-        ""
-    ).strip()
-
-    if not query:
-        return {
-            "error": "A search term is required."
-        }, 400
-
+    query = request.args.get("q", "").strip()
+    year = request.args.get("year", "").strip()
     country = request.args.get("country", "").strip()
-    match = re.fullmatch(r"N\\s*#\\s*(\\d+)", query, re.IGNORECASE)
+    if not query and not country:
+        return {"error": "Enter a denomination or country."}, 400
+
+    match = re.fullmatch(r"N\s*#\s*(\d+)", query, re.IGNORECASE)
     if match:
         item, error = _numista_get(f"/types/{int(match.group(1))}", headers, {"lang": "en"})
         if error:
@@ -4068,17 +4062,25 @@ def numista_search():
         return {"count": 1, "results": [{
             "id": item.get("id"), "title": item.get("title"),
             "issuer": issuer.get("name"), "min_year": item.get("min_year"),
-            "max_year": item.get("max_year")}]}
+            "max_year": item.get("max_year")}], "fallback_used": False}
 
-    # First find the denomination. If it fails, look for coins from
-    # the specified country and year without requiring a denomination match.
-    stages = [(query, year, "denomination"), (query, "", "denomination")]
+    normalized_query = _numista_normalize(query)
+    normalized_country = _numista_normalize(country)
+    search_terms = []
+    if query:
+        search_terms.append((query, year, "exact"))
+        ascii_query = _numista_normalize(query)
+        if ascii_query != query.casefold():
+            search_terms.append((ascii_query, year, "normalized"))
+        if country:
+            search_terms.append((f"{query} {country}", year, "combined"))
+        search_terms.append((query, "", "denomination"))
     if country:
-        stages.extend([(country, year, "country_year"), (country, "", "country_year")])
-    results = []
-    seen_ids = set()
-    stage_used = None
-    for term, search_year, stage in stages:
+        search_terms.append((country, year, "country_year"))
+        search_terms.append((country, "", "country"))
+    # A result from a broader query must still be scored and filtered locally.
+    candidates = {}
+    for term, search_year, stage in search_terms:
         for page in range(1, 6):
             params = {"q": term, "category": "coin", "lang": "en",
                       "page": page, "count": 20}
@@ -4086,37 +4088,54 @@ def numista_search():
                 params["year"] = search_year
             data, error = _numista_get("/types", headers, params)
             if error:
+                if candidates:
+                    break
                 return error
             types = data.get("types") or []
             for item in types:
+                identifier = item.get("id")
+                if identifier is None:
+                    continue
+                title = item.get("title") or ""
                 issuer = (item.get("issuer") or {}).get("name") or ""
-                if country and country.casefold() not in issuer.casefold():
+                title_norm = _numista_normalize(title)
+                issuer_norm = _numista_normalize(issuer)
+                if normalized_country and normalized_country not in issuer_norm:
                     continue
                 low, high = item.get("min_year"), item.get("max_year")
                 if year.lstrip("-").isdigit() and low is not None and high is not None:
                     if not (int(low) <= int(year) <= int(high)):
                         continue
-                title = item.get("title") or ""
-                if stage == "denomination" and not all(
-                        word in title.casefold() for word in query.casefold().split()):
-                    continue
-                if item.get("id") in seen_ids:
-                    continue
-                seen_ids.add(item.get("id"))
-                results.append({"id": item.get("id"), "title": title,
-                                "issuer": issuer, "min_year": low, "max_year": high})
-            if len(results) >= 30 or len(types) < 20:
+                tokens = normalized_query.split()
+                matched = sum(token in title_norm.split() for token in tokens)
+                exact_denom = bool(tokens) and matched == len(tokens)
+                score = matched * 20 + (45 if exact_denom else 0)
+                if normalized_country and normalized_country in issuer_norm:
+                    score += 15
+                if year and low is not None and high is not None:
+                    score += 15
+                if stage in ("exact", "normalized"):
+                    score += 5
+                record = {"id": identifier, "title": title, "issuer": issuer,
+                          "min_year": low, "max_year": high, "_score": score,
+                          "_exact": exact_denom}
+                if identifier not in candidates or score > candidates[identifier]["_score"]:
+                    candidates[identifier] = record
+            if len(types) < 20:
                 break
-        if results:
-            stage_used = stage
+        # Stop early only if strong denomination matches have been found.
+        if sum(bool(c["_exact"]) for c in candidates.values()) >= 10:
             break
 
-    words = query.casefold().split()
-    results.sort(key=lambda item: (-sum(word in (item.get("title") or "").casefold()
-                                        for word in words), item.get("title") or ""))
-    results = results[:30]
+    ranked = sorted(candidates.values(),
+                    key=lambda item: (-item["_score"], item["title"]))
+    # Show the closest matches even if none has an exact denomination.
+    results = [{k: v for k, v in item.items() if not k.startswith("_")}
+               for item in ranked[:30]]
+    fallback = bool(results) and bool(normalized_query) and not any(
+        item["_exact"] for item in ranked[:30])
     return {"count": len(results), "results": results,
-            "fallback_used": stage_used == "country_year"}
+            "fallback_used": fallback}
 
 
 @app.route("/api/numista/type/<int:type_id>")
