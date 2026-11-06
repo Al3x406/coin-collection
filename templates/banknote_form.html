@@ -37,16 +37,48 @@
 {% for key,label in [('name','Name'),('country','Issuing country'),('denomination','Denomination'),('condition','Condition'),('quantity','Quantity'),('estimated_value','Estimated value per banknote (USD)'),('purchase_price','Price paid (USD)'),('date_acquired','Date acquired')] %}
 <div class="col-md-6"><label class="form-label" for="{{ key }}">{{ label }}</label><input class="form-control" id="{{ key }}" name="{{ key }}" {% if key=='date_acquired' %}type="date"{% elif key=='quantity' %}type="number" min="1" step="1" required{% endif %} value="{{ (note.quantity or 1) if key=='quantity' else (note|attr(key) if note|attr(key) is not none else '') }}" {% if key=='name' %}required{% endif %}></div>
 {% endfor %}
-<div class="col-12"><div class="card border-secondary"><div class="card-body">
-<h5 class="card-title">Banknote date</h5>
-<p class="text-muted small mb-3">Enter an exact year, or use a range when the note is undated. Leave exact year blank for a range.</p>
-<div class="row g-3">
-<div class="col-md-4"><label class="form-label" for="year">Exact year (optional)</label><input class="form-control" id="year" name="year" type="number" value="{{ note.year if note.year is not none else '' }}" placeholder="1971"></div>
-<div class="col-md-4"><label class="form-label" for="date_start_year">Earliest year</label><input class="form-control" id="date_start_year" name="date_start_year" type="number" value="{{ note.date_start_year if note.date_start_year is not none else '' }}" placeholder="1971"></div>
-<div class="col-md-4"><label class="form-label" for="date_end_year">Latest year</label><input class="form-control" id="date_end_year" name="date_end_year" type="number" value="{{ note.date_end_year if note.date_end_year is not none else '' }}" placeholder="1987"></div>
+<div class="col-12">
+<div class="d-flex align-items-center justify-content-between gap-2 flex-wrap mb-2">
+<label class="form-label fw-semibold mb-0" for="banknoteDateMode">Date</label>
+<select id="banknoteDateMode" class="form-select form-select-sm" style="width:auto;max-width:180px" aria-label="Date type">
+<option value="exact">Exact year</option><option value="range">Year range</option>
+</select>
 </div>
-<div class="form-check mt-3"><input class="form-check-input" type="checkbox" id="date_is_approx" name="date_is_approx" {% if note.date_is_approx %}checked{% endif %}><label class="form-check-label" for="date_is_approx">Approximate date</label></div>
-</div></div></div>
+<div id="banknoteExactDate"><input class="form-control" id="year" name="year" type="number" value="{{ note.year if note.year is not none else '' }}" placeholder="e.g. 1971"></div>
+<div id="banknoteRangeDate" class="row g-2" hidden>
+<div class="col-6"><input class="form-control" id="date_start_year" name="date_start_year" type="number" value="{{ note.date_start_year if note.date_start_year is not none else '' }}" placeholder="From year" aria-label="Earliest year"></div>
+<div class="col-6"><input class="form-control" id="date_end_year" name="date_end_year" type="number" value="{{ note.date_end_year if note.date_end_year is not none else '' }}" placeholder="To year" aria-label="Latest year"></div>
+</div>
+<input type="hidden" name="date_is_approx" value="">
+</div>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const mode = document.getElementById('banknoteDateMode');
+  const exact = document.getElementById('banknoteExactDate');
+  const range = document.getElementById('banknoteRangeDate');
+  const year = document.getElementById('year');
+  const from = document.getElementById('date_start_year');
+  const to = document.getElementById('date_end_year');
+  if (!mode || !year || !from || !to) return;
+  const hasRange = (from.value || to.value) && (!year.value || from.value !== to.value);
+  mode.value = hasRange ? 'range' : 'exact';
+  function update() {
+    const isRange = mode.value === 'range';
+    exact.hidden = isRange;
+    range.hidden = !isRange;
+    year.disabled = isRange;
+    from.disabled = !isRange;
+    to.disabled = !isRange;
+  }
+  mode.addEventListener('change', function () {
+    if (mode.value === 'range') year.value = '';
+    else { from.value = ''; to.value = ''; }
+    update();
+    year.dispatchEvent(new Event('change', {bubbles:true}));
+  });
+  update();
+});
+</script>
 <div class="col-md-6"><label class="form-label">Front photo</label><input type="file" name="front" accept="image/*" data-banknote-crop="front" class="form-control"></div>
 <div class="col-md-6"><label class="form-label">Back photo</label><input type="file" name="back" accept="image/*" data-banknote-crop="back" class="form-control"></div>
 {% if note.id %}
