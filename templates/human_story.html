@@ -1261,6 +1261,21 @@ body{background:var(--hs-bg);}
  transition:opacity .18s ease;opacity:0;
 }
 .era.open .mtt-figure{opacity:1}
+/* Chapter I cartoon character test: bold outlines, clean readable silhouettes. */
+.era-origins .mtt-figure{width:47px;height:62px}
+.era-origins .mtt-figure svg{overflow:visible;filter:drop-shadow(0 1px 1px #15110e)}
+.era-origins .mtt-figure .mtt-art{transform-origin:50% 85%;animation:mtt-cartoon-idle 5s ease-in-out infinite}
+.era-origins .mtt-figure .mtt-pouch{transform-origin:31px 30px;animation:mtt-cartoon-swing 2.6s ease-in-out infinite alternate}
+.era-origins .mtt-figure .mtt-coin{animation:mtt-cartoon-coin 5s ease-in-out infinite}
+.era-origins .mtt-figure .mtt-shield{transform-origin:18px 36px;animation:mtt-cartoon-shield 5s ease-in-out infinite}
+.era-origins .mtt-figure.mtt-changing svg{animation:mtt-cartoon-morph .8s ease-in-out}
+@keyframes mtt-cartoon-idle{0%,75%,100%{transform:translateY(0)}85%{transform:translateY(-1px)}}
+@keyframes mtt-cartoon-swing{from{transform:rotate(-5deg)}to{transform:rotate(6deg)}}
+@keyframes mtt-cartoon-coin{0%,75%,100%{opacity:1}82%{opacity:.6}}
+@keyframes mtt-cartoon-shield{0%,75%,100%{transform:rotate(0)}85%{transform:rotate(-7deg)}}
+@keyframes mtt-cartoon-morph{0%{opacity:.35;filter:brightness(2) sepia(.7)}45%{opacity:.75;filter:brightness(1.8) sepia(.6)}100%{opacity:1;filter:none}}
+@media(prefers-reduced-motion:reduce){.era-origins .mtt-figure .mtt-art,.era-origins .mtt-figure .mtt-pouch,.era-origins .mtt-figure .mtt-coin,.era-origins .mtt-figure .mtt-shield,.era-origins .mtt-figure.mtt-changing svg{animation:none!important}}
+
 .mtt-figure svg{width:100%;height:100%;overflow:visible}
 .mtt-figure .mtt-leg-a{transform-origin:22px 39px;animation:mtt-step-a .75s ease-in-out infinite alternate}
 .mtt-figure .mtt-leg-b{transform-origin:22px 39px;animation:mtt-step-b .75s ease-in-out infinite alternate}
@@ -1792,6 +1807,36 @@ body{background:var(--hs-bg);}
   runner:['#f3e3c8','#477da1','#d4ac6d'],
   doctor:['#dce8e6','#4b8290','#d7c1a0']
  };
+ function cartoon(type){
+  const ink='#30221d', gold='#f1c25d', skin='#d89d6e';
+  if(type==='merchant')return `<svg viewBox="0 0 52 68" xmlns="http://www.w3.org/2000/svg"><g class="mtt-art" stroke="${ink}" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round">
+  <path d="M20 44L16 58L11 62L19 64L26 49M30 44L33 59L40 62L33 65L26 49" fill="#a46c37"/>
+  <path d="M16 19Q6 28 13 46L23 42L24 20" fill="#b54732"/>
+  <path d="M17 20Q27 16 35 22L35 45L18 45Z" fill="#f1dbac"/>
+  <path d="M18 38H35" fill="none" stroke="#c58a40" stroke-width="3"/>
+  <path d="M18 25L12 37L16 41M33 25L38 34" fill="none" stroke="${skin}" stroke-width="5"/>
+  <g class="mtt-pouch"><path d="M34 32Q45 27 47 39L44 49Q35 53 32 43Z" fill="#9b5b2e"/><path d="M35 35L44 35" stroke="${gold}"/></g>
+  <path d="M20 13Q17 3 27 4Q37 4 36 16L33 22L22 21Z" fill="${skin}"/>
+  <path d="M18 13Q22 3 32 5L38 12L34 15L23 12Z" fill="#a53f2f"/>
+  <path d="M19 16Q25 27 34 20L32 26Q24 30 20 22Z" fill="#553526"/>
+  <circle cx="32" cy="15" r="1.4" fill="${ink}" stroke="none"/>
+  <g class="mtt-coin"><circle cx="41" cy="20" r="5.2" fill="${gold}" stroke="#7b562c" stroke-width="1.6"/><path d="M41 17V23" stroke="#fff0b2" stroke-width="1.3"/></g>
+  </g></svg>`;
+  if(type==='hoplite')return `<svg viewBox="0 0 52 68" xmlns="http://www.w3.org/2000/svg"><g class="mtt-art" stroke="${ink}" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round">
+  <path d="M21 44L18 59L14 63L22 64L27 48M31 44L34 59L39 62L32 64L27 48" fill="#b98545"/>
+  <path d="M20 20L12 43L23 43L25 22" fill="#bd3e34"/>
+  <path d="M19 21Q27 16 35 21L37 44H19Z" fill="#d6a94c"/>
+  <path d="M19 37H36M23 25H33" stroke="#f4d477" fill="none"/>
+  <path d="M21 24L13 37M34 24L42 33" fill="none" stroke="${skin}" stroke-width="5"/>
+  <path d="M21 13Q20 4 29 4Q37 5 36 17L33 23H23Z" fill="${skin}"/>
+  <path d="M19 12Q23 1 36 7L38 19L32 19L31 13L24 16Z" fill="#e8b54e"/>
+  <path d="M21 7Q25 -2 31 1Q38 1 40 8" fill="#ba4034" stroke="#8c3027" stroke-width="3.5"/>
+  <circle cx="33" cy="15" r="1.3" fill="${ink}" stroke="none"/>
+  <path d="M43 2V61" stroke="#c7ad79" stroke-width="2.8"/><path d="M43 1L39 10H47Z" fill="#e0e2d7"/>
+  <g class="mtt-shield"><ellipse cx="14" cy="37" rx="12" ry="17" fill="#244e83" stroke="${gold}" stroke-width="3"/><circle cx="14" cy="37" r="4" fill="${gold}" stroke="#8b662b" stroke-width="1.5"/><path d="M8 27Q14 24 20 27" stroke="${gold}" fill="none" stroke-width="1.5"/></g>
+  </g></svg>`;
+  return person(type);
+ }
  function person(type){
   const p=palette[type]||palette.traveler;
   const helmet=['hoplite','legion','knight','soldier'].includes(type);
@@ -1867,7 +1912,8 @@ body{background:var(--hs-bg);}
    const index=Math.min(s.types.length-1,Math.floor(progress*s.types.length));
    if(index!==s.index){
     const type=s.types[Math.max(0,index)]||'traveler';
-    s.figure.innerHTML=type==='horse'?horse():type==='astronaut'?astronaut():people.has(type)?person(type):object(type);
+    s.figure.innerHTML=s.era.classList.contains('era-origins')&&index<2?cartoon(type):type==='horse'?horse():type==='astronaut'?astronaut():people.has(type)?person(type):object(type);
+    if(s.era.classList.contains('era-origins')){s.figure.classList.remove('mtt-changing');void s.figure.offsetWidth;s.figure.classList.add('mtt-changing');}
     s.figure.dataset.type=type;
     s.figure.title=(s.moments[index]?.querySelector('h4')?.textContent||'Historical moment').trim()+' — '+type;
     s.index=index;
@@ -1875,6 +1921,12 @@ body{background:var(--hs-bg);}
    const pt=s.path.getPointAtLength(s.path.getTotalLength()*progress);
    s.figure.style.left=pt.x+'%';
    s.figure.style.top=pt.y+'%';
+   if(s.era.classList.contains('era-origins')){
+    const delta=.003, before=s.path.getPointAtLength(s.path.getTotalLength()*Math.max(0,progress-delta));
+    const after=s.path.getPointAtLength(s.path.getTotalLength()*Math.min(1,progress+delta));
+    const direction=after.x>=before.x?1:-1;
+    s.figure.querySelector('svg')?.style.setProperty('transform',direction<0?'scaleX(-1)':'scaleX(1)');
+   }
   }
  }
  function schedule(){if(!frame)frame=requestAnimationFrame(update)}
