@@ -1290,6 +1290,23 @@ body{background:var(--hs-bg);}
 @keyframes mtt-cloak{to{transform:skewY(5deg)}}
 @media(prefers-reduced-motion:reduce){.era-origins .mtt-figure *{animation:none!important}}
 
+
+/* Chapter III: animated illustrated ships and historical travelers. */
+.era-exploration .mtt-figure{width:67px;height:91px;transition:none}
+.era-exploration .mtt-figure[data-type="columbus"],.era-exploration .mtt-figure[data-type="dagama"],.era-exploration .mtt-figure[data-type="armada"]{width:132px;height:104px}
+.era-exploration .mtt-figure .mtt-art{animation:none}
+.era-exploration .mtt-figure .mtt-coin{display:none}
+.era-exploration .mtt-figure .mtt-leg-a{transform-origin:49px 93px;animation:mtt-walk-a .68s ease-in-out infinite alternate}
+.era-exploration .mtt-figure .mtt-leg-b{transform-origin:49px 93px;animation:mtt-walk-b .68s ease-in-out infinite alternate}
+.era-exploration .mtt-figure .mtt-arm-a{transform-origin:32px 55px;animation:mtt-walk-b .8s ease-in-out infinite alternate}
+.era-exploration .mtt-figure .mtt-arm-b{transform-origin:68px 55px;animation:mtt-walk-a .8s ease-in-out infinite alternate}
+.era-exploration .mtt-ship-rock{transform-origin:90px 108px;animation:mtt-rock 2.8s ease-in-out infinite alternate}
+.era-exploration .mtt-sail{transform-origin:center top;animation:mtt-sail 2.1s ease-in-out infinite alternate}
+.mtt-gallery-item[data-type="columbus"] svg,.mtt-gallery-item[data-type="dagama"] svg,.mtt-gallery-item[data-type="armada"] svg{width:125px}
+@keyframes mtt-rock{from{transform:rotate(-2deg) translateY(-2px)}to{transform:rotate(2deg) translateY(2px)}}
+@keyframes mtt-sail{from{transform:skewX(-2deg)}to{transform:skewX(2deg)}}
+@media(prefers-reduced-motion:reduce){.era-exploration .mtt-figure *{animation:none!important}}
+
 /* Preview gallery uses the exact SVG assets shown on the journey. */
 .mtt-gallery{margin:16px auto 28px;max-width:950px;padding:12px 16px;border:1px solid rgba(211,166,81,.32);border-radius:12px;background:rgba(13,16,20,.82);color:#ecd6a6}
 .mtt-gallery summary{cursor:pointer;font:600 14px Georgia,serif;letter-spacing:.04em}
@@ -1855,7 +1872,7 @@ body{background:var(--hs-bg);}
  const themes={
   origins:['merchant','hoplite','alexander','caesar','jesus','pompeii','trajan','constantine','germanic'],
   faith:['justinian','viking','charlemagne','norman','crusader','john','mongol','physician','mehmed'],
-  exploration:['ship','ship','scribe','horse','merchant','ship','ship','soldier','scribe','traveler','king'],
+  exploration:['columbus','dagama','luther','cortes','miner','armada','trader','pikeman','diplomat','firefighter','william'],
   revolutions:['king','flag','flag','flag','flag','emperor','horse','horse','flag','flag','flag','king','soldier','flag','traveler','soldier'],
   industry:['telephone','ship','tower','runner','flag','plane','flag','car','traveler','flag'],
   worldwars:['plane','flag','soldier','flag','scribe','merchant','merchant','flag','soldier','plane','ship','plane','flag'],
@@ -1963,6 +1980,87 @@ body{background:var(--hs-bg);}
  }
 
 
+
+ 
+ function chapterThree(type){
+  const ink='#352821', gold='#e4b85e', skin='#d9a077';
+  const p=(d,fill,stroke=ink,w=2)=>'<path d="'+d+'" fill="'+fill+'" stroke="'+stroke+'" stroke-width="'+w+'" stroke-linejoin="round" stroke-linecap="round"/>';
+  const line=(d,color=ink,w=2)=>p(d,'none',color,w);
+  const circle=(x,y,r,fill,stroke=ink,w=1.5)=>'<circle cx="'+x+'" cy="'+y+'" r="'+r+'" fill="'+fill+'" stroke="'+stroke+'" stroke-width="'+w+'"/>';
+  const svg=(a,v='0 0 100 145')=>'<svg viewBox="'+v+'" xmlns="http://www.w3.org/2000/svg" aria-label="'+type+' illustrated historical traveler"><g stroke-linecap="round" stroke-linejoin="round">'+a+'</g></svg>';
+  if(['columbus','dagama','armada'].includes(type)){
+   const war=type==='armada',port=type==='dagama';
+   let a='<g class="mtt-ship-rock">';
+   a+=p(war?'M13 92L172 92L153 124Q90 144 32 119Z':'M19 94L158 94L144 119Q91 138 36 119Z',war?'#82502f':port?'#9b6037':'#93613d',ink,3);
+   a+=p('M31 96L149 96L143 105L35 105Z','#c58a51')+line('M42 110Q92 123 136 109','#e0ac68',2);
+   a+=p('M27 90L27 68L45 64L53 94Z','#81512f')+p('M137 94L139 53L157 53L167 94Z',war?'#9a5e3b':'#785036');
+   a+=line('M47 91H145','#e6bf81',3);
+   for(let i=0;i<(war?6:3);i++)a+=circle(48+i*17,109,4,'#211e20','#d7a46a',2);
+   const mast=[58,93,127];
+   mast.forEach((x,i)=>{
+    const top=i===1?9:24;
+    a+=line('M'+x+' '+top+'V96','#60452f',4);
+    a+='<g class="mtt-sail">'+p('M'+(x+3)+' '+(top+7)+'Q'+(x+29)+' '+(top+29)+' '+(x+2)+' '+(top+56)+'Z',war?'#f0e3c3':'#eee2c8','#967c5e',1.5);
+    a+=line('M'+(x+3)+' '+(top+11)+'L'+(x+4)+' '+(top+52),'#cbb89b',1);
+    a+=p('M'+(x+13)+' '+(top+23)+'v16M'+(x+7)+' '+(top+31)+'h13','none','#a9443e',3)+'</g>';
+    a+=line('M'+x+' '+(top+2)+'L'+(x-26)+' 94','#7b6750',1);
+   });
+   a+=p('M94 9L119 14L95 22Z',port?'#317b54':'#a83c37')+p('M126 23L148 28L127 36Z',war?'#b43937':'#c6a15e');
+   if(war)a+=p('M138 52L139 32L154 31L155 54Z','#a16d40')+line('M142 35H151M142 42H151',gold,2);
+   a+=circle(77,76,5,skin)+p('M73 82L82 82L85 96L71 96Z',port?'#32634f':'#783d38')+p('M70 74L83 74L86 77L68 77Z','#392b28');
+   a+='</g>';
+   return svg(a,'0 0 180 145');
+  }
+  const coats={luther:'#332d2d',cortes:'#b43c36',miner:'#9b7451',trader:'#356e72',pikeman:'#ad5b38',diplomat:'#506a91',firefighter:'#796447',william:'#346da3'};
+  const coat=coats[type]||'#6d6b5e';
+  let a='<g class="mtt-leg-b">'+p('M41 91L36 121L31 132L45 133L53 96Z','#584c3e')+'</g><g class="mtt-leg-a">'+p('M52 92L63 122L72 132L83 132L78 125L65 93Z','#68523f')+'</g>';
+  a+=p('M29 48Q48 38 70 49L76 101Q51 112 25 101Z',coat,ink,2.6);
+  a+=p('M41 51L50 70L58 51Z',type==='luther'?'#232020':'#e7d4af')+line('M33 78Q49 84 68 78',gold,3);
+  a+='<g class="mtt-arm-a">'+line('M32 55L18 81',coat,12)+circle(17,83,5,skin)+'</g>';
+  a+='<g class="mtt-arm-b">'+line('M68 55L83 80',coat,12)+circle(84,81,5,skin)+'</g>';
+  a+=p('M43 39L45 48L57 48L59 39Z',skin)+circle(51,27,17,skin,ink,2.5);
+  a+=line('M44 27L47 28M55 28L59 27',ink,1.7)+circle(46,30,1.3,ink)+circle(57,30,1.3,ink)+line('M48 37Q53 39 57 36','#995e45',1.6);
+  if(type==='luther'){
+   a+=p('M34 21Q36 7 52 7Q66 8 68 23L62 18Q52 15 40 22Z','#42312b');
+   a+=p('M25 47Q30 41 36 44L39 109L25 108Z','#2c2929');
+   a+=line('M18 79L11 47','#9a6b3c',4)+p('M4 41L19 41L20 52L6 52Z','#8e9293');
+   a+=p('M79 77L95 70L97 94L81 96Z','#e4c99c')+line('M84 81H93M84 86H92','#8d674c',1);
+  }else if(type==='cortes'){
+   a+=p('M32 47Q49 42 69 47L67 80Q49 87 33 80Z','#aeb8bb',ink,2.5)+line('M41 54L59 54M42 63L58 63','#e6e4dc',2);
+   a+=p('M35 17Q37 4 53 6Q67 6 69 19L62 22L40 22Z','#a7b0b3')+line('M33 20H72','#6f7a7d',4);
+   a+=p('M30 52L18 98L36 99Z','#b44338');
+   a+=line('M84 82L89 132','#c7cbd0',4)+line('M78 93H97',gold,4)+circle(88,91,4,gold);
+  }else if(type==='miner'){
+   a+=p('M29 20L74 20L68 12L35 12Z','#6c4d30')+line('M27 20H78','#a47a47',5);
+   a+=p('M31 48L70 48L67 78L33 78Z','#d4b68c')+line('M48 50L51 76','#836d55',3);
+   a+=line('M12 51L90 8','#815b35',5)+p('M80 5Q94 1 101 16L95 19Q90 10 82 13Z','#858b8c');
+   a+=p('M73 86Q96 78 100 101L96 116L73 111Z','#93877a')+circle(85,98,3,'#c2c5c6');
+  }else if(type==='trader'){
+   a+=p('M32 14Q48 4 67 14L75 20L27 20Z','#503e31')+p('M36 49L66 49L61 59L41 59Z','#e9d8bc')+line('M37 53H66','#d2b991',2);
+   a+=p('M10 76L32 72L34 99L10 102Z','#926438')+line('M10 82H34M21 74V100',gold,2)+circle(22,86,3,gold);
+   a+=p('M74 80L99 77L101 99L76 101Z','#d4b58b')+line('M79 85H97M79 90H97','#8a6849',1.5);
+  }else if(type==='pikeman'){
+   a+=p('M32 45L70 45L66 79L35 79Z','#aab0b4',ink,2)+line('M41 53H61M41 62H61','#e3e4d8',2);
+   a+=p('M35 17Q37 5 51 6Q67 7 69 18Z','#a4a8ab')+line('M26 19H75','#8b969c',4);
+   a+=line('M84 -6L84 136','#815b39',5)+p('M84 -15L77 3L91 3Z','#b7c0c3');
+   a+=p('M26 85L38 92L28 109Z','#bc7543');
+  }else if(type==='diplomat'){
+   a+=p('M29 18Q43 1 63 10L73 22L28 24Z','#35373d')+p('M60 9Q75 -7 80 4Q69 4 66 18Z','#e7c88b');
+   a+=p('M33 47L67 47L72 91L27 91Z','#536c91')+line('M42 55L58 55',gold,3);
+   a+=p('M77 81L98 73L99 91L80 96Z','#e9d4ad')+circle(94,91,5,'#aa3d3b',gold,1.5);
+  }else if(type==='firefighter'){
+   a+=p('M26 19L76 19L69 11L35 11Z','#5b4b3b')+line('M24 21H80','#7b5d42',4);
+   a+=p('M33 50L69 50L75 99L28 99Z','#9c805d')+line('M42 55L42 94M59 55L59 94','#bca382',2);
+   a+=p('M5 87L28 87L25 110L9 110Z','#8a5938')+line('M5 87Q15 72 28 87','#d0a36b',3);
+   a+=line('M86 79L95 40','#775235',4)+p('M88 38L101 37L104 47L89 48Z','#92999a');
+  }else if(type==='william'){
+   a+=p('M27 17Q45 2 66 15L78 22L23 22Z','#272f43')+p('M64 12Q75 -7 82 3Q74 8 70 20Z','#f0e3c9');
+   a+=p('M28 46L74 46L80 103L23 103Z','#346da3')+p('M31 49L42 49L73 91L63 96Z','#e6a34b')+line('M38 57L63 57',gold,3);
+   a+=line('M84 79L92 130','#c5c7ce',4)+line('M82 90H99',gold,4)+circle(90,89,4,gold);
+   a+=p('M31 48Q20 63 20 100L30 105Z','#e7e2d2');
+  }
+  return svg(a);
+ }
 
  function chapterTwo(type){
   const ink='#423027',gold='#e8bc68',skin='#dba47c';
@@ -2148,6 +2246,14 @@ body{background:var(--hs-bg);}
   faithEra.querySelector('.c1-opening')?.insertAdjacentElement('afterend',gallery);
  }
 
+ const explorationEra=document.querySelector('.era-exploration');
+ if(explorationEra){
+  const names=[['columbus','1 · Columbus · Santa María'],['dagama','2 · Vasco da Gama · São Gabriel'],['luther','3 · Martin Luther'],['cortes','4 · Hernán Cortés'],['miner','5 · Potosí silver miner'],['armada','6 · Spanish Armada galleon'],['trader','7 · East India Company merchant'],['pikeman','8 · Thirty Years’ War pikeman'],['diplomat','9 · Westphalia diplomat'],['firefighter','10 · London firefighter'],['william','11 · William III']];
+  const gallery=document.createElement('details');gallery.className='mtt-gallery';
+  gallery.innerHTML='<summary>View all 11 Chapter III character designs</summary><div class="mtt-gallery-grid">'+names.map(([id,label])=>'<div class="mtt-gallery-item" data-type="'+id+'">'+chapterThree(id)+'<span>'+label+'</span></div>').join('')+'</div>';
+  explorationEra.querySelector('.c1-opening')?.insertAdjacentElement('afterend',gallery);
+ }
+
  const people=new Set(Object.keys(palette));
  const states=[...document.querySelectorAll('.era')].map(era=>{
   const layer=era.querySelector('.c1-road-layer');
@@ -2168,12 +2274,13 @@ body{background:var(--hs-bg);}
    const progress=Math.max(0,Math.min(1,(focus-rect.top)/rect.height));
    const isOrigins=s.era.classList.contains('era-origins');
    const isFaith=s.era.classList.contains('era-faith');
-   const markerBased=isOrigins||isFaith;
+   const isExploration=s.era.classList.contains('era-exploration');
+   const markerBased=isOrigins||isFaith||isExploration;
    const markerCount=markerBased?[...s.layer.querySelectorAll('[data-journey-marker]')].filter(m=>{const r=m.getBoundingClientRect();return focus>=r.top+r.height/2}).length:0;
-   const index=markerBased?(Math.max(0,Math.min(8,markerCount-1))):Math.min(s.types.length-1,Math.floor(progress*s.types.length));
+   const index=markerBased?(Math.max(0,Math.min(s.types.length-1,markerCount-1))):Math.min(s.types.length-1,Math.floor(progress*s.types.length));
    if(index!==s.index){
     const type=s.types[Math.max(0,index)]||'traveler';
-    s.figure.innerHTML=isOrigins?chapterOne(type):isFaith?chapterTwo(type):type==='horse'?horse():type==='astronaut'?astronaut():people.has(type)?person(type):object(type);
+    s.figure.innerHTML=isOrigins?chapterOne(type):isFaith?chapterTwo(type):isExploration?chapterThree(type):type==='horse'?horse():type==='astronaut'?astronaut():people.has(type)?person(type):object(type);
     
     s.figure.dataset.type=type;
     s.figure.title=(s.moments[index]?.querySelector('h4')?.textContent||'Historical moment').trim()+' — '+type;
