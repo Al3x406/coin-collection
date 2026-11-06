@@ -7151,7 +7151,7 @@ def currency_exact_duplicate():
     country = norm(request.args.get("country"))
     denomination = norm(request.args.get("denomination"))
     year_raw = request.args.get("year", "").strip()
-    if kind not in ("coin", "banknote") or not country or not denomination or not re.fullmatch(r"-?\\d{1,5}", year_raw):
+    if kind not in ("coin", "banknote") or not country or not denomination or not re.fullmatch(r"-?\d{1,5}", year_raw):
         return jsonify({"matches": []})
     year = int(year_raw)
     model = Coin if kind == "coin" else Banknote
