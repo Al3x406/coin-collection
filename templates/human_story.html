@@ -1309,6 +1309,18 @@ body{background:var(--hs-bg);}
 .era-origins .mtt-figure[data-type="merchant"] .mtt-pouch{animation-duration:.9s}
 @keyframes mtt-merchant-step-a{from{transform:rotate(-12deg)}to{transform:rotate(12deg)}}
 @keyframes mtt-merchant-step-b{from{transform:rotate(12deg)}to{transform:rotate(-12deg)}}
+
+/* Detailed Chapter I cast: share the merchant's illustrated scale and motion. */
+.era-origins .mtt-figure:not([data-type="merchant"]):not([data-type="alexander"]):not([data-type="wagon"]){width:61px;height:88px}
+.era-origins .mtt-figure[data-type="alexander"],.era-origins .mtt-figure[data-type="wagon"]{width:132px;height:90px}
+.era-origins .mtt-figure[data-type="wagon"]{width:151px}
+.era-origins .mtt-figure:not([data-type="merchant"]) .mtt-arm-a{transform-origin:31px 54px;animation:mtt-walk-b .8s ease-in-out infinite alternate}
+.era-origins .mtt-figure:not([data-type="merchant"]) .mtt-arm-b{transform-origin:67px 54px;animation:mtt-walk-a .8s ease-in-out infinite alternate}
+.era-origins .mtt-figure:not([data-type="merchant"]) .mtt-leg-a,.era-origins .mtt-figure:not([data-type="merchant"]) .mtt-leg-b{transform-origin:50px 94px;animation-duration:.8s}
+.era-origins .mtt-figure[data-type="pompeii"] .mtt-leg-a,.era-origins .mtt-figure[data-type="pompeii"] .mtt-leg-b{animation-duration:.35s}
+.era-origins .mtt-figure[data-type="alexander"] .mtt-horse-leg-a,.era-origins .mtt-figure[data-type="alexander"] .mtt-horse-leg-b,.era-origins .mtt-figure[data-type="wagon"] .mtt-horse-leg-a,.era-origins .mtt-figure[data-type="wagon"] .mtt-horse-leg-b{transform-origin:75px 74px;animation-duration:.45s}
+.mtt-gallery-item:not([data-type="merchant"]):not([data-type="alexander"]):not([data-type="wagon"]) svg{width:95px;height:133px}
+.mtt-gallery-item[data-type="alexander"] svg,.mtt-gallery-item[data-type="wagon"] svg{width:155px;height:115px}
 /* Chapter I cartoon character test: bold outlines, clean readable silhouettes. */
 .era-origins .mtt-figure{width:47px;height:62px}
 .era-origins .mtt-figure svg{overflow:visible;filter:drop-shadow(0 1px 1px #15110e)}
@@ -1940,7 +1952,94 @@ body{background:var(--hs-bg);}
    <path d="M16 11Q25 3 34 11L32 18H18Z" fill="#4b8196"/></svg>`;
  }
 
+
+ function chapterOneRefined(type){
+  const I='#493125',S='#e7ae7d',D='#a86d4e',G='#e7bd68';
+  const path=(d,fill,stroke=I,w=2.5,extra='')=>'<path d="'+d+'" fill="'+fill+'" stroke="'+stroke+'" stroke-width="'+w+'" stroke-linejoin="round" stroke-linecap="round" '+extra+'/>';
+  const line=(d,color=I,w=2)=>path(d,'none',color,w);
+  const ellipse=(cx,cy,rx,ry,fill,stroke=I,w=2)=>'<ellipse cx="'+cx+'" cy="'+cy+'" rx="'+rx+'" ry="'+ry+'" fill="'+fill+'" stroke="'+stroke+'" stroke-width="'+w+'"/>';
+  const circle=(cx,cy,r,fill,stroke=I,w=1)=>'<circle cx="'+cx+'" cy="'+cy+'" r="'+r+'" fill="'+fill+'" stroke="'+stroke+'" stroke-width="'+w+'"/>';
+  const wrap=(art,view='0 0 100 140')=>'<svg viewBox="'+view+'" xmlns="http://www.w3.org/2000/svg" aria-label="'+type+' character"><g stroke-linejoin="round" stroke-linecap="round">'+art+'</g></svg>';
+  const garment={hoplite:'#c9a66b',caesar:'#f6ecda',jesus:'#f4e9d5',pompeii:'#cfaa7b',trajan:'#c6a263',constantine:'#b9b4bb',germanic:'#8b694c'};
+  const cloak={hoplite:'#b94036',caesar:'#eee6d8',jesus:'#a57e5f',pompeii:'#bb916e',trajan:'#b63738',constantine:'#68449a',germanic:'#796147'};
+  const shoes=type==='jesus'?'#98704d':'#78543a';
+  function feet(){
+   return '<g class="mtt-leg-b">'+path('M42 90Q42 105 38 115L34 126Q39 130 46 127L53 103L53 90Z',S)+path('M34 123Q40 121 47 126L46 132Q37 135 30 132Z',shoes)+line('M35 126L45 129','#c79b69',1.7)+'</g><g class="mtt-leg-a">'+path('M53 90Q57 106 63 118L66 127L78 130L77 134Q66 136 60 130L48 108L47 91Z',S)+path('M65 126Q72 124 79 131L77 134H61Z',shoes)+line('M65 129L76 132','#c79b69',1.7)+'</g>';
+  }
+  function arm(side){
+   const right=side==='right',x=right?67:31,ex=right?78:21;
+   return '<g class="mtt-arm-'+(right?'b':'a')+'">'+path('M'+x+' 54Q'+(right?76:23)+' 65 '+ex+' 81','none','#a86d4e',11)+path('M'+x+' 54Q'+(right?76:23)+' 65 '+ex+' 81','none',S,8)+path('M'+(ex-4)+' 79Q'+ex+' 75 '+(ex+4)+' 80L'+(ex+5)+' 87Q'+ex+' 93 '+(ex-4)+' 88Z',S,I,1.4)+line('M'+(ex-1)+' 85L'+ex+' 90',D,1)+'</g>';
+  }
+  function face(){
+   const hair=type==='jesus'?'#493025':type==='germanic'?'#5c3d2b':'#665043';
+   let h=path('M36 19Q38 7 51 8Q66 9 67 25L65 41Q59 51 49 49Q36 45 35 33Z',S);
+   if(type==='jesus'||type==='germanic'){
+    h+=path('M35 22Q30 13 40 8Q51 0 63 10Q70 16 68 31L63 29L62 19Q53 24 43 19L38 29Z',hair);
+    h+=path('M36 31Q29 43 42 50Q47 60 56 56Q67 51 66 39L61 37Q57 48 51 46L44 42Z',hair);
+    h+=line('M35 26Q28 44 36 56M66 25Q73 44 65 56',hair,5);
+   }else{
+    h+=path(type==='caesar'?'M38 19Q42 8 51 9Q62 10 65 20L61 18Q53 16 49 19L42 20Z':'M35 23Q33 10 46 8Q62 4 67 22L63 23Q53 20 43 21L37 27Z',hair);
+   }
+   h+=line('M42 31Q46 29 50 31M56 30Q61 29 64 31',hair,1.8)+ellipse(46,34,1.6,2,'#29201b','none',0)+ellipse(60,34,1.6,2,'#29201b','none',0);
+   h+=line('M53 35L51 41L55 42M48 45Q53 47 58 44','#a56a50',1.4);
+   if(type==='pompeii')h+=line('M43 27L48 29M57 28L63 26',I,2.5)+ellipse(54,46,2.2,3.2,'#633d32','none',0);
+   return h;
+  }
+  const wreath=()=>line('M35 20Q50 5 68 20',G,3)+[0,1,2,3,4,5].map((i)=>ellipse(38+i*5.4,18-Math.sin(i/5*Math.PI)*7,4,2.1,'#e7bd68','#936b32',.7)).join('');
+  function hat(){
+   if(type==='hoplite')return path('M34 24Q35 4 54 5Q69 8 69 25L62 27L61 18L43 23L39 33Z','#c99b48')+path('M43 8Q48 -3 60 3Q68 8 69 13','none','#a63e36',8)+line('M41 24L40 39',G,2.4);
+   if(type==='constantine')return path('M35 20L36 10L42 15L49 7L55 14L64 8L67 20Z','#e3b95d')+line('M36 20Q50 16 67 20','#f4dc9e',3)+circle(51,15,3,'#8e4f9c');
+   if(type==='caesar'||type==='trajan')return wreath();
+   if(type==='germanic')return path('M34 23Q36 7 51 6Q67 7 69 23L64 27H37Z','#999994')+line('M36 24H68','#e3ded1',2.5);
+   return '';
+  }
+  function armor(){
+   if(type==='hoplite'||type==='trajan'||type==='constantine'){
+    const col=type==='constantine'?'#b9b4b8':'#c99c50';
+    return path('M39 53Q51 49 64 53L65 88Q51 96 37 88Z',col)+path('M42 57Q50 62 60 57L59 75L51 82L43 75Z',type==='constantine'?'#8d8196':'#e2bc6d',I,1.5)+line('M51 60V79M43 71L59 71','#7e5e42',1.6)+path('M36 52L42 48L47 55L39 63Z',G)+path('M60 55L65 48L71 54L63 64Z',G)+[0,1,2,3].map(i=>line('M'+(39+i*7)+' 88L'+(37+i*7)+' 99',type==='constantine'?'#7d5e9b':'#b7473b',3)).join('');
+   }
+   return '';
+  }
+  if(type==='alexander'||type==='wagon'){
+   const isWagon=type==='wagon';
+   let horse='<g class="mtt-horse-leg-b">'+line('M40 74L35 109L28 127','#68442e',8)+line('M82 73L88 107L91 128','#68442e',8)+'</g><g class="mtt-horse-leg-a">'+line('M57 74L64 106L56 128','#99633f',8)+line('M98 72L103 107L112 126','#99633f',8)+'</g>';
+   horse+=path('M28 55Q50 42 82 51L96 36L112 31L125 45L121 62L110 71L95 65L85 86L47 85L34 74Z','#9f6d48',I,3.5);
+   horse+=path('M32 55Q24 47 18 37M97 40L93 24M107 35L107 26','#503726',6)+path('M108 31L109 21L117 28Z','#805234')+circle(117,48,2.6,I)+line('M111 60L122 60',I,2);
+   horse+=path('M31 59Q48 53 72 57','none','#c58d5e',3)+path('M96 45Q101 53 98 64','none','#5c3e30',3);
+   if(!isWagon){
+    let rider=path('M60 36Q48 40 42 65L71 60L77 38Z','#7643a1')+path('M62 28L82 28L84 60L61 60Z','#cda455')+line('M65 36L80 45',G,3)+line('M65 57L58 86M79 57L88 84','#a67855',6);
+    rider+=path('M63 12Q64 0 76 0Q88 1 90 14L86 27L68 27Z',S)+path('M62 14Q64 -2 79 -4Q90 -2 92 16L85 18L83 10L70 16Z','#c69a4f')+path('M70 0Q76 -12 89 -4L96 6','none','#a43e39',7)+circle(84,14,1.8,I);
+    return wrap(horse+rider,'0 -12 145 150');
+   }
+   const wheel=(x)=>'<g class="mtt-wheel">'+circle(x,112,19,'#7d5135',I,4)+circle(x,112,14,'none','#e3b978',2)+line('M'+x+' 96V128M'+(x-16)+' 112H'+(x+16)+'M'+(x-11)+' 101L'+(x+11)+' 123M'+(x+11)+' 101L'+(x-11)+' 123','#e6c48d',2.5)+'</g>';
+   let cart=line('M122 74L147 85','#8e623e',4)+path('M143 67L204 67L195 105L150 105Z','#a87848',I,4)+line('M147 78H201M161 68V104M181 68V104','#68452e',3);
+   cart+=path('M155 67L157 47L172 45L177 67Z','#cfb089')+path('M179 67L180 51L193 51L196 67Z','#98704c');
+   cart+=path('M167 45L170 27L183 25L192 46Z','#79563e')+circle(181,22,9,S)+path('M171 19Q180 6 188 18Z','#6e4c35');
+   return wrap(horse+cart+wheel(162)+wheel(196),'0 -12 222 154');
+  }
+  if(!garment[type])return null;
+  let art=feet();
+  art+=path('M36 50Q20 59 18 97L35 104L55 88L60 50Z',cloak[type]);
+  if(type==='jesus')art+=path('M35 53Q48 48 64 52L70 114Q51 123 30 113Z',garment[type])+line('M43 63Q39 92 39 112M54 62Q58 86 58 116','#c5ac8d',2)+path('M34 52Q28 68 26 107L40 110L45 59Z','#aa8465');
+  else if(type==='caesar')art+=path('M36 51Q52 46 67 53L74 110Q49 121 27 110L32 62Z','#f5ead9')+path('M36 53Q25 67 28 93L65 105L71 92Q49 87 36 53Z','#fef7e9')+line('M35 57Q44 81 69 94','#8f4052',5)+line('M41 69L37 107M57 85L58 111','#c8b8a2',2);
+  else art+=path('M36 52Q50 47 65 52L72 100Q50 110 29 100Z',garment[type])+line('M39 73Q50 78 63 73M42 85L40 101M57 85L60 101','#a58060',1.7);
+  art+=arm('left')+arm('right')+armor()+path('M44 43L45 55L57 54L57 43Z',S)+face()+hat();
+  if(type==='hoplite'){
+   art+=line('M89 8V129','#a98a65',4)+path('M89 4L83 19H95Z','#d8d7cf')+circle(25,82,27,'#2e6197',G,5)+circle(25,82,17,'none','#7cb8e6',2.5)+circle(25,82,7,G);
+  }
+  if(type==='trajan')art+=line('M34 98Q50 107 70 98','#a53631',5);
+  if(type==='constantine')art+=line('M91 3V133',G,4)+line('M82 20H100M91 12V34M84 26L98 34','#f5dda3',3.5)+path('M83 37L100 37L98 59L85 59Z','#70439a',G,2);
+  if(type==='germanic'){
+   art+=path('M34 52Q30 47 24 53L16 80L32 84L41 58Z','#a18b70')+path('M35 55L28 59L35 64L28 69L35 74','#e1c29b',I,1.5);
+   art+=circle(23,84,24,'#825b3d',I,4)+circle(23,84,18,'none','#b18b5b',2)+circle(23,84,7,'#b7b7b1',I,2);
+   art+=line('M76 76L94 42','#d2d4d0',5)+line('M74 69L87 78','#a77a48',4);
+  }
+  if(type==='pompeii')art+=line('M42 56Q28 61 21 75','#d3a979',3);
+  return wrap(art);
+ }
+
  function chapterOne(type){
+  if(type!=='merchant'){const refined=chapterOneRefined(type);if(refined)return refined;}
   const ink='#34251e',skin='#d6a078',gold='#e8ba60';
   const legs='<g class="mtt-leg-b"><path d="M21 44L18 57L14 64L22 65L27 48" fill="#9b7959" stroke="#34251e" stroke-width="2"/></g><g class="mtt-leg-a"><path d="M30 44L34 57L39 64L32 65L27 48" fill="#9b7959" stroke="#34251e" stroke-width="2"/></g>';
   const head='<path d="M19 13Q18 4 28 4Q37 5 36 16L32 23H22Z" fill="#d6a078" stroke="#34251e" stroke-width="2"/><circle cx="33" cy="15" r="1.3" fill="#34251e"/>';
