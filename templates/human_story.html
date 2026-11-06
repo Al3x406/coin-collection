@@ -1307,6 +1307,17 @@ body{background:var(--hs-bg);}
 @keyframes mtt-sail{from{transform:skewX(-2deg)}to{transform:skewX(2deg)}}
 @media(prefers-reduced-motion:reduce){.era-exploration .mtt-figure *{animation:none!important}}
 
+
+/* Chapter IV: individually illustrated revolutionary and imperial travelers. */
+.era-revolutions .mtt-figure{width:67px;height:91px;transition:none}
+.era-revolutions .mtt-figure .mtt-art{animation:none}
+.era-revolutions .mtt-figure .mtt-coin{display:none}
+.era-revolutions .mtt-figure .mtt-leg-a{transform-origin:51px 94px;animation:mtt-walk-a .65s ease-in-out infinite alternate}
+.era-revolutions .mtt-figure .mtt-leg-b{transform-origin:51px 94px;animation:mtt-walk-b .65s ease-in-out infinite alternate}
+.era-revolutions .mtt-figure .mtt-arm-a{transform-origin:32px 55px;animation:mtt-walk-b .77s ease-in-out infinite alternate}
+.era-revolutions .mtt-figure .mtt-arm-b{transform-origin:69px 55px;animation:mtt-walk-a .77s ease-in-out infinite alternate}
+@media(prefers-reduced-motion:reduce){.era-revolutions .mtt-figure *{animation:none!important}}
+
 /* Preview gallery uses the exact SVG assets shown on the journey. */
 .mtt-gallery{margin:16px auto 28px;max-width:950px;padding:12px 16px;border:1px solid rgba(211,166,81,.32);border-radius:12px;background:rgba(13,16,20,.82);color:#ecd6a6}
 .mtt-gallery summary{cursor:pointer;font:600 14px Georgia,serif;letter-spacing:.04em}
@@ -1873,7 +1884,7 @@ body{background:var(--hs-bg);}
   origins:['merchant','hoplite','alexander','caesar','jesus','pompeii','trajan','constantine','germanic'],
   faith:['justinian','viking','charlemagne','norman','crusader','john','mongol','physician','mehmed'],
   exploration:['columbus','dagama','luther','cortes','miner','armada','trader','pikeman','diplomat','firefighter','william'],
-  revolutions:['king','flag','flag','flag','flag','emperor','horse','horse','flag','flag','flag','king','soldier','flag','traveler','soldier'],
+  revolutions:['anne','liberty','french','haitirevolt','haiti','napoleon','russia','waterloo','greek','pedro','revolts','victor','civilwar','emancipation','meiji','wilhelm'],
   industry:['telephone','ship','tower','runner','flag','plane','flag','car','traveler','flag'],
   worldwars:['plane','flag','soldier','flag','scribe','merchant','merchant','flag','soldier','plane','ship','plane','flag'],
   coldwar:['flag','flag','plane','flag','flag','soldier','satellite','wall','ship','flag','astronaut','wall','flag','flag'],
@@ -1982,6 +1993,56 @@ body{background:var(--hs-bg);}
 
 
  
+
+ function chapterFour(type){
+  const ink='#362923',skin='#dca47c',gold='#e8bd6a';
+  const p=(d,c,stroke=ink,w=2)=>'<path d="'+d+'" fill="'+c+'" stroke="'+stroke+'" stroke-width="'+w+'" stroke-linejoin="round" stroke-linecap="round"/>';
+  const l=(d,c=ink,w=2)=>p(d,'none',c,w);
+  const dot=(x,y,r,c)=>'<circle cx="'+x+'" cy="'+y+'" r="'+r+'" fill="'+c+'" stroke="'+ink+'" stroke-width="1.5"/>';
+  const svg=(a,v='0 0 110 145')=>'<svg viewBox="'+v+'" xmlns="http://www.w3.org/2000/svg" aria-label="'+type+' historic traveler"><g stroke-linecap="round" stroke-linejoin="round">'+a+'</g></svg>';
+  const royal=['anne','napoleon','pedro','victor','wilhelm','meiji'];
+  const military=['napoleon','russia','waterloo','civilwar','garibaldi','wilhelm'];
+  const coat={anne:'#6b3c88',liberty:'#326d96',french:'#356e9b',haitirevolt:'#8a5544',haiti:'#365c86',napoleon:'#2f597e',russia:'#526d83',waterloo:'#ae3c38',greek:'#f1e6cf',pedro:'#32744b',revolts:'#ae5746',victor:'#306b91',civilwar:'#315f91',emancipation:'#343a43',meiji:'#303e62',wilhelm:'#53606e'}[type]||'#775d4a';
+  let a='<g class="mtt-leg-b">'+p('M42 92L36 121L32 134L47 134L53 95Z','#554a40')+'</g><g class="mtt-leg-a">'+p('M53 93L66 122L77 133L87 133L80 125L66 95Z','#6d5945')+'</g>';
+  a+=p('M28 49Q51 38 72 49L79 103Q52 114 23 103Z',coat,ink,2.6);
+  if(type==='anne')a+=p('M30 51Q14 74 23 113Q51 128 80 111L73 50Z','#81509b')+l('M30 99Q51 111 75 99',gold,3);
+  if(type==='greek')a+=p('M30 48L73 48L78 111L26 111Z','#f0e7d7')+l('M35 59L66 59','#4485bd',5);
+  if(type==='haitirevolt'||type==='haiti')a+=p('M30 50L70 50L70 88L29 88Z',type==='haiti'?'#245d9a':'#d7b68d')+l('M33 77L69 77','#b44c42',4);
+  if(type==='meiji')a+=p('M26 49L73 49L85 112L17 112Z','#4e638c')+l('M36 53L63 100','#e0c9a1',4);
+  a+=l('M34 78Q52 84 70 78',gold,2.5);
+  a+='<g class="mtt-arm-a">'+l('M32 55L17 80',coat,12)+dot(17,82,5,skin)+'</g>';
+  a+='<g class="mtt-arm-b">'+l('M69 54L86 79',coat,12)+dot(86,81,5,skin)+'</g>';
+  a+=p('M44 39L45 49L58 49L60 39Z',skin)+dot(52,28,17,skin);
+  a+=l('M43 27L47 27M56 27L60 27',ink,1.6)+dot(46,31,1.2,ink)+dot(58,31,1.2,ink)+l('M48 37Q53 40 58 36','#985b43',1.5);
+  if(royal.includes(type)){
+   if(type==='anne')a+=p('M36 17L39 5L47 12L53 2L61 12L68 5L71 18Z',gold)+dot(53,12,3,'#b94759')+p('M34 20Q27 27 33 48L40 46L41 24Z','#513d38')+p('M67 20Q76 29 72 48L65 45L64 23Z','#513d38');
+   else if(type==='meiji')a+=p('M35 18Q37 7 51 7Q67 8 70 19Z','#28252a')+l('M42 15L62 15','#b8a4a0',2);
+   else a+=p('M34 18Q40 8 53 9Q66 8 72 18L68 24L37 24Z',type==='napoleon'?'#333943':'#2c3139')+l('M34 21H73',gold,3);
+  }else if(type==='french'||type==='liberty'||type==='revolts'){
+   a+=p('M33 17Q36 6 53 8Q67 8 71 18Z',type==='liberty'?'#7d563c':'#8b4737')+l('M32 20H74','#b99b72',4);
+  }else if(type==='civilwar'||type==='waterloo'||type==='russia'){
+   a+=p('M34 19L36 10L68 10L72 20Z','#343b42')+l('M30 20H75','#31343c',4);
+  }else if(type==='haiti'||type==='haitirevolt')a+=p('M34 17Q40 5 55 9L70 18L66 23L37 23Z','#554035');
+  else a+=p('M35 18Q38 7 52 7Q66 7 70 18Z','#534032')+l('M32 20H74','#73543b',4);
+  if(type==='anne')a+=p('M81 78L101 72L103 96L82 97Z','#eee0c2')+dot(99,93,4,'#a13d47');
+  if(type==='liberty')a+=l('M86 81L92 127','#775536',4)+p('M92 37L108 37L108 74L92 74Z','#f2e5c9')+l('M92 47H108','#a43c40',4)+p('M92 37H108V49H92Z','#376c9b');
+  if(type==='french')a+=l('M86 80L91 130','#775637',4)+p('M91 33L108 33L108 76L91 76Z','#eee5d5')+p('M91 33H97V76H91Z','#3065a2')+p('M102 33H108V76H102Z','#b83f42');
+  if(type==='haitirevolt')a+=l('M87 79L92 128','#6f4d32',4)+p('M92 39H108V69H92Z','#245e9d')+p('M92 54H108V69H92Z','#b84140');
+  if(type==='haiti')a+=p('M81 77L103 72L105 95L82 98Z','#e9d5a6')+dot(101,94,4,'#b43e39');
+  if(type==='napoleon')a+=p('M27 52L75 52L72 61L29 61Z','#e6e2d7')+l('M38 54L66 84','#c33c39',6)+l('M86 82L94 132','#c3c8ce',4)+l('M83 92H102',gold,3);
+  if(type==='russia')a+=p('M29 52L75 52L73 91L28 91Z','#a5a7a3')+l('M86 80L96 131','#8b6443',5)+p('M93 125L102 125L105 136L91 136Z','#9ca7ab');
+  if(type==='waterloo')a+=l('M86 82L98 132','#bcc2c6',4)+l('M83 92H102',gold,4)+p('M25 51L17 103L32 104Z','#b64239');
+  if(type==='greek')a+=l('M85 80L91 131','#795439',4)+p('M91 36H109V76H91Z','#f3eee2')+l('M91 46H109M91 57H109M91 68H109','#4684b6',3)+p('M91 36H101V58H91Z','#4b86b8');
+  if(type==='pedro')a+=p('M28 49L72 49L69 58L31 58Z','#d7bf70')+p('M32 16L40 6L52 12L63 6L70 17Z',gold)+l('M85 79L96 130','#c7cbd0',4)+l('M84 91H104',gold,4);
+  if(type==='revolts')a+=p('M82 78L106 71L106 94L83 99Z','#e9d5a8')+l('M88 81H100M88 87H101','#8a5f43',1.5);
+  if(type==='victor')a+=p('M33 15L40 5L52 11L64 5L71 15Z',gold)+p('M26 50L16 105L31 109Z','#b83f39')+l('M86 79L95 130','#c6cbd0',4);
+  if(type==='civilwar')a+=l('M85 81L94 130','#765234',4)+p('M92 124L100 124L100 137L90 137Z','#a7aeb0');
+  if(type==='emancipation')a+=p('M35 17Q36 2 52 5Q69 6 70 19Z','#292a2b')+p('M27 16H76L76 20H27Z','#343536')+p('M79 78L105 71L106 100L82 100Z','#f0dcad')+l('M85 80H101M85 86H101M85 92H101','#856c50',1.4);
+  if(type==='meiji')a+=p('M80 80L103 73L104 100L82 100Z','#ead9b3')+dot(96,87,6,'#ba4847');
+  if(type==='wilhelm')a+=p('M33 16L37 4L70 4L75 16Z','#444a4e')+l('M34 17H77',gold,3)+p('M29 52L71 52L73 91L28 91Z','#8b9ba2')+l('M86 80L94 131','#bfc3c7',4)+l('M82 91H101',gold,4);
+  return svg(a);
+ }
+
  function chapterThree(type){
   const ink='#352821', gold='#e4b85e', skin='#d9a077';
   const p=(d,fill,stroke=ink,w=2)=>'<path d="'+d+'" fill="'+fill+'" stroke="'+stroke+'" stroke-width="'+w+'" stroke-linejoin="round" stroke-linecap="round"/>';
@@ -2275,6 +2336,14 @@ body{background:var(--hs-bg);}
   explorationEra.querySelector('.c1-opening')?.insertAdjacentElement('afterend',gallery);
  }
 
+ const revolutionsEra=document.querySelector('.era-revolutions');
+ if(revolutionsEra){
+  const names=[['anne','1 · Queen Anne · Union'],['liberty','2 · American independence'],['french','3 · French revolutionary'],['haitirevolt','4 · Haitian revolutionary'],['haiti','5 · Haitian independence'],['napoleon','6 · Napoleon crowned'],['russia','7 · Napoleon’s Russian campaign'],['waterloo','8 · Waterloo officer'],['greek','9 · Greek independence'],['pedro','10 · Pedro I of Brazil'],['revolts','11 · Revolutions of 1848'],['victor','12 · Victor Emmanuel II'],['civilwar','13 · Union soldier'],['emancipation','14 · Lincoln · Emancipation'],['meiji','15 · Emperor Meiji'],['wilhelm','16 · Wilhelm I · German unity']];
+  const gallery=document.createElement('details');gallery.className='mtt-gallery';
+  gallery.innerHTML='<summary>View all 16 Chapter IV character designs</summary><div class="mtt-gallery-grid">'+names.map(([id,label])=>'<div class="mtt-gallery-item" data-type="'+id+'">'+chapterFour(id)+'<span>'+label+'</span></div>').join('')+'</div>';
+  revolutionsEra.querySelector('.c1-opening')?.insertAdjacentElement('afterend',gallery);
+ }
+
  const people=new Set(Object.keys(palette));
  const states=[...document.querySelectorAll('.era')].map(era=>{
   const layer=era.querySelector('.c1-road-layer');
@@ -2296,12 +2365,13 @@ body{background:var(--hs-bg);}
    const isOrigins=s.era.classList.contains('era-origins');
    const isFaith=s.era.classList.contains('era-faith');
    const isExploration=s.era.classList.contains('era-exploration');
-   const markerBased=isOrigins||isFaith||isExploration;
+   const isRevolutions=s.era.classList.contains('era-revolutions');
+   const markerBased=isOrigins||isFaith||isExploration||isRevolutions;
    const markerCount=markerBased?[...s.layer.querySelectorAll('[data-journey-marker]')].filter(m=>{const r=m.getBoundingClientRect();return focus>=r.top+r.height/2}).length:0;
    const index=markerBased?(Math.max(0,Math.min(s.types.length-1,markerCount-1))):Math.min(s.types.length-1,Math.floor(progress*s.types.length));
    if(index!==s.index){
     const type=s.types[Math.max(0,index)]||'traveler';
-    s.figure.innerHTML=isOrigins?chapterOne(type):isFaith?chapterTwo(type):isExploration?chapterThree(type):type==='horse'?horse():type==='astronaut'?astronaut():people.has(type)?person(type):object(type);
+    s.figure.innerHTML=isOrigins?chapterOne(type):isFaith?chapterTwo(type):isExploration?chapterThree(type):isRevolutions?chapterFour(type):type==='horse'?horse():type==='astronaut'?astronaut():people.has(type)?person(type):object(type);
     
     s.figure.dataset.type=type;
     s.figure.title=(s.moments[index]?.querySelector('h4')?.textContent||'Historical moment').trim()+' — '+type;
