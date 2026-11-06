@@ -7136,6 +7136,54 @@ def collection_timeline():
     )  
 from banknote_feature import register_banknotes
 Banknote = register_banknotes(app, db)
+
+# Exact duplicate check for currency entry forms (read-only, owner-only).
+@app.route("/api/currency/exact-duplicate")
+def currency_exact_duplicate():
+    from flask import jsonify
+    if not session.get("is_owner"):
+        abort(403)
+
+    def norm(value):
+        return " ".join(str(value or "").casefold().split())
+
+    kind = request.args.get("kind", "")
+    country = norm(request.args.get("country"))
+    denomination = norm(request.args.get("denomination"))
+    year_raw = request.args.get("year", "").strip()
+    if kind not in ("coin", "banknote") or not country or not denomination or not re.fullmatch(r"-?\\d{1,5}", year_raw):
+        return jsonify({"matches": []})
+    year = int(year_raw)
+    model = Coin if kind == "coin" else Banknote
+    candidates = model.query.filter_by(year=year).all()
+    matches = []
+    for item in candidates:
+        if norm(item.country) != country or norm(item.denomination) != denomination:
+            continue
+        if kind == "coin":
+            mint = norm(request.args.get("mint"))
+            mark = norm(request.args.get("mint_mark"))
+            if not mint and not mark:
+                # Unknown mint cannot establish an exact match.
+                continue
+            if mint and str(item.mint_id or "") != mint:
+                continue
+            if mark != norm(item.mint_mark):
+                continue
+            issue = request.args.get("issue_id", "").strip()
+            if issue and str(item.numista_issue_id or "") != issue:
+                continue
+            url = url_for("coin_detail", coin_id=item.id) if "coin_detail" in app.view_functions else url_for("coins")
+        else:
+            catalog = norm(request.args.get("catalog"))
+            if not catalog or catalog != norm(item.catalog_number):
+                # Year + denomination alone may cover multiple banknote issues.
+                continue
+            url = url_for("banknotes.detail_note", note_id=item.id)
+        matches.append({"name": item.name, "quantity": item.quantity or 1, "url": url})
+    return jsonify({"matches": matches[:10]})
+
+
 # Gunicorn does not execute the __main__ block; initialize additive tables on startup.
 with app.app_context():
     db.create_all()
