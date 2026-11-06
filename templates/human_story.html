@@ -2002,7 +2002,15 @@ body{background:var(--hs-bg);}
   }else if(type==='john'){
    a+=p('M34 20L36 10L44 14L51 6L58 15L66 10L68 21Z',gold)+p('M39 38Q43 50 52 50Q62 49 64 39L58 44L51 46L45 42Z','#624634')+p('M72 78L94 76L95 90L73 92Z','#e8d7b0','#9e7950',2)+l('M77 77L77 92M90 76L90 91','#bca47c',2)+circ(84,93,4,'#a53738');
   }else if(type==='physician'){
-   a+=p('M34 23Q32 7 51 5Q69 8 69 24L65 27L63 19L40 21Z','#453b34')+l('M38 49Q48 57 60 49','#8b7563',2)+l('M19 100L26 89','#62805c',3);
+   // Iconic seventeenth-century beaked plague doctor, used here as a symbolic visual for 1348.
+   a+=p('M24 24Q50 17 77 24L82 29Q51 34 20 29Z','#24292b',ink,2.6);
+   a+=p('M36 22L38 7Q51 -1 64 7L67 22Z','#303638',ink,2.5);
+   a+=p('M35 29Q38 23 49 25L60 29L82 41L88 49L75 49L54 42Q43 47 36 39Z','#e2d6b8',ink,2.5);
+   a+=circ(46,32,5,'#303638','#d4c6a7',2)+circ(58,33,4,'#303638','#d4c6a7',2);
+   a+=l('M66 37L82 45','#ad9a78',1.6);
+   a+=p('M30 51Q49 43 69 51L77 115Q52 125 24 114Z','#292f31',ink,2.5)+l('M37 62L32 111M62 62L69 113','#586064',2);
+   a+=p('M69 83L84 83L87 103L69 103Z','#79563b',ink,2)+l('M71 88H84','#b49b73',2);
+   a+=l('M23 82L17 129','#8b7353',4)+p('M14 127L23 127L23 133L13 133Z','#b7a486');
   }else if(type==='mehmed'){
    a+=p('M28 21Q28 7 40 8Q42 -3 54 3Q70 0 73 13Q79 21 67 25L33 26Z','#f1e8d6',ink,2.5)+l('M31 18Q49 12 72 19','#d4c9b6',3)+p('M39 40Q44 54 54 54Q64 53 66 40L59 44L53 48L45 44Z','#45332c')+l('M87 49V133','#b18b54',5)+circ(87,44,7,gold)+l('M37 65Q51 73 66 65',gold,4)+l('M43 80L43 109M58 80L60 109',gold,2);
   }
@@ -2134,7 +2142,7 @@ body{background:var(--hs-bg);}
 
  const faithEra=document.querySelector('.era-faith');
  if(faithEra){
-  const names=[['justinian','1 · Justinian I'],['viking','2 · Viking raider'],['charlemagne','3 · Charlemagne'],['norman','4 · Norman horseman'],['crusader','5 · Crusader knight'],['john','6 · King John'],['mongol','7 · Mongol archer'],['physician','8 · Medieval physician'],['mehmed','9 · Mehmed II']];
+  const names=[['justinian','1 · Justinian I'],['viking','2 · Viking raider'],['charlemagne','3 · Charlemagne'],['norman','4 · Norman horseman'],['crusader','5 · Crusader knight'],['john','6 · King John'],['mongol','7 · Mongol archer'],['physician','8 · Beaked plague doctor'],['mehmed','9 · Mehmed II']];
   const gallery=document.createElement('details');gallery.className='mtt-gallery';
   gallery.innerHTML='<summary>View all 9 Chapter II character designs</summary><div class="mtt-gallery-grid">'+names.map(([id,label])=>'<div class="mtt-gallery-item" data-type="'+id+'">'+chapterTwo(id)+'<span>'+label+'</span></div>').join('')+'</div>';
   faithEra.querySelector('.c1-opening')?.insertAdjacentElement('afterend',gallery);
