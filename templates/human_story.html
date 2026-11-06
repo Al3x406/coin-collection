@@ -1279,6 +1279,15 @@ body{background:var(--hs-bg);}
 @keyframes mtt-spin{to{transform:rotate(360deg)}}
 @keyframes mtt-cloak{to{transform:skewY(5deg)}}
 @media(prefers-reduced-motion:reduce){.era-origins .mtt-figure *{animation:none!important}}
+
+/* Preview gallery uses the exact SVG assets shown on the journey. */
+.mtt-gallery{margin:16px auto 28px;max-width:950px;padding:12px 16px;border:1px solid rgba(211,166,81,.32);border-radius:12px;background:rgba(13,16,20,.82);color:#ecd6a6}
+.mtt-gallery summary{cursor:pointer;font:600 14px Georgia,serif;letter-spacing:.04em}
+.mtt-gallery-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(112px,1fr));gap:12px;margin-top:18px}
+.mtt-gallery-item{text-align:center;font:12px Georgia,serif;min-width:0}
+.mtt-gallery-item svg{width:75px;height:94px;max-width:100%;display:block;margin:auto auto 6px;overflow:visible;filter:drop-shadow(0 2px 2px #000)}
+.mtt-gallery-item[data-type="alexander"] svg,.mtt-gallery-item[data-type="wagon"] svg{width:110px}
+.mtt-gallery-item span{display:block;line-height:1.35}
 /* Chapter I cartoon character test: bold outlines, clean readable silhouettes. */
 .era-origins .mtt-figure{width:47px;height:62px}
 .era-origins .mtt-figure svg{overflow:visible;filter:drop-shadow(0 1px 1px #15110e)}
@@ -1936,6 +1945,16 @@ body{background:var(--hs-bg);}
   return person('traveler');
  }
 
+
+ const originEra=document.querySelector('.era-origins');
+ if(originEra){
+  const names=[['merchant','1 · Lydian merchant'],['hoplite','2 · Greek hoplite'],['alexander','3 · Alexander'],['caesar','4 · Julius Caesar'],['jesus','5 · Jesus'],['pompeii','6 · Pompeii runner'],['trajan','7 · Trajan'],['constantine','8 · Constantine'],['germanic','9 · Germanic warrior'],['wagon','Final · Horse and cart']];
+  const gallery=document.createElement('details');gallery.className='mtt-gallery';
+  gallery.innerHTML='<summary>View all 10 Chapter I character designs</summary><div class="mtt-gallery-grid">'+names.map(([id,label])=>'<div class="mtt-gallery-item" data-type="'+id+'">'+chapterOne(id)+'<span>'+label+'</span></div>').join('')+'</div>';
+  const opening=originEra.querySelector('.c1-opening');
+  if(opening)opening.insertAdjacentElement('afterend',gallery);
+  else originEra.querySelector('.era-expanded')?.prepend(gallery);
+ }
  const people=new Set(Object.keys(palette));
  const states=[...document.querySelectorAll('.era')].map(era=>{
   const layer=era.querySelector('.c1-road-layer');
