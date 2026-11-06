@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}The Human Story · History Through Coins{% endblock %}
+{% block title %}Minted Through Time · History Through Coins{% endblock %}
 
 {% macro coin_block(moment) %}
     {% set c = moment.coin %}
@@ -1257,8 +1257,8 @@ body{background:var(--hs-bg);}
 <section class="hs-hero" id="human-story-top">
     <div class="hs-hero-inner">
         <div class="hs-kicker">Coins connect us</div>
-        <h1>The Human Story <span>History Through Coins</span></h1>
-        <p>From the first coinage to a connected world, each object is a physical bookmark in the human story. Scroll through the eras, or open any chapter to see the major moments, people, ideas, and coins within it.</p>
+        <h1>Minted Through Time <span>History Through Coins</span></h1>
+        <p>From the first coinage to a connected world, each object is a physical bookmark in human history. Scroll through the eras, or open any chapter to see the major moments, people, ideas, and coins within it.</p>
         <div class="hs-progress">
             <div><strong>{{ completed }} / {{ total }}</strong><br><small>moments represented</small></div>
             <div class="hs-progress-track"><span style="width:{{ percent }}%"></span></div>
@@ -1267,7 +1267,7 @@ body{background:var(--hs-bg);}
     </div>
 </section>
 
-<nav class="hs-nav" aria-label="Human Story chapters">
+<nav class="hs-nav" aria-label="Minted Through Time chapters">
 {% for era in eras %}
     <a href="#era-{{ era.id }}"><span>{{ era.roman }}</span>{{ era.title.split('&')[0].strip() }}</a>
 {% endfor %}
@@ -1502,7 +1502,7 @@ body{background:var(--hs-bg);}
 
 <section class="hs-footer">
     <div>
-        <div class="era-kicker">The Human Story</div>
+        <div class="era-kicker">Minted Through Time</div>
         <h2>Small objects. A vast human story.</h2>
         <p>Every completed slot adds another physical link to the people, places, ideas, conflicts, discoveries, and everyday lives that came before us.</p>
     </div>
