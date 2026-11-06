@@ -155,6 +155,71 @@
 }());
 </script>
 
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const path = location.pathname;
+  const kind = path === '/add' ? 'coin' : path === '/banknotes/add' ? 'banknote' : null;
+  if (!kind) return;
+  const form = document.querySelector('form[method="POST"], form[method="post"]');
+  if (!form) return;
+  const field = name => form.querySelector('[name="' + name + '"]');
+  const banner = document.createElement('div');
+  banner.className = 'alert alert-warning mt-3';
+  banner.setAttribute('role', 'status');
+  banner.setAttribute('aria-live', 'polite');
+  banner.hidden = true;
+  form.prepend(banner);
+  let counter = 0;
+  async function check() {
+    const id = ++counter;
+    const params = new URLSearchParams({kind});
+    for (const key of ['country','denomination','year']) params.set(key, field(key)?.value.trim() || '');
+    if (kind === 'coin') {
+      params.set('mint', field('mint_id')?.value || '');
+      params.set('mint_mark', field('mint_mark')?.value || '');
+      params.set('issue_id', field('numista_issue_id')?.value || '');
+    } else {
+      params.set('catalog', field('catalog_number')?.value || '');
+    }
+    if (!params.get('country') || !params.get('denomination') || !params.get('year') ||
+        (kind === 'coin' && !params.get('mint') && !params.get('mint_mark')) ||
+        (kind === 'banknote' && !params.get('catalog'))) {
+      banner.hidden = true; return;
+    }
+    try {
+      const response = await fetch('/api/currency/exact-duplicate?' + params.toString(), {credentials:'same-origin'});
+      if (!response.ok) throw Error('lookup unavailable');
+      const data = await response.json();
+      if (id !== counter) return;
+      banner.replaceChildren();
+      if (!data.matches?.length) { banner.hidden = true; return; }
+      const heading = document.createElement('strong');
+      heading.textContent = 'Already in your collection — exact match found.';
+      banner.append(heading);
+      for (const item of data.matches) {
+        const line = document.createElement('div');
+        const link = document.createElement('a');
+        link.href = item.url;
+        link.textContent = item.name + ' (quantity: ' + item.quantity + ') — View existing';
+        line.append(link); banner.append(line);
+      }
+      const hint = document.createElement('small');
+      hint.textContent = 'You can still save another copy.';
+      banner.append(hint); banner.hidden = false;
+    } catch (error) { if (id === counter) banner.hidden = true; }
+  }
+  form.addEventListener('input', check);
+  form.addEventListener('change', check);
+  const observer = new MutationObserver(() => check());
+  for (const name of ['numista_issue_id','catalog_number']) {
+    const input = field(name);
+    if (input) observer.observe(input, {attributes:true,attributeFilter:['value']});
+  }
+  check();
+});
+</script>
+
 </body>
 
 </html>
