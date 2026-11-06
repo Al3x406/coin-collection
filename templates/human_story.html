@@ -1261,6 +1261,24 @@ body{background:var(--hs-bg);}
  transition:opacity .18s ease;opacity:0;
 }
 .era.open .mtt-figure{opacity:1}
+
+/* Chapter I: immediate changes and continuous miniature motion. */
+.era-origins .mtt-figure{width:54px;height:70px;transition:none}
+.era-origins .mtt-figure[data-type="alexander"],.era-origins .mtt-figure[data-type="wagon"]{width:110px;height:78px}
+.era-origins .mtt-figure .mtt-art{animation:none}
+.era-origins .mtt-figure .mtt-coin{display:none}
+.era-origins .mtt-figure .mtt-leg-a{transform-origin:25px 45px;animation:mtt-walk-a .55s ease-in-out infinite alternate}
+.era-origins .mtt-figure .mtt-leg-b{transform-origin:25px 45px;animation:mtt-walk-b .55s ease-in-out infinite alternate}
+.era-origins .mtt-figure[data-type="pompeii"] .mtt-leg-a,.era-origins .mtt-figure[data-type="pompeii"] .mtt-leg-b{animation-duration:.26s}
+.era-origins .mtt-figure .mtt-horse-leg-a{transform-origin:32px 39px;animation:mtt-walk-a .36s ease-in-out infinite alternate}
+.era-origins .mtt-figure .mtt-horse-leg-b{transform-origin:32px 39px;animation:mtt-walk-b .36s ease-in-out infinite alternate}
+.era-origins .mtt-figure .mtt-wheel{transform-box:fill-box;transform-origin:center;animation:mtt-spin 1s linear infinite}
+.era-origins .mtt-figure .mtt-cloak{transform-origin:27px 24px;animation:mtt-cloak 1s ease-in-out infinite alternate}
+@keyframes mtt-walk-a{from{transform:rotate(-18deg)}to{transform:rotate(18deg)}}
+@keyframes mtt-walk-b{from{transform:rotate(18deg)}to{transform:rotate(-18deg)}}
+@keyframes mtt-spin{to{transform:rotate(360deg)}}
+@keyframes mtt-cloak{to{transform:skewY(5deg)}}
+@media(prefers-reduced-motion:reduce){.era-origins .mtt-figure *{animation:none!important}}
 /* Chapter I cartoon character test: bold outlines, clean readable silhouettes. */
 .era-origins .mtt-figure{width:47px;height:62px}
 .era-origins .mtt-figure svg{overflow:visible;filter:drop-shadow(0 1px 1px #15110e)}
@@ -1783,7 +1801,7 @@ body{background:var(--hs-bg);}
 /* Event-linked historical travelers. SVG artwork stays lightweight and local. */
 (() => {
  const themes={
-  origins:['merchant','hoplite','horse','senator','legion','legion','emperor','legion','traveler'],
+  origins:['merchant','hoplite','alexander','caesar','jesus','pompeii','trajan','constantine','germanic','wagon'],
   faith:['emperor','ship','king','horse','knight','scribe','horse','traveler','emperor'],
   exploration:['ship','ship','scribe','horse','merchant','ship','ship','soldier','scribe','traveler','king'],
   revolutions:['king','flag','flag','flag','flag','emperor','horse','horse','flag','flag','flag','king','soldier','flag','traveler','soldier'],
@@ -1891,6 +1909,33 @@ body{background:var(--hs-bg);}
    <circle cx="25" cy="12" r="11" fill="#dce4e5" stroke="#c3aa76" stroke-width="2"/>
    <path d="M16 11Q25 3 34 11L32 18H18Z" fill="#4b8196"/></svg>`;
  }
+
+ function chapterOne(type){
+  const ink='#34251e',skin='#d6a078',gold='#e8ba60';
+  const legs='<g class="mtt-leg-b"><path d="M21 44L18 57L14 64L22 65L27 48" fill="#9b7959" stroke="#34251e" stroke-width="2"/></g><g class="mtt-leg-a"><path d="M30 44L34 57L39 64L32 65L27 48" fill="#9b7959" stroke="#34251e" stroke-width="2"/></g>';
+  const head='<path d="M19 13Q18 4 28 4Q37 5 36 16L32 23H22Z" fill="#d6a078" stroke="#34251e" stroke-width="2"/><circle cx="33" cy="15" r="1.3" fill="#34251e"/>';
+  const arms='<path d="M18 27L12 39M35 27L41 39" stroke="#d6a078" stroke-width="5" stroke-linecap="round"/>';
+  const laurel='<path d="M18 13Q26 3 37 12M20 9L17 5M26 6L26 2M33 8L37 4" fill="none" stroke="#e8ba60" stroke-width="3"/>';
+  const cape=(color)=>'<path class="mtt-cloak" d="M19 23Q8 28 10 49L25 43L29 23Z" fill="'+color+'" stroke="#34251e" stroke-width="2"/>';
+  const body=(color)=>'<path d="M19 23Q27 19 35 23L37 46H17Z" fill="'+color+'" stroke="#34251e" stroke-width="2"/><path d="M18 38H36" stroke="#e8ba60" stroke-width="2"/>';
+  const wrap=(art,view='0 0 54 70')=>'<svg viewBox="'+view+'" xmlns="http://www.w3.org/2000/svg"><g stroke-linecap="round" stroke-linejoin="round">'+art+'</g></svg>';
+  const horse='<g class="mtt-horse-leg-b"><path d="M25 41L21 62M43 41L48 62" stroke="#64412e" stroke-width="5"/></g><g class="mtt-horse-leg-a"><path d="M34 41L37 62M52 41L57 62" stroke="#80533a" stroke-width="5"/></g><path d="M15 27L25 22L48 25L55 15L65 18L70 29L64 36L53 34L47 45H27L20 39Z" fill="#9c6b48" stroke="#34251e" stroke-width="2.5"/><path d="M15 27L8 18M55 16L53 10" stroke="#543729" stroke-width="4"/><circle cx="64" cy="26" r="2" fill="#34251e"/>';
+  if(type==='alexander')return wrap(horse+cape('#773e92')+'<path d="M36 17L48 17L50 35L37 34Z" fill="#d3a858" stroke="#34251e" stroke-width="2"/><path d="M38 32L33 47M47 32L54 47" stroke="#ac7953" stroke-width="4"/><circle cx="43" cy="11" r="7" fill="#d6a078" stroke="#34251e" stroke-width="2"/><path d="M35 11Q36 0 47 3L52 12L48 15H37Z" fill="#d6ac59" stroke="#34251e" stroke-width="2"/><path d="M39 5Q45 -5 52 5L54 9" stroke="#b54335" stroke-width="5" fill="none"/>','0 0 76 70');
+  if(type==='wagon'){
+   const wheel=(x)=>'<g class="mtt-wheel"><circle cx="'+x+'" cy="52" r="12" fill="#7e5337" stroke="#34251e" stroke-width="3"/><circle cx="'+x+'" cy="52" r="9" fill="none" stroke="#e2b873" stroke-width="2"/><path d="M'+x+' 42V62M'+(x-10)+' 52H'+(x+10)+'M'+(x-7)+' 45L'+(x+7)+' 59M'+(x+7)+' 45L'+(x-7)+' 59" stroke="#e2b873" stroke-width="2"/></g>';
+   return wrap(horse+'<path d="M67 33L82 40" stroke="#a88759" stroke-width="3"/><path d="M71 28H108L103 51H76Z" fill="#a77849" stroke="#34251e" stroke-width="3"/><path d="M74 34H106M82 29V48M95 29V49" stroke="#6a442f" stroke-width="2"/><path d="M80 27V16H92V27M95 27V20H103V27" fill="#c4a079" stroke="#34251e" stroke-width="2"/><path d="M85 19V12L92 10L98 19" fill="#6e543d" stroke="#34251e" stroke-width="2"/><circle cx="90" cy="8" r="5" fill="#d6a078" stroke="#34251e" stroke-width="2"/>'+wheel(83)+wheel(103),'0 0 120 70');
+  }
+  if(type==='merchant')return wrap(legs+cape('#e6d6bd')+body('#f6eddb')+arms+head+'<path d="M18 13Q21 1 33 5L37 13" fill="#60432f" stroke="#34251e" stroke-width="2"/><path d="M21 19Q27 28 34 20L32 28Q25 31 21 24Z" fill="#60432f"/><path d="M13 40Q6 44 11 53L20 52L21 43Z" fill="#a77946" stroke="#34251e" stroke-width="2"/>');
+  if(type==='hoplite')return cartoon('hoplite');
+  if(type==='caesar')return wrap(legs+body('#f5ebdf')+'<path d="M16 26Q10 38 16 55L36 56L38 26Z" fill="#f4ede2" stroke="#34251e" stroke-width="2"/><path d="M16 29Q23 40 37 44" fill="none" stroke="#983f53" stroke-width="4"/>'+arms+head+'<path d="M20 12Q24 8 33 12" fill="none" stroke="#776758" stroke-width="2"/>'+laurel);
+  if(type==='jesus')return wrap(legs+cape('#ac8766')+body('#f2e8d6')+'<path d="M18 37L16 59H38L36 37Z" fill="#f2e8d6" stroke="#34251e" stroke-width="2"/>'+arms+head+'<path d="M18 12Q13 23 17 35M36 12Q43 25 38 36" stroke="#4b3027" stroke-width="5" fill="none"/><path d="M21 19Q27 30 34 20L32 29Q25 33 21 24Z" fill="#4b3027"/>');
+  if(type==='pompeii')return wrap(legs+body('#d6b68c')+'<path d="M18 44L15 50H39L36 44" fill="#d6b68c" stroke="#34251e" stroke-width="2"/>'+arms+head+'<path d="M19 13Q22 2 35 9" fill="#64452e" stroke="#34251e" stroke-width="3"/><path d="M22 20L27 23" stroke="#34251e" stroke-width="2"/>');
+  if(type==='trajan')return wrap(legs+cape('#b73e38')+body('#c4a65d')+'<path d="M20 28L34 29L27 36Z" fill="#f0d389"/>'+arms+head+laurel);
+  if(type==='constantine')return wrap(legs+cape('#70408c')+body('#b7a3a0')+arms+head+'<path d="M18 11L19 3L24 8L28 1L32 8L37 3L38 12Z" fill="#e8ba60" stroke="#34251e" stroke-width="2"/><circle cx="28" cy="8" r="2" fill="#80428d"/><path d="M46 1V65" stroke="#e8ba60" stroke-width="3"/><path d="M40 11H52M46 6V20M40 14L52 20" stroke="#f7e1a6" stroke-width="2.5"/><path d="M41 21H51L49 32H43Z" fill="#70408c" stroke="#e8ba60" stroke-width="2"/>');
+  if(type==='germanic')return wrap(legs+cape('#80664d')+body('#946c48')+arms+head+'<path d="M18 12Q19 1 29 1Q38 2 39 14L33 15L21 15Z" fill="#a2a09a" stroke="#34251e" stroke-width="2"/><path d="M21 19Q27 30 34 20L32 29Q25 33 21 24Z" fill="#5a3d2b"/><path d="M39 34L51 19" stroke="#d6d6cf" stroke-width="3"/><path d="M38 30L45 37" stroke="#a8804e" stroke-width="3"/><ellipse cx="13" cy="39" rx="11" ry="15" fill="#825a3e" stroke="#34251e" stroke-width="3"/><circle cx="13" cy="39" r="4" fill="#aaa9a3"/>');
+  return person('traveler');
+ }
+
  const people=new Set(Object.keys(palette));
  const states=[...document.querySelectorAll('.era')].map(era=>{
   const layer=era.querySelector('.c1-road-layer');
@@ -1909,11 +1954,13 @@ body{background:var(--hs-bg);}
    if(rect.height<=0)continue;
    const focus=innerHeight*.48;
    const progress=Math.max(0,Math.min(1,(focus-rect.top)/rect.height));
-   const index=Math.min(s.types.length-1,Math.floor(progress*s.types.length));
+   const isOrigins=s.era.classList.contains('era-origins');
+   const markerCount=isOrigins?[...s.layer.querySelectorAll('[data-journey-marker]')].filter(m=>{const r=m.getBoundingClientRect();return focus>=r.top+r.height/2}).length:0;
+   const index=isOrigins?(progress>=.965?9:Math.max(0,Math.min(8,markerCount-1))):Math.min(s.types.length-1,Math.floor(progress*s.types.length));
    if(index!==s.index){
     const type=s.types[Math.max(0,index)]||'traveler';
-    s.figure.innerHTML=s.era.classList.contains('era-origins')&&index<2?cartoon(type):type==='horse'?horse():type==='astronaut'?astronaut():people.has(type)?person(type):object(type);
-    if(s.era.classList.contains('era-origins')){s.figure.classList.remove('mtt-changing');void s.figure.offsetWidth;s.figure.classList.add('mtt-changing');}
+    s.figure.innerHTML=isOrigins?chapterOne(type):type==='horse'?horse():type==='astronaut'?astronaut():people.has(type)?person(type):object(type);
+    
     s.figure.dataset.type=type;
     s.figure.title=(s.moments[index]?.querySelector('h4')?.textContent||'Historical moment').trim()+' — '+type;
     s.index=index;
