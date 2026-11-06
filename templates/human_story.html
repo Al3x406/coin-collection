@@ -1,5 +1,57 @@
 {% extends "base.html" %}
-{% block title %}Minted Through Time · History Through Coins{% endblock %}
+{% block title %}Minted Through Time · History Through Coins
+<script id="mtt-illustrated-traveler">
+(() => {
+ const era=document.querySelector('.era-origins');
+ const figure=era?.querySelector('.mtt-figure');
+ const layer=era?.querySelector('.c1-road-layer');
+ const path=era?.querySelector('.c1-road-main');
+ if(!figure||!layer||!path)return;
+ const costumes=[
+  {coat:'#9e7045',cape:'#665038',hat:'#ad8850',tool:'staff'},
+  {coat:'#b44b34',cape:'#315b89',hat:'#cba55e',tool:'spear'},
+  {coat:'#8d3c31',cape:'#a22d30',hat:'#d6b570',tool:'shield'}
+ ];
+ function draw(s){
+  const item=s.tool==='staff'
+   ? '<path d="M37 10V57" stroke="#c5a16c" stroke-width="2.6"/>'
+   :s.tool==='spear'
+   ? '<path d="M37 8V58" stroke="#b5bab8" stroke-width="2"/><path d="M37 2L33 10H41Z" fill="#d8dad6"/>'
+   :'<ellipse cx="37" cy="33" rx="8" ry="12" fill="#8f4936" stroke="#d9b568" stroke-width="2"/><path d="M37 23V43M30 33H44" stroke="#d9b568" stroke-width="1.5"/>';
+  return `<svg viewBox="0 0 48 64" xmlns="http://www.w3.org/2000/svg">
+   <path d="M19 19Q8 28 12 45L26 40L29 20Z" fill="${s.cape}" stroke="#463528"/>
+   <g class="mtt-leg-b"><path d="M20 38L17 51L12 58L19 60L24 51L26 40" fill="#a48165" stroke="#49362c" stroke-width="1.5"/></g>
+   <g class="mtt-leg-a"><path d="M24 39L29 50L29 58L36 59L35 49L29 37" fill="#b99471" stroke="#49362c" stroke-width="1.5"/></g>
+   <path d="M17 21Q24 17 30 22L32 40Q24 44 16 39Z" fill="${s.coat}" stroke="#49362c" stroke-width="1.5"/>
+   <path d="M16 36H32" stroke="#e0bc73" stroke-width="2"/>
+   <path d="M18 23L12 34L17 39M29 23L36 29" fill="none" stroke="#b99471" stroke-width="4" stroke-linecap="round"/>
+   <path d="M19 12Q17 5 24 5Q31 6 30 14L27 21H21Z" fill="#c59a74" stroke="#4e3a2e"/>
+   <path d="M17 12Q17 2 25 3Q32 4 32 12Z" fill="${s.hat}" stroke="#5b4530" stroke-width="1.4"/>
+   <circle cx="28" cy="13" r="1" fill="#302720"/>${item}</svg>`;
+ }
+ let current=-1,frame=0;
+ function update(){
+  frame=0;
+  if(!era.classList.contains('open'))return;
+  const rect=layer.getBoundingClientRect();
+  if(rect.height<=0)return;
+  const progress=Math.max(0,Math.min(1,(innerHeight*.48-rect.top)/rect.height));
+  const stage=progress<.35?0:progress<.7?1:2;
+  if(stage!==current){figure.innerHTML=draw(costumes[stage]);current=stage}
+  const pt=path.getPointAtLength(path.getTotalLength()*progress);
+  figure.style.left=pt.x+'%';
+  figure.style.top=pt.y+'%';
+ }
+ function schedule(){if(!frame)frame=requestAnimationFrame(update)}
+ addEventListener('scroll',schedule,{passive:true});
+ addEventListener('resize',schedule);
+ addEventListener('load',schedule);
+ new MutationObserver(schedule).observe(era,{attributes:true,attributeFilter:['class']});
+ schedule();
+})();
+</script>
+
+{% endblock %}
 
 {% macro coin_block(moment) %}
     {% set c = moment.coin %}
