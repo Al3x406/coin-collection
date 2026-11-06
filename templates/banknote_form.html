@@ -34,9 +34,19 @@
 </section>
 
 <form method="post" enctype="multipart/form-data" class="row g-3">
-{% for key,label in [('name','Name'),('country','Issuing country'),('denomination','Denomination'),('year','Year'),('condition','Condition'),('quantity','Quantity'),('estimated_value','Estimated value per banknote (USD)'),('purchase_price','Price paid (USD)'),('date_acquired','Date acquired')] %}
+{% for key,label in [('name','Name'),('country','Issuing country'),('denomination','Denomination'),('condition','Condition'),('quantity','Quantity'),('estimated_value','Estimated value per banknote (USD)'),('purchase_price','Price paid (USD)'),('date_acquired','Date acquired')] %}
 <div class="col-md-6"><label class="form-label" for="{{ key }}">{{ label }}</label><input class="form-control" id="{{ key }}" name="{{ key }}" {% if key=='date_acquired' %}type="date"{% elif key=='quantity' %}type="number" min="1" step="1" required{% endif %} value="{{ (note.quantity or 1) if key=='quantity' else (note|attr(key) if note|attr(key) is not none else '') }}" {% if key=='name' %}required{% endif %}></div>
 {% endfor %}
+<div class="col-12"><div class="card border-secondary"><div class="card-body">
+<h5 class="card-title">Banknote date</h5>
+<p class="text-muted small mb-3">Enter an exact year, or use a range when the note is undated. Leave exact year blank for a range.</p>
+<div class="row g-3">
+<div class="col-md-4"><label class="form-label" for="year">Exact year (optional)</label><input class="form-control" id="year" name="year" type="number" value="{{ note.year if note.year is not none else '' }}" placeholder="1971"></div>
+<div class="col-md-4"><label class="form-label" for="date_start_year">Earliest year</label><input class="form-control" id="date_start_year" name="date_start_year" type="number" value="{{ note.date_start_year if note.date_start_year is not none else '' }}" placeholder="1971"></div>
+<div class="col-md-4"><label class="form-label" for="date_end_year">Latest year</label><input class="form-control" id="date_end_year" name="date_end_year" type="number" value="{{ note.date_end_year if note.date_end_year is not none else '' }}" placeholder="1987"></div>
+</div>
+<div class="form-check mt-3"><input class="form-check-input" type="checkbox" id="date_is_approx" name="date_is_approx" {% if note.date_is_approx %}checked{% endif %}><label class="form-check-label" for="date_is_approx">Approximate date</label></div>
+</div></div></div>
 <div class="col-md-6"><label class="form-label">Front photo</label><input type="file" name="front" accept="image/*" data-banknote-crop="front" class="form-control"></div>
 <div class="col-md-6"><label class="form-label">Back photo</label><input type="file" name="back" accept="image/*" data-banknote-crop="back" class="form-control"></div>
 {% if note.id %}
@@ -53,10 +63,9 @@
 <div class="col-12"><label class="form-label" for="notes">Historical notes</label><textarea id="notes" name="notes" class="form-control" rows="4">{{ note.notes or '' }}</textarea></div>
 <details class="col-12 mt-4"><summary class="fw-semibold mb-3" style="cursor:pointer">Additional details (optional)</summary>
 <div class="row g-3">
-{% for key,label in [('set_country','Set country'),('currency','Currency'),('date_start_year','Earliest year'),('date_end_year','Latest year'),('issuing_authority','Issuing authority'),('serial_number','Serial number'),('catalog_number','Numista / catalog reference'),('portrait','Front design'),('reverse_design','Back design'),('source','Source URL')] %}
+{% for key,label in [('set_country','Set country'),('currency','Currency'),('issuing_authority','Issuing authority'),('serial_number','Serial number'),('catalog_number','Numista / catalog reference'),('portrait','Front design'),('reverse_design','Back design'),('source','Source URL')] %}
 <div class="col-md-6"><label class="form-label" for="{{ key }}">{{ label }}</label><input class="form-control" id="{{ key }}" name="{{ key }}" value="{{ note|attr(key) if note|attr(key) is not none else '' }}"></div>
 {% endfor %}
-<div class="col-12"><label><input type="checkbox" name="date_is_approx" {% if note.date_is_approx %}checked{% endif %}> Approximate date</label></div>
 </div></details>
 <div class="col-12"><button class="btn btn-primary" type="submit">Save banknote</button> <a class="btn btn-outline-secondary" href="{{ url_for('coins') }}">Cancel</a></div>
 </form>
