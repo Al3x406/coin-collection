@@ -1990,6 +1990,27 @@ body{background:var(--hs-bg);}
   const svg=(a,v='0 0 100 145')=>'<svg viewBox="'+v+'" xmlns="http://www.w3.org/2000/svg" aria-label="'+type+' illustrated historical traveler"><g stroke-linecap="round" stroke-linejoin="round">'+a+'</g></svg>';
   if(['columbus','dagama','armada'].includes(type)){
    const war=type==='armada',port=type==='dagama';
+   if(port){
+    // São Gabriel: high Portuguese forecastle and sterncastle, four masts, striped lateen mizzen.
+    let a='<g class="mtt-ship-rock">';
+    a+=p('M15 92L168 92L149 124Q93 143 32 119Z','#825333',ink,3);
+    a+=p('M19 91L19 65L47 65L52 93Z','#a66b3c')+p('M134 93L134 44L160 44L169 93Z','#a26b3f');
+    a+=line('M22 71H46M138 51H159M138 60H161',gold,2);
+    a+=p('M31 96L154 96L147 104L35 104Z','#d4a36b')+line('M39 112Q91 125 144 111','#e2b678',2);
+    [47,68,89,110,131].forEach(x=>a+=circle(x,110,2.2,'#dfbd83','#795030',1));
+    // Main Portuguese square sails and broad horizontal yards.
+    [[64,13,62,51],[102,4,97,57]].forEach(([x,y,_,h])=>{
+     a+=line('M'+x+' '+y+'V96','#60442e',4)+line('M'+(x-22)+' '+(y+17)+'H'+(x+23),'#765139',3);
+     a+='<g class="mtt-sail">'+p('M'+(x-20)+' '+(y+19)+'Q'+x+' '+(y+27)+' '+(x+20)+' '+(y+19)+'L'+(x+15)+' '+(y+h)+'Q'+x+' '+(y+h+10)+' '+(x-15)+' '+(y+h)+'Z','#f4dfae','#9e805b',1.7);
+     a+=p('M'+x+' '+(y+28)+'v18M'+(x-8)+' '+(y+36)+'h16','none','#b33735',4)+'</g>';
+    });
+    // The distinctive aft lateen sail.
+    a+=line('M139 20V94','#644a31',3)+line('M123 32L166 73','#75553b',3);
+    a+='<g class="mtt-sail">'+p('M124 34L162 75L133 70Z','#f0d6a0','#957858',2)+line('M132 47L148 64','#bb4b37',3)+'</g>';
+    a+=p('M103 6L125 12L104 20Z','#2d8558')+p('M140 22L158 28L141 35Z','#2d8558');
+    a+=circle(78,78,5,skin)+p('M74 84L83 84L86 96L71 96Z','#32634f')+p('M71 75L85 75L87 78L70 78Z','#3a3028');
+    return svg(a+'</g>','0 0 180 145');
+   }
    let a='<g class="mtt-ship-rock">';
    a+=p(war?'M13 92L172 92L153 124Q90 144 32 119Z':'M19 94L158 94L144 119Q91 138 36 119Z',war?'#82502f':port?'#9b6037':'#93613d',ink,3);
    a+=p('M31 96L149 96L143 105L35 105Z','#c58a51')+line('M42 110Q92 123 136 109','#e0ac68',2);
@@ -2033,7 +2054,7 @@ body{background:var(--hs-bg);}
   }else if(type==='miner'){
    a+=p('M29 20L74 20L68 12L35 12Z','#6c4d30')+line('M27 20H78','#a47a47',5);
    a+=p('M31 48L70 48L67 78L33 78Z','#d4b68c')+line('M48 50L51 76','#836d55',3);
-   a+=line('M12 51L90 8','#815b35',5)+p('M80 5Q94 1 101 16L95 19Q90 10 82 13Z','#858b8c');
+   // Upright pickaxe beside the miner, never crossing the face or hat.\n   a+=line('M90 39L90 129','#795231',5)+p('M66 37Q89 19 110 37L107 44Q91 35 72 45Z','#a7afb0',ink,2)+line('M76 39Q89 33 101 39','#dce1df',1.8);
    a+=p('M73 86Q96 78 100 101L96 116L73 111Z','#93877a')+circle(85,98,3,'#c2c5c6');
   }else if(type==='trader'){
    a+=p('M32 14Q48 4 67 14L75 20L27 20Z','#503e31')+p('M36 49L66 49L61 59L41 59Z','#e9d8bc')+line('M37 53H66','#d2b991',2);
