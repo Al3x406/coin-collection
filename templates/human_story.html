@@ -1254,19 +1254,19 @@ body{background:var(--hs-bg);}
 
 /* Minted Through Time: Chapter I illustrated scroll traveler prototype. */
 .era-origins .c1-traveler{display:none!important}
-.era-origins .mtt-figure{
+.era .mtt-figure{
  position:absolute;z-index:9;width:43px;height:58px;
  transform:translate(-50%,-88%);pointer-events:none;
  filter:drop-shadow(0 3px 3px rgba(0,0,0,.75));
  transition:opacity .18s ease;opacity:0;
 }
-.era-origins.open .mtt-figure{opacity:1}
+.era.open .mtt-figure{opacity:1}
 .mtt-figure svg{width:100%;height:100%;overflow:visible}
 .mtt-figure .mtt-leg-a{transform-origin:22px 39px;animation:mtt-step-a .75s ease-in-out infinite alternate}
 .mtt-figure .mtt-leg-b{transform-origin:22px 39px;animation:mtt-step-b .75s ease-in-out infinite alternate}
 @keyframes mtt-step-a{from{transform:rotate(-16deg)}to{transform:rotate(18deg)}}
 @keyframes mtt-step-b{from{transform:rotate(18deg)}to{transform:rotate(-16deg)}}
-@media(max-width:760px){.era-origins .mtt-figure{display:none!important}}
+@media(max-width:760px){.era .mtt-figure{width:31px;height:43px}}
 @media(prefers-reduced-motion:reduce){
  .mtt-figure .mtt-leg-a,.mtt-figure .mtt-leg-b{animation:none!important}
 }
@@ -1453,9 +1453,7 @@ body{background:var(--hs-bg);}
                          data-journey-marker="{{ loop.index }}">{{ loop.index }}</div>
                 {% endfor %}
 
-                {% if era.theme == 'origins' %}
                 <div class="mtt-figure" aria-hidden="true" title="A traveler through history"></div>
-                {% endif %}
                 <div class="c1-foot f1"></div>
                 <div class="c1-foot f2"></div>
                 <div class="c1-foot f3"></div>
@@ -1767,52 +1765,123 @@ body{background:var(--hs-bg);}
 </script>
 
 <script id="mtt-illustrated-traveler">
+/* Event-linked historical travelers. SVG artwork stays lightweight and local. */
 (() => {
- const era=document.querySelector('.era-origins');
- const figure=era?.querySelector('.mtt-figure');
- const layer=era?.querySelector('.c1-road-layer');
- const path=era?.querySelector('.c1-road-main');
- if(!figure||!layer||!path)return;
- const costumes=[
-  {coat:'#9e7045',cape:'#665038',hat:'#ad8850',tool:'staff'},
-  {coat:'#b44b34',cape:'#315b89',hat:'#cba55e',tool:'spear'},
-  {coat:'#8d3c31',cape:'#a22d30',hat:'#d6b570',tool:'shield'}
- ];
- function draw(s){
-  const item=s.tool==='staff'
-   ? '<path d="M37 10V57" stroke="#c5a16c" stroke-width="2.6"/>'
-   :s.tool==='spear'
-   ? '<path d="M37 8V58" stroke="#b5bab8" stroke-width="2"/><path d="M37 2L33 10H41Z" fill="#d8dad6"/>'
-   :'<ellipse cx="37" cy="33" rx="8" ry="12" fill="#8f4936" stroke="#d9b568" stroke-width="2"/><path d="M37 23V43M30 33H44" stroke="#d9b568" stroke-width="1.5"/>';
+ const themes={
+  origins:['merchant','hoplite','horse','senator','legion','legion','emperor','legion','traveler'],
+  faith:['emperor','ship','king','horse','knight','scribe','horse','traveler','emperor'],
+  exploration:['ship','ship','scribe','horse','merchant','ship','ship','soldier','scribe','traveler','king'],
+  revolutions:['king','flag','flag','flag','flag','emperor','horse','horse','flag','flag','flag','king','soldier','flag','traveler','soldier'],
+  industry:['telephone','ship','tower','runner','flag','plane','flag','car','traveler','flag'],
+  worldwars:['plane','flag','soldier','flag','scribe','merchant','merchant','flag','soldier','plane','ship','plane','flag'],
+  coldwar:['flag','flag','plane','flag','flag','soldier','satellite','wall','ship','flag','astronaut','wall','flag','flag'],
+  modern:['flag','ship','candle','coin','merchant','coin','flag','flag','doctor','flag']
+ };
+ const palette={
+  merchant:['#a87543','#715139','#c99c60'],
+  hoplite:['#b74e36','#315d8d','#cda75d'],
+  horse:['#775037','#b34032','#d5b36d'],
+  senator:['#eee0bf','#993b37','#d7b06b'],
+  legion:['#a74334','#982c29','#c8a55b'],
+  emperor:['#733f72','#b03d35','#e0bd70'],
+  traveler:['#a67c50','#5b5946','#c9a46d'],
+  knight:['#929ca5','#36527d','#d2ba7c'],
+  king:['#78539c','#a03c3c','#dfc36e'],
+  scribe:['#5b7d6b','#8e6546','#d2b277'],
+  soldier:['#65745b','#75654a','#c3b18b'],
+  runner:['#f3e3c8','#477da1','#d4ac6d'],
+  doctor:['#dce8e6','#4b8290','#d7c1a0']
+ };
+ function person(type){
+  const p=palette[type]||palette.traveler;
+  const helmet=['hoplite','legion','knight','soldier'].includes(type);
+  const extra=type==='merchant'?'<path d="M35 10V57" stroke="#a88752" stroke-width="2.6"/>'
+   :type==='hoplite'||type==='legion'||type==='soldier'?'<path d="M38 4V56" stroke="#c9c7bc" stroke-width="2"/><path d="M38 2L34 11H42Z" fill="#dedbd2"/>'
+   :type==='knight'?'<ellipse cx="38" cy="31" rx="8" ry="11" fill="#47668c" stroke="#e1bc73" stroke-width="2"/>'
+   :type==='king'||type==='emperor'?'<path d="M17 8L19 2L23 7L27 2L31 8Z" fill="#e3bd63" stroke="#74552c"/>'
+   :type==='scribe'?'<path d="M34 28L43 19M32 30L39 33" stroke="#d8bc79" stroke-width="2"/>':'';
   return `<svg viewBox="0 0 48 64" xmlns="http://www.w3.org/2000/svg">
-   <path d="M19 19Q8 28 12 45L26 40L29 20Z" fill="${s.cape}" stroke="#463528"/>
-   <g class="mtt-leg-b"><path d="M20 38L17 51L12 58L19 60L24 51L26 40" fill="#a48165" stroke="#49362c" stroke-width="1.5"/></g>
-   <g class="mtt-leg-a"><path d="M24 39L29 50L29 58L36 59L35 49L29 37" fill="#b99471" stroke="#49362c" stroke-width="1.5"/></g>
-   <path d="M17 21Q24 17 30 22L32 40Q24 44 16 39Z" fill="${s.coat}" stroke="#49362c" stroke-width="1.5"/>
-   <path d="M16 36H32" stroke="#e0bc73" stroke-width="2"/>
-   <path d="M18 23L12 34L17 39M29 23L36 29" fill="none" stroke="#b99471" stroke-width="4" stroke-linecap="round"/>
-   <path d="M19 12Q17 5 24 5Q31 6 30 14L27 21H21Z" fill="#c59a74" stroke="#4e3a2e"/>
-   <path d="M17 12Q17 2 25 3Q32 4 32 12Z" fill="${s.hat}" stroke="#5b4530" stroke-width="1.4"/>
-   <circle cx="28" cy="13" r="1" fill="#302720"/>${item}</svg>`;
+  <path d="M19 19Q8 28 12 45L26 40L29 20Z" fill="${p[1]}" stroke="#443427"/>
+  <g class="mtt-leg-b"><path d="M20 38L17 51L12 58L19 60L24 51L26 40" fill="#9e785b" stroke="#49362c" stroke-width="1.5"/></g>
+  <g class="mtt-leg-a"><path d="M24 39L29 50L29 58L36 59L35 49L29 37" fill="#b18b6b" stroke="#49362c" stroke-width="1.5"/></g>
+  <path d="M17 21Q24 17 30 22L32 40Q24 44 16 39Z" fill="${p[0]}" stroke="#49362c" stroke-width="1.5"/>
+  <path d="M16 36H32" stroke="${p[2]}" stroke-width="2"/>
+  <path d="M18 23L12 34L17 39M29 23L36 29" fill="none" stroke="#bb9470" stroke-width="4" stroke-linecap="round"/>
+  <path d="M19 12Q17 5 24 5Q31 6 30 14L27 21H21Z" fill="#c59a74" stroke="#4e3a2e"/>
+  <path d="M17 12Q17 2 25 3Q32 4 32 12Z" fill="${helmet?p[2]:'#71503a'}" stroke="#5b4530" stroke-width="1.4"/>
+  <circle cx="28" cy="13" r="1" fill="#302720"/>${extra}</svg>`;
  }
- let current=-1,frame=0;
+ function object(type){
+  const common='stroke="#e4c47e" stroke-width="1.5" stroke-linejoin="round"';
+  const shapes={
+   ship:'<path d="M5 40H45L36 52H15Z" fill="#80533b"/><path d="M24 10V40M24 12L41 35H24Z" fill="#eee0b8" stroke="#a88753"/><path d="M21 15L9 34H21Z" fill="#c8b68d"/>',
+   plane:'<path d="M3 31L20 26L28 8L35 8L31 26L47 31L31 35L35 48L29 48L21 35Z" fill="#a4b5b4" stroke="#e5d4a1" stroke-width="1.5"/>',
+   satellite:'<rect x="18" y="24" width="15" height="14" rx="3" fill="#c4a56a"/><path d="M18 26L2 20V42L18 36M33 26L49 20V42L33 36" fill="#416c98" stroke="#d5bc80"/>',
+   car:'<path d="M4 38H46V46H4Z" fill="#8f3e32"/><path d="M13 38L20 26H35L43 38Z" fill="#ba6741"/><circle cx="13" cy="46" r="6" fill="#252b2d" stroke="#d4ba82"/><circle cx="38" cy="46" r="6" fill="#252b2d" stroke="#d4ba82"/>',
+   telephone:'<path d="M12 24Q25 12 38 24L34 31H16Z" fill="#b8a27a"/><rect x="16" y="32" width="20" height="18" rx="3" fill="#7a533a"/><circle cx="26" cy="39" r="6" fill="#dfc68d"/>',
+   tower:'<path d="M25 6L10 55H40Z" fill="none" stroke="#c7a56a" stroke-width="3"/><path d="M16 39H34M19 29H31M22 19H28M12 49H38" stroke="#d6bb83" stroke-width="2"/>',
+   wall:'<rect x="6" y="20" width="39" height="32" fill="#b1a28a"/><path d="M6 30H45M6 41H45M18 20V30M32 30V41M20 41V52" stroke="#655b4e" stroke-width="2"/>',
+   coin:'<circle cx="25" cy="32" r="20" fill="#b99349" stroke="#f1d48d" stroke-width="3"/><circle cx="25" cy="32" r="15" fill="none" stroke="#765326" stroke-width="1.5"/><path d="M25 19V45M19 23H29Q36 28 26 32Q15 35 24 40H33" fill="none" stroke="#f5d78b" stroke-width="2"/>',
+   flag:'<path d="M15 9V56" stroke="#c5a16b" stroke-width="3"/><path d="M16 10Q27 3 44 12V32Q29 24 16 31Z" fill="#a64a40" stroke="#e1bd78" stroke-width="1.5"/>',
+   candle:'<path d="M19 24H31V53H19Z" fill="#e8d9b4"/><path d="M25 9Q36 22 25 26Q15 22 25 9Z" fill="#e9a951"/>'
+  };
+  const shape=shapes[type]||shapes.coin;
+  return `<svg viewBox="0 0 50 64" xmlns="http://www.w3.org/2000/svg"><g ${common}>${shape}</g></svg>`;
+ }
+ function horse(){
+  return `<svg viewBox="0 0 60 64" xmlns="http://www.w3.org/2000/svg">
+   <path d="M11 30L19 22L38 24L44 14L52 18L55 31L46 33L40 30L38 42H19L12 39Z" fill="#a16d49" stroke="#513a2d" stroke-width="2"/>
+   <path d="M17 41L12 57M27 41L30 57M36 40L43 56" stroke="#775039" stroke-width="4" stroke-linecap="round"/>
+   <path d="M12 31L5 23M44 17L40 12" stroke="#50392b" stroke-width="3"/>
+   <circle cx="49" cy="24" r="1.8" fill="#1f1c18"/>
+   <path d="M24 20L22 10L27 6L33 12L32 23M26 13L18 29M30 21L37 29" fill="#b74f37" stroke="#d5b273" stroke-width="2"/>
+   <circle cx="27" cy="6" r="4" fill="#c99b72"/></svg>`;
+ }
+ function astronaut(){
+  return `<svg viewBox="0 0 48 64" xmlns="http://www.w3.org/2000/svg">
+   <g class="mtt-leg-b"><path d="M20 38L15 57H22L26 40" fill="#e3e8e5" stroke="#8da9b4" stroke-width="2"/></g>
+   <g class="mtt-leg-a"><path d="M25 39L30 57H37L30 38" fill="#e3e8e5" stroke="#8da9b4" stroke-width="2"/></g>
+   <rect x="15" y="19" width="21" height="23" rx="7" fill="#e6e8df" stroke="#9ab0b8" stroke-width="2"/>
+   <path d="M17 23L10 36M34 23L42 35" stroke="#e7e8e3" stroke-width="6"/>
+   <circle cx="25" cy="12" r="11" fill="#dce4e5" stroke="#c3aa76" stroke-width="2"/>
+   <path d="M16 11Q25 3 34 11L32 18H18Z" fill="#4b8196"/></svg>`;
+ }
+ const people=new Set(Object.keys(palette));
+ const states=[...document.querySelectorAll('.era')].map(era=>{
+  const layer=era.querySelector('.c1-road-layer');
+  const figure=layer?.querySelector('.mtt-figure');
+  const path=layer?.querySelector('.c1-road-main');
+  const moments=[...era.querySelectorAll('.c1-moment')];
+  const theme=[...era.classList].find(x=>x.startsWith('era-')&&themes[x.slice(4)])?.slice(4);
+  return {era,layer,figure,path,moments,types:themes[theme]||[],index:-1};
+ }).filter(s=>s.figure&&s.path);
+ let frame=0;
  function update(){
   frame=0;
-  if(!era.classList.contains('open'))return;
-  const rect=layer.getBoundingClientRect();
-  if(rect.height<=0)return;
-  const progress=Math.max(0,Math.min(1,(innerHeight*.48-rect.top)/rect.height));
-  const stage=progress<.35?0:progress<.7?1:2;
-  if(stage!==current){figure.innerHTML=draw(costumes[stage]);current=stage}
-  const pt=path.getPointAtLength(path.getTotalLength()*progress);
-  figure.style.left=pt.x+'%';
-  figure.style.top=pt.y+'%';
+  for(const s of states){
+   if(!s.era.classList.contains('open'))continue;
+   const rect=s.layer.getBoundingClientRect();
+   if(rect.height<=0)continue;
+   const focus=innerHeight*.48;
+   const progress=Math.max(0,Math.min(1,(focus-rect.top)/rect.height));
+   const index=Math.min(s.types.length-1,Math.floor(progress*s.types.length));
+   if(index!==s.index){
+    const type=s.types[Math.max(0,index)]||'traveler';
+    s.figure.innerHTML=type==='horse'?horse():type==='astronaut'?astronaut():people.has(type)?person(type):object(type);
+    s.figure.dataset.type=type;
+    s.figure.title=(s.moments[index]?.querySelector('h4')?.textContent||'Historical moment').trim()+' — '+type;
+    s.index=index;
+   }
+   const pt=s.path.getPointAtLength(s.path.getTotalLength()*progress);
+   s.figure.style.left=pt.x+'%';
+   s.figure.style.top=pt.y+'%';
+  }
  }
  function schedule(){if(!frame)frame=requestAnimationFrame(update)}
  addEventListener('scroll',schedule,{passive:true});
  addEventListener('resize',schedule);
  addEventListener('load',schedule);
- new MutationObserver(schedule).observe(era,{attributes:true,attributeFilter:['class']});
+ for(const s of states)new MutationObserver(schedule).observe(s.era,{attributes:true,attributeFilter:['class']});
  schedule();
 })();
 </script>
