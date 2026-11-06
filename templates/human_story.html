@@ -2361,14 +2361,31 @@ body{background:var(--hs-bg);}
    const rect=s.layer.getBoundingClientRect();
    if(rect.height<=0)continue;
    const focus=innerHeight*.48;
-   const progress=Math.max(0,Math.min(1,(focus-rect.top)/rect.height));
    const isOrigins=s.era.classList.contains('era-origins');
    const isFaith=s.era.classList.contains('era-faith');
    const isExploration=s.era.classList.contains('era-exploration');
    const isRevolutions=s.era.classList.contains('era-revolutions');
-   const markerBased=isOrigins||isFaith||isExploration||isRevolutions;
-   const markerCount=markerBased?[...s.layer.querySelectorAll('[data-journey-marker]')].filter(m=>{const r=m.getBoundingClientRect();return focus>=r.top+r.height/2}).length:0;
-   const index=markerBased?(Math.max(0,Math.min(s.types.length-1,markerCount-1))):Math.min(s.types.length-1,Math.floor(progress*s.types.length));
+   // The traveler follows the *rendered vertical position* of the road, not
+   // an arc-length percentage (curves have uneven length per vertical pixel).
+   const length=s.path.getTotalLength();
+   const targetY=Math.max(0,Math.min(100,(focus-rect.top)/rect.height*100));
+   let lo=0,hi=1;
+   for(let n=0;n<18;n++){
+    const mid=(lo+hi)/2;
+    if(s.path.getPointAtLength(length*mid).y<targetY)lo=mid;
+    else hi=mid;
+   }
+   const progress=(lo+hi)/2;
+   const pt=s.path.getPointAtLength(length*progress);
+   const travelerY=rect.top+rect.height*pt.y/100;
+   // Change at the precise center of each numbered circle as the traveler
+   // reaches it. This applies to every chapter, including future chapters.
+   const markers=[...s.layer.querySelectorAll('[data-journey-marker]')];
+   const crossed=markers.reduce((count,m)=>{
+    const r=m.getBoundingClientRect();
+    return count+(travelerY>=r.top+r.height/2?1:0);
+   },0);
+   const index=Math.max(0,Math.min(s.types.length-1,crossed-1));
    if(index!==s.index){
     const type=s.types[Math.max(0,index)]||'traveler';
     s.figure.innerHTML=isOrigins?chapterOne(type):isFaith?chapterTwo(type):isExploration?chapterThree(type):isRevolutions?chapterFour(type):type==='horse'?horse():type==='astronaut'?astronaut():people.has(type)?person(type):object(type);
@@ -2377,10 +2394,9 @@ body{background:var(--hs-bg);}
     s.figure.title=(s.moments[index]?.querySelector('h4')?.textContent||'Historical moment').trim()+' — '+type;
     s.index=index;
    }
-   const pt=s.path.getPointAtLength(s.path.getTotalLength()*progress);
    s.figure.style.left=pt.x+'%';
    s.figure.style.top=pt.y+'%';
-   if(markerBased){
+   {
     const delta=.003, before=s.path.getPointAtLength(s.path.getTotalLength()*Math.max(0,progress-delta));
     const after=s.path.getPointAtLength(s.path.getTotalLength()*Math.min(1,progress+delta));
     const direction=after.x>=before.x?1:-1;
