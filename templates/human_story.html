@@ -1995,51 +1995,56 @@ body{background:var(--hs-bg);}
  
 
  function chapterFour(type){
-  const ink='#362923',skin='#dca47c',gold='#e8bd6a';
-  const p=(d,c,stroke=ink,w=2)=>'<path d="'+d+'" fill="'+c+'" stroke="'+stroke+'" stroke-width="'+w+'" stroke-linejoin="round" stroke-linecap="round"/>';
+  const ink='#302820',gold='#e9bd65',skin='#d9a17b';
+  const p=(d,c,stroke=ink,w=1.7)=>'<path d="'+d+'" fill="'+c+'" stroke="'+stroke+'" stroke-width="'+w+'" stroke-linejoin="round" stroke-linecap="round"/>';
   const l=(d,c=ink,w=2)=>p(d,'none',c,w);
-  const dot=(x,y,r,c)=>'<circle cx="'+x+'" cy="'+y+'" r="'+r+'" fill="'+c+'" stroke="'+ink+'" stroke-width="1.5"/>';
-  const svg=(a,v='0 0 110 145')=>'<svg viewBox="'+v+'" xmlns="http://www.w3.org/2000/svg" aria-label="'+type+' historic traveler"><g stroke-linecap="round" stroke-linejoin="round">'+a+'</g></svg>';
-  const royal=['anne','napoleon','pedro','victor','wilhelm','meiji'];
-  const military=['napoleon','russia','waterloo','civilwar','garibaldi','wilhelm'];
-  const coat={anne:'#6b3c88',liberty:'#326d96',french:'#356e9b',haitirevolt:'#8a5544',haiti:'#365c86',napoleon:'#2f597e',russia:'#526d83',waterloo:'#ae3c38',greek:'#f1e6cf',pedro:'#32744b',revolts:'#ae5746',victor:'#306b91',civilwar:'#315f91',emancipation:'#343a43',meiji:'#303e62',wilhelm:'#53606e'}[type]||'#775d4a';
-  let a='<g class="mtt-leg-b">'+p('M42 92L36 121L32 134L47 134L53 95Z','#554a40')+'</g><g class="mtt-leg-a">'+p('M53 93L66 122L77 133L87 133L80 125L66 95Z','#6d5945')+'</g>';
-  a+=p('M28 49Q51 38 72 49L79 103Q52 114 23 103Z',coat,ink,2.6);
-  if(type==='anne')a+=p('M30 51Q14 74 23 113Q51 128 80 111L73 50Z','#81509b')+l('M30 99Q51 111 75 99',gold,3);
-  if(type==='greek')a+=p('M30 48L73 48L78 111L26 111Z','#f0e7d7')+l('M35 59L66 59','#4485bd',5);
-  if(type==='haitirevolt'||type==='haiti')a+=p('M30 50L70 50L70 88L29 88Z',type==='haiti'?'#245d9a':'#d7b68d')+l('M33 77L69 77','#b44c42',4);
-  if(type==='meiji')a+=p('M26 49L73 49L85 112L17 112Z','#4e638c')+l('M36 53L63 100','#e0c9a1',4);
-  a+=l('M34 78Q52 84 70 78',gold,2.5);
-  a+='<g class="mtt-arm-a">'+l('M32 55L17 80',coat,12)+dot(17,82,5,skin)+'</g>';
-  a+='<g class="mtt-arm-b">'+l('M69 54L86 79',coat,12)+dot(86,81,5,skin)+'</g>';
-  a+=p('M44 39L45 49L58 49L60 39Z',skin)+dot(52,28,17,skin);
-  a+=l('M43 27L47 27M56 27L60 27',ink,1.6)+dot(46,31,1.2,ink)+dot(58,31,1.2,ink)+l('M48 37Q53 40 58 36','#985b43',1.5);
-  if(royal.includes(type)){
-   if(type==='anne')a+=p('M36 17L39 5L47 12L53 2L61 12L68 5L71 18Z',gold)+dot(53,12,3,'#b94759')+p('M34 20Q27 27 33 48L40 46L41 24Z','#513d38')+p('M67 20Q76 29 72 48L65 45L64 23Z','#513d38');
-   else if(type==='meiji')a+=p('M35 18Q37 7 51 7Q67 8 70 19Z','#28252a')+l('M42 15L62 15','#b8a4a0',2);
-   else a+=p('M34 18Q40 8 53 9Q66 8 72 18L68 24L37 24Z',type==='napoleon'?'#333943':'#2c3139')+l('M34 21H73',gold,3);
-  }else if(type==='french'||type==='liberty'||type==='revolts'){
-   a+=p('M33 17Q36 6 53 8Q67 8 71 18Z',type==='liberty'?'#7d563c':'#8b4737')+l('M32 20H74','#b99b72',4);
-  }else if(type==='civilwar'||type==='waterloo'||type==='russia'){
-   a+=p('M34 19L36 10L68 10L72 20Z','#343b42')+l('M30 20H75','#31343c',4);
-  }else if(type==='haiti'||type==='haitirevolt')a+=p('M34 17Q40 5 55 9L70 18L66 23L37 23Z','#554035');
-  else a+=p('M35 18Q38 7 52 7Q66 7 70 18Z','#534032')+l('M32 20H74','#73543b',4);
-  if(type==='anne')a+=p('M81 78L101 72L103 96L82 97Z','#eee0c2')+dot(99,93,4,'#a13d47');
-  if(type==='liberty')a+=l('M86 81L92 127','#775536',4)+p('M92 37L108 37L108 74L92 74Z','#f2e5c9')+l('M92 47H108','#a43c40',4)+p('M92 37H108V49H92Z','#376c9b');
-  if(type==='french')a+=l('M86 80L91 130','#775637',4)+p('M91 33L108 33L108 76L91 76Z','#eee5d5')+p('M91 33H97V76H91Z','#3065a2')+p('M102 33H108V76H102Z','#b83f42');
-  if(type==='haitirevolt')a+=l('M87 79L92 128','#6f4d32',4)+p('M92 39H108V69H92Z','#245e9d')+p('M92 54H108V69H92Z','#b84140');
-  if(type==='haiti')a+=p('M81 77L103 72L105 95L82 98Z','#e9d5a6')+dot(101,94,4,'#b43e39');
-  if(type==='napoleon')a+=p('M27 52L75 52L72 61L29 61Z','#e6e2d7')+l('M38 54L66 84','#c33c39',6)+l('M86 82L94 132','#c3c8ce',4)+l('M83 92H102',gold,3);
-  if(type==='russia')a+=p('M29 52L75 52L73 91L28 91Z','#a5a7a3')+l('M86 80L96 131','#8b6443',5)+p('M93 125L102 125L105 136L91 136Z','#9ca7ab');
-  if(type==='waterloo')a+=l('M86 82L98 132','#bcc2c6',4)+l('M83 92H102',gold,4)+p('M25 51L17 103L32 104Z','#b64239');
-  if(type==='greek')a+=l('M85 80L91 131','#795439',4)+p('M91 36H109V76H91Z','#f3eee2')+l('M91 46H109M91 57H109M91 68H109','#4684b6',3)+p('M91 36H101V58H91Z','#4b86b8');
-  if(type==='pedro')a+=p('M28 49L72 49L69 58L31 58Z','#d7bf70')+p('M32 16L40 6L52 12L63 6L70 17Z',gold)+l('M85 79L96 130','#c7cbd0',4)+l('M84 91H104',gold,4);
-  if(type==='revolts')a+=p('M82 78L106 71L106 94L83 99Z','#e9d5a8')+l('M88 81H100M88 87H101','#8a5f43',1.5);
-  if(type==='victor')a+=p('M33 15L40 5L52 11L64 5L71 15Z',gold)+p('M26 50L16 105L31 109Z','#b83f39')+l('M86 79L95 130','#c6cbd0',4);
-  if(type==='civilwar')a+=l('M85 81L94 130','#765234',4)+p('M92 124L100 124L100 137L90 137Z','#a7aeb0');
-  if(type==='emancipation')a+=p('M35 17Q36 2 52 5Q69 6 70 19Z','#292a2b')+p('M27 16H76L76 20H27Z','#343536')+p('M79 78L105 71L106 100L82 100Z','#f0dcad')+l('M85 80H101M85 86H101M85 92H101','#856c50',1.4);
-  if(type==='meiji')a+=p('M80 80L103 73L104 100L82 100Z','#ead9b3')+dot(96,87,6,'#ba4847');
-  if(type==='wilhelm')a+=p('M33 16L37 4L70 4L75 16Z','#444a4e')+l('M34 17H77',gold,3)+p('M29 52L71 52L73 91L28 91Z','#8b9ba2')+l('M86 80L94 131','#bfc3c7',4)+l('M82 91H101',gold,4);
+  const c=(x,y,r,fill)=>'<circle cx="'+x+'" cy="'+y+'" r="'+r+'" fill="'+fill+'" stroke="'+ink+'" stroke-width="1.5"/>';
+  const g=(cls,content)=>'<g class="'+cls+'">'+content+'</g>';
+  const svg=(content)=>'<svg viewBox="0 0 140 158" xmlns="http://www.w3.org/2000/svg" aria-label="'+type+' historic traveler"><g stroke-linejoin="round" stroke-linecap="round">'+content+'</g></svg>';
+  const legs=(color='#51463d')=>g('mtt-leg-b',p('M55 109L47 140L32 145L57 145L66 110Z',color))+g('mtt-leg-a',p('M69 109L83 139L99 145L73 145L60 111Z',color));
+  const face=(x=65,y=33,fill=skin)=>c(x,y,15,fill)+l('M'+(x-9)+' '+(y-3)+'h4M'+(x+5)+' '+(y-3)+'h4',ink,1.5)+l('M'+(x-4)+' '+(y+7)+'q5 3 9 -1','#9b594a',1.5);
+  const coat=(color,shape='M43 51Q65 44 86 51L91 113Q67 122 37 113Z')=>p(shape,color,ink,2.4);
+  const arm=(side,color,hand=skin)=>g(side==='a'?'mtt-arm-a':'mtt-arm-b',l(side==='a'?'M45 57L26 88':'M85 57L103 88',color,12)+c(side==='a'?26:103,88,5,hand));
+  const flag=(x,y,kind)=>{let f=l('M'+x+' '+(y+100)+'V'+y,'#80603b',3);if(kind==='usa'){f+=p('M'+x+' '+y+'q14 -7 33 1v34q-15 -7 -33 -1Z','#f5e8d5');for(let i=0;i<4;i++)f+=l('M'+(x+1)+' '+(y+7+i*7)+'q16 -5 31 1','#b84445',3);f+=p('M'+x+' '+y+'q11 -4 17 0v16q-9 -3 -17 0Z','#305f9b');for(let i=0;i<5;i++)f+=c(x+3+(i%3)*5,y+4+Math.floor(i/3)*6,1,'#fff3dc');}else{f+=p('M'+x+' '+y+'q15 -5 30 0v33q-15 -5 -30 0Z','#e5e5dd')+p('M'+x+' '+y+'h10v33h-10Z',kind==='hungary'?'#c54342':'#2b6697')+p('M'+(x+20)+' '+y+'h10v33h-10Z',kind==='hungary'?'#398358':'#c34343');}return f;};
+  const sword=(x=105)=>l('M'+x+' 87L'+(x+8)+' 139','#c9d0d4',3)+l('M'+(x-6)+' 99L'+(x+10)+' 95',gold,4);
+  const crown=(x=65,y=14)=>p('M'+(x-19)+' '+y+'l2 -13 9 8 8 -13 9 13 9 -8 2 13Z',gold)+c(x,y-4,3,'#b84153')+c(x-12,y-4,2,'#427fa9')+c(x+12,y-4,2,'#427fa9');
+  const robe=(base,trim)=>p('M48 49Q27 60 20 134Q67 151 113 134Q102 72 83 49Z',base,ink,2.4)+p('M49 48Q30 65 28 132L38 135Q43 81 57 51Z',trim)+p('M81 49Q96 67 105 134L94 136Q87 81 73 51Z',trim)+l('M45 122Q68 132 90 122',gold,3);
+  const horse=(rider)=>{let h=g('mtt-leg-b',p('M33 112L28 147L40 147L48 115Z','#765748')+p('M94 113L103 147L115 147L107 110Z','#765748'));h+=p('M23 84Q46 72 91 79L110 64L122 69L127 93L115 100L106 93L103 119Q65 133 32 114Z','#92725c',ink,2.7)+p('M19 89Q8 106 19 126','#5c4437')+p('M111 68L109 51L116 62L123 51L123 69Z','#765748')+c(119,79,2,'#241c18')+p('M47 79Q66 68 88 78L85 89L49 92Z','#564b4b');h+=rider;return h;};
+  let a='';
+  if(type==='anne'){
+    a=legs('#704565')+robe('#673b86','#eee7db')+p('M45 51L65 86L85 51L76 47L65 65L54 47Z','#f0d6ac')+face()+p('M47 27Q38 12 47 7Q57 -1 65 10Q77 -1 86 12Q94 28 82 43L78 36Q81 17 65 15Q49 17 52 38L46 43Z','#e5dfd0')+crown()+arm('a','#704785')+arm('b','#704785')+l('M104 89L106 23',gold,4)+c(106,21,6,gold)+p('M18 90L32 82L38 100L21 109Z','#f4e4c6');
+  }else if(type==='liberty'){
+    a=legs('#eee1bf')+coat('#2c5e91')+p('M47 51L65 69L82 51L74 48L65 58L56 48Z','#e5d3aa')+face()+p('M46 28Q46 11 64 12Q85 12 84 29Z','#f1e9df')+p('M49 19L42 35L49 42L53 25Z','#f2ede3')+p('M80 20L89 36L80 42L77 24Z','#f2ede3')+p('M42 15L45 8L83 8L87 16L75 18L57 18Z','#29343c')+arm('a','#315e8b')+arm('b','#315e8b')+flag(106,8,'usa')+l('M46 83L84 83',gold,3);
+  }else if(type==='french'){
+    a=legs('#ece6d9')+coat('#2d6393')+p('M34 50L26 107L42 119L53 52Z','#235287')+p('M91 51L104 112L86 119L78 53Z','#f0e8d9')+face()+p('M48 19Q43 6 54 7Q65 -2 79 8Q91 19 82 26L80 18Q64 15 49 26Z','#e6e3db')+p('M43 14L43 5L51 10L63 1L74 10L85 5L87 14Z',gold)+p('M44 14H86V20H44Z',gold)+arm('a','#286091')+arm('b','#286091')+l('M101 89L111 32',gold,4)+c(111,30,5,gold)+p('M25 88L40 84L43 107L24 110Z','#f5e6c9');
+  }else if(type==='haitirevolt'){
+    a=legs('#e6e0d3')+coat('#243e61')+p('M49 54L65 84L79 53L71 48L65 63L58 48Z','#d3b16b')+face(65,34,'#86543b')+p('M48 20Q60 7 80 20L83 28L47 28Z','#22292d')+p('M42 18L85 16L90 23L45 27Z','#24272e')+l('M47 59L83 59',gold,3)+arm('a','#243e61','#86543b')+arm('b','#243e61','#86543b')+sword()+p('M43 88L85 88L85 97L43 97Z','#b84843');
+  }else if(type==='haiti'){
+    a=legs('#eee5d9')+p('M37 48L88 48L95 118L32 118Z','#b9403e')+p('M41 53L65 92L87 53L78 48L65 68L52 48Z','#245e94')+face(65,33,'#86543b')+p('M44 18Q65 1 88 18L84 27L47 27Z','#262b31')+p('M39 19L89 19L96 26L41 28Z','#252a2f')+p('M64 6L68 -2L73 10Z','#d8c79c')+l('M43 65L86 65',gold,3)+arm('a','#b9403e','#86543b')+arm('b','#b9403e','#86543b')+sword()+p('M40 92L87 92',gold);
+  }else if(type==='napoleon'){
+    a=legs('#f0e4d2')+robe('#ad2737','#f3f0e9')+p('M43 55Q66 44 87 55L79 82L65 100L50 82Z','#eee8dd')+l('M50 62L83 95','#bb3440',7)+face()+p('M46 26Q45 12 65 12Q84 12 85 26Z','#3d3029')+p('M45 17Q55 6 65 13Q76 6 85 17','#d3aa4e')+p('M47 14L65 5L83 14L76 20L65 12L54 20Z',gold)+arm('a','#b63242')+arm('b','#b63242')+l('M104 90L106 23',gold,4)+c(106,20,6,gold)+l('M36 119L92 119',gold,3);
+  }else if(type==='russia'){
+    a=horse(legs('#43444b')+p('M54 51L84 50L91 95L47 98Z','#9b9c9e')+p('M48 52Q29 74 39 109L52 114L61 54Z','#bbb5a9')+face(69,34,'#d6a17d')+p('M54 23L57 4L80 4L85 23Z','#42444b')+p('M58 6L69 -4L80 6Z','#a8a8a5')+p('M54 22H86V27H54Z','#d4c2a1')+p('M54 39Q69 48 82 39','#d9cfc5')+arm('a','#aaa9a6')+arm('b','#aaa9a6')+l('M104 89L113 121','#a8a7a2',3));
+    a+=g('mtt-arm-b',p('M15 25L17 20L19 27Z','#fff'))+c(31,104,2,'#e7f1f5')+c(94,72,2,'#e7f1f5')+c(116,103,2,'#e7f1f5');
+  }else if(type==='waterloo'){
+    a=legs('#eee1cf')+coat('#bc3837')+p('M45 52L64 76L83 52L76 48L65 64L54 48Z','#f3e4cb')+l('M45 58L83 58',gold,3)+face()+p('M45 20Q62 7 84 18L87 24L44 25Z','#272c30')+p('M41 19L89 16L94 23L42 26Z','#262b2e')+p('M48 25L49 37L55 40L54 26Z','#ddd6c9')+arm('a','#bc3837')+arm('b','#bc3837')+p('M44 71L84 87','#4e78a0')+sword();
+  }else if(type==='greek'){
+    a=legs('#d7d1c2')+p('M41 53L86 53L92 91L36 91Z','#a4493d')+p('M44 89L84 89L105 124Q65 138 25 124Z','#f2e8d8')+Array.from({length:7},(_,i)=>l('M'+(35+i*9)+' 95L'+(31+i*11)+' 126','#c7bda8',1)).join('')+face(65,34,'#c18c6a')+p('M46 20Q47 5 65 5Q82 5 85 20L81 28L49 28Z','#6b7378')+p('M60 6L65 -9L70 6Z','#d4a34c')+p('M46 35Q53 46 65 41Q78 46 84 35Q77 52 65 50Q51 51 46 35Z','#5a443a')+l('M51 31Q56 28 61 34M69 34Q75 28 80 31','#5a443a',3)+arm('a','#a4493d')+arm('b','#a4493d')+sword();
+  }else if(type==='pedro'){
+    a=legs('#f3e5d3')+robe('#2b794f','#e8d5a0')+p('M47 53L65 90L84 53L75 49L65 65L56 49Z','#f2efe4')+face()+p('M47 21Q49 10 65 10Q80 10 83 21Z','#44332c')+crown()+arm('a','#277449')+arm('b','#277449')+l('M106 90L106 23',gold,4)+c(106,20,6,gold)+p('M42 107L88 107',gold,4);
+  }else if(type==='revolts'){
+    a=legs('#34363a')+coat('#292e3d','M40 51Q65 42 89 51L96 119Q67 131 32 119Z')+p('M44 56L65 83L84 55L76 50L65 69L53 50Z','#b4a1a1')+l('M42 67L86 67','#bd9a65',3)+face()+p('M46 25Q41 7 65 9Q88 7 84 26Z','#4c382e')+p('M40 20L89 20L89 28L40 28Z','#25292d')+p('M53 11L60 -2L64 11Z','#2d3032')+p('M51 36Q65 48 79 36Q75 50 65 51Q54 49 51 36Z','#503b33')+arm('a','#292e3d')+arm('b','#292e3d')+flag(107,6,'hungary')+p('M36 88L91 88','#a7a7a3');
+  }else if(type==='victor'){
+    a=legs('#6b5449')+coat('#c64040')+p('M42 50L89 50L96 101L34 101Z','#b4b5a6')+face()+p('M48 19Q57 4 80 15L83 25H46Z','#7e7770')+p('M41 19L88 19L89 24L41 24Z','#49433d')+p('M46 38Q65 52 83 38L79 45L65 50L51 45Z','#574039')+arm('a','#b94343')+arm('b','#b94343')+sword();
+  }else if(type==='civilwar'){
+    a=legs('#293b55')+coat('#2e537d')+p('M46 55L65 75L83 55L74 50L65 65L56 50Z','#e0d6c3')+l('M43 85L85 85','#a98d60',3)+face()+p('M48 17Q65 6 82 17L83 28L47 28Z','#2e4c70')+p('M42 22L89 22L90 28L42 28Z','#233e61')+p('M50 38Q66 54 80 38Q77 54 65 54Q54 53 50 38Z','#4a352b')+arm('a','#2e537d')+arm('b','#2e537d')+l('M46 62L82 62',gold,2)+sword();
+  }else if(type==='emancipation'){
+    a=legs('#27292b')+coat('#25272c','M45 50Q65 45 85 50L94 137L72 139L65 104L57 139L36 137Z')+p('M53 50L65 78L77 50Z','#f4efe3')+p('M61 53L65 64L69 53Z','#27292b')+face(65,34,'#c79776')+p('M51 38Q65 44 79 38L79 48Q65 58 51 48Z','#493d35')+p('M50 23Q48 11 65 11Q82 11 80 24Z','#332e2a')+p('M46 11L47 -15L82 -15L83 11Z','#242529')+p('M39 11H90V17H39Z','#25262a')+arm('a','#25272c')+arm('b','#25272c')+p('M93 87L116 80L116 105L94 111Z','#f0dfb6')+l('M97 88H111M97 94H111M97 100H111','#8a7150',1.2);
+  }else if(type==='meiji'){
+    a=legs('#a14b29')+p('M47 51Q65 42 85 51L109 127Q67 149 20 127Z','#d78335')+p('M52 52L65 103L78 52Z','#f4c66b')+p('M37 61L16 108L29 114L56 68Z','#d78335')+p('M94 61L118 108L105 114L75 68Z','#d78335')+face()+p('M48 20L50 -6L81 -6L83 20Z','#292b2c')+p('M42 18H90V23H42Z','#242627')+p('M61 -6L65 -17L70 -6Z','#222527')+arm('a','#d78335')+arm('b','#d78335')+p('M94 86Q112 91 117 105L95 105Z','#e6d3a5')+l('M95 91L114 102','#ad7047',2);
+  }else if(type==='wilhelm'){
+    a=legs('#eee6d7')+coat('#eeeae2')+p('M48 52L65 77L82 52L76 49L65 64L55 49Z','#d2cbbd')+l('M42 65L86 65',gold,3)+face()+p('M46 20L48 6L82 6L84 20Z','#30383c')+p('M63 6L65 -10L68 6Z','#d6b45e')+p('M42 20H89V26H42Z','#c5a25e')+p('M47 34Q65 45 83 34Q76 43 65 42Q55 44 47 34Z','#6a4836')+p('M47 40Q53 51 65 47Q77 51 83 40','#6a4836')+arm('a','#eeeae2')+arm('b','#eeeae2')+sword()+p('M46 86L85 86',gold,3);
+  }
   return svg(a);
  }
 
