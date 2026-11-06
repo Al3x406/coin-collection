@@ -3951,9 +3951,24 @@ def _numista_get(path, headers, params=None):
                 "error": f"Numista is temporarily limiting searches. Search has been paused for about {minutes} minutes so repeated taps do not send more requests."
             }, 429)
 
+        if response.status_code in (502, 503, 504):
+            # Retry transient upstream gateway failures once, without retrying rate limits.
+            time.sleep(1)
+            try:
+                response = requests.get(
+                    f"{NUMISTA_BASE_URL}{path}", headers=headers, params=params, timeout=15
+                )
+                _numista_last_request_at = time.monotonic()
+            except requests.RequestException:
+                return None, ({
+                    "error": "Numista is temporarily unavailable. You can still enter this banknote manually and try searching later."
+                }, 502)
+
         if response.status_code >= 400:
             app.logger.error("Numista API HTTP %s path=%s params=%r body=%r", response.status_code, path, params, response.text[:500])
-            return None, ({"error": f"Numista rejected the search request (HTTP {response.status_code})."}, 502)
+            if response.status_code in (502, 503, 504):
+                return None, ({"error": "Numista is temporarily unavailable (server error). You can still add this banknote manually and try the reference search later."}, 502)
+            return None, ({"error": f"Numista could not complete the search (HTTP {response.status_code}). You can still enter the banknote manually."}, 502)
         data = response.json()
         _numista_cache[cache_key] = (time.time(), data)
         return data, None
