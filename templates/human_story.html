@@ -1262,6 +1262,16 @@ body{background:var(--hs-bg);}
 }
 .era.open .mtt-figure{opacity:1}
 
+/* Chapter II follows Chapter I's articulated, continuously animated character language. */
+.era-faith .mtt-figure{width:65px;height:88px;transition:none}
+.era-faith .mtt-figure[data-type="norman"],.era-faith .mtt-figure[data-type="mongol"]{width:116px;height:93px}
+.era-faith .mtt-leg-a{transform-origin:50px 92px;animation:mtt-walk-a .62s ease-in-out infinite alternate}
+.era-faith .mtt-leg-b{transform-origin:50px 92px;animation:mtt-walk-b .62s ease-in-out infinite alternate}
+.era-faith .mtt-horse-leg-a{transform-origin:65px 72px;animation:mtt-walk-a .4s ease-in-out infinite alternate}
+.era-faith .mtt-horse-leg-b{transform-origin:65px 72px;animation:mtt-walk-b .4s ease-in-out infinite alternate}
+.era-faith .mtt-cloak{transform-origin:50px 52px;animation:mtt-cloak .85s ease-in-out infinite alternate}
+@media(prefers-reduced-motion:reduce){.era-faith .mtt-figure *{animation:none!important}}
+.mtt-gallery-item[data-type="norman"] svg,.mtt-gallery-item[data-type="mongol"] svg{width:116px}
 /* Chapter I: immediate changes and continuous miniature motion. */
 .era-origins .mtt-figure{width:54px;height:70px;transition:none}
 .era-origins .mtt-figure[data-type="alexander"],.era-origins .mtt-figure[data-type="wagon"]{width:110px;height:78px}
@@ -1844,7 +1854,7 @@ body{background:var(--hs-bg);}
 (() => {
  const themes={
   origins:['merchant','hoplite','alexander','caesar','jesus','pompeii','trajan','constantine','germanic'],
-  faith:['emperor','ship','king','horse','knight','scribe','horse','traveler','emperor'],
+  faith:['justinian','viking','charlemagne','norman','crusader','john','mongol','physician','mehmed'],
   exploration:['ship','ship','scribe','horse','merchant','ship','ship','soldier','scribe','traveler','king'],
   revolutions:['king','flag','flag','flag','flag','emperor','horse','horse','flag','flag','flag','king','soldier','flag','traveler','soldier'],
   industry:['telephone','ship','tower','runner','flag','plane','flag','car','traveler','flag'],
@@ -1952,6 +1962,52 @@ body{background:var(--hs-bg);}
    <path d="M16 11Q25 3 34 11L32 18H18Z" fill="#4b8196"/></svg>`;
  }
 
+
+
+ function chapterTwo(type){
+  const ink='#423027',gold='#e8bc68',skin='#dba47c';
+  const p=(d,fill,stroke=ink,w=2)=>'<path d="'+d+'" fill="'+fill+'" stroke="'+stroke+'" stroke-width="'+w+'" stroke-linejoin="round" stroke-linecap="round"/>';
+  const l=(d,color=ink,w=2)=>p(d,'none',color,w);
+  const circ=(x,y,r,fill,stroke=ink,w=1.5)=>'<circle cx="'+x+'" cy="'+y+'" r="'+r+'" fill="'+fill+'" stroke="'+stroke+'" stroke-width="'+w+'"/>';
+  const svg=(s,view='0 0 100 140')=>'<svg viewBox="'+view+'" xmlns="http://www.w3.org/2000/svg" aria-label="'+type+' historical character"><g stroke-linecap="round" stroke-linejoin="round">'+s+'</g></svg>';
+  if(type==='norman'||type==='mongol'){
+   let a='<g class="mtt-horse-leg-b">'+l('M35 76L30 109L22 127M85 76L87 107L94 127','#66452f',8)+'</g><g class="mtt-horse-leg-a">'+l('M53 76L60 108L55 127M98 73L106 106L116 126','#9b6945',8)+'</g>';
+   a+=p('M25 56Q52 44 83 52L96 38L114 32L128 45L123 64L111 70L95 66L85 86L46 85L33 75Z',type==='norman'?'#986545':'#ae8557',ink,3)+l('M29 57L17 39M99 40L96 25','#513828',5)+circ(117,48,2.5,'#211b17')+l('M112 60L124 60',ink,2);
+   a+=l('M62 57L55 85M78 58L88 85','#a97a55',6)+p('M58 27L83 27L88 60L57 60Z',type==='norman'?'#b0afb0':'#9b7252')+p('M57 28Q47 40 43 63L62 59Z',type==='norman'?'#46668d':'#8a4034')+circ(72,16,11,skin)+l('M65 15L70 16M77 16L81 16',ink,1.5);
+   if(type==='norman'){
+    a+=p('M60 12Q62 -3 75 -3Q88 0 88 13L82 17L67 17Z','#a7a9a7')+l('M75 8L75 24','#d9d4c7',3)+p('M50 34L39 42L42 78L62 73L65 43Z','#5274a0',gold,3)+l('M49 42L57 66',gold,3)+l('M88 -10L92 92','#9b7649',4)+p('M88 -13L83 2L94 2Z','#d4d2c9');
+   }else{
+    a+=p('M59 10Q70 -4 82 8L88 13L61 17Z','#755039')+l('M61 13L56 24M85 13L90 23','#c7a77a',4);
+    a+=Array.from({length:3},(_,i)=>l('M59 '+(34+i*7)+'H84','#d8b67c',2.5)).join('')+p('M94 31Q115 47 94 67','none','#c99d59',4)+l('M94 31L93 68','#d5b075',2)+l('M98 38L120 48M98 47L120 58','#c5a679',1.5)+p('M49 29L40 54L52 58L61 36Z','#8b573e')+l('M41 34L36 17M44 35L47 16',ink,2);
+   }
+   return svg(a,'0 -16 145 160');
+  }
+  const robe={justinian:'#663b91',viking:'#526a74',charlemagne:'#315c9b',crusader:'#eee3c9',john:'#b93e45',physician:'#574c45',mehmed:'#a83b39'}[type]||'#a77b58';
+  let a='<g class="mtt-leg-b">'+p('M42 92L37 119L33 130L45 132L53 97Z','#80634d')+'</g><g class="mtt-leg-a">'+p('M52 93L61 120L68 132L79 132L75 125L64 95Z','#947454')+'</g>';
+  a+='<g class="mtt-cloak">'+p('M39 48Q20 57 20 100L37 106L62 53Z',type==='justinian'?'#8b53b4':type==='charlemagne'?'#3b70b7':type==='john'?'#b22e37':type==='mehmed'?'#7c2f32':'#84624c')+'</g>';
+  a+=p('M36 51Q51 45 66 51L73 111Q51 120 27 111Z',robe,ink,2.8)+l('M38 65L33 108M62 65L68 109',gold,1.6)+l('M35 88Q50 94 68 88',gold,2.5);
+  if(['viking','crusader'].includes(type))a+=Array.from({length:5},(_,i)=>l('M38 '+(60+i*8)+'H65','#a9a8a3',1.6)).join('');
+  if(type==='crusader')a+=p('M49 60H56V72H66V79H56V97H49V79H40V72H49Z','#ad3833','none',0);
+  if(type==='physician')a+=p('M34 48Q51 29 68 48L72 67L30 67Z','#514740')+p('M64 78L81 78L85 99L67 99Z','#936640')+l('M66 83H82','#c7a077',2)+l('M26 86L18 101','#6c8a55',4);
+  a+='<g class="mtt-arm-a">'+l('M36 57Q27 69 25 84',skin,9)+circ(25,84,4,skin)+'</g><g class="mtt-arm-b">'+l('M65 57Q75 68 77 84',skin,9)+circ(77,84,4,skin)+'</g>';
+  a+=p('M44 42L44 54L57 54L57 42Z',skin)+p('M36 21Q36 7 51 7Q66 7 67 23L64 41Q57 52 47 47Q36 44 35 31Z',skin)+l('M42 29L48 29M56 29L62 29',ink,1.8)+circ(46,33,1.4,ink,'none',0)+circ(59,33,1.4,ink,'none',0)+l('M52 35L51 41L55 42M47 45Q53 47 59 44','#9b6046',1.5);
+  if(type==='justinian'){
+   a+=p('M35 20L35 9L43 14L50 4L57 13L65 8L67 20Z',gold)+circ(50,14,4,'#a34b98')+circ(40,16,2,'#dce8d9')+circ(61,16,2,'#c34a5e')+l('M35 20H67','#f5dda0',3)+l('M37 57Q50 63 65 57',gold,4)+l('M40 69L40 109M60 69L60 109','#c6a16d',2);
+  }else if(type==='viking'){
+   a+=p('M34 22Q36 5 51 5Q67 6 69 23L63 27H38Z','#8d9395')+l('M37 24H67','#c7c6bf',3)+p('M38 38Q43 56 53 55Q65 55 66 38L59 43L52 47L44 42Z','#67412f')+circ(18,85,24,'#8c5d3c',ink,4)+circ(18,85,17,'none',gold,2)+circ(18,85,6,'#b8b7b1')+l('M77 78L97 36','#9b704a',5)+p('M92 34Q103 25 113 34L109 45L98 48Z','#b7b8b4');
+  }else if(type==='charlemagne'){
+   a+=p('M34 21L35 12L42 16L49 5L56 15L65 9L68 21Z',gold)+circ(50,15,3,'#ad4c50')+p('M38 40Q43 55 54 54Q64 53 65 39L58 44L51 48L43 43Z','#6b4b35')+l('M84 47V132',gold,5)+circ(84,43,7,gold)+circ(84,43,3,'#b94d57')+l('M36 58Q50 66 66 58',gold,4);
+  }else if(type==='crusader'){
+   a+=p('M34 22Q36 5 51 5Q66 6 68 22L62 26H38Z','#a9a9a6')+l('M51 15V36','#dedbd0',3)+l('M78 85L98 28','#c8c9c7',5)+l('M70 67L90 75','#a47b4b',4)+p('M14 62L35 68L31 112L13 105Z','#e9dfc9',ink,3)+p('M21 73H26V85H32V90H26V101H21V90H16V85H21Z','#ae4038','none',0);
+  }else if(type==='john'){
+   a+=p('M34 20L36 10L44 14L51 6L58 15L66 10L68 21Z',gold)+p('M39 38Q43 50 52 50Q62 49 64 39L58 44L51 46L45 42Z','#624634')+p('M72 78L94 76L95 90L73 92Z','#e8d7b0','#9e7950',2)+l('M77 77L77 92M90 76L90 91','#bca47c',2)+circ(84,93,4,'#a53738');
+  }else if(type==='physician'){
+   a+=p('M34 23Q32 7 51 5Q69 8 69 24L65 27L63 19L40 21Z','#453b34')+l('M38 49Q48 57 60 49','#8b7563',2)+l('M19 100L26 89','#62805c',3);
+  }else if(type==='mehmed'){
+   a+=p('M28 21Q28 7 40 8Q42 -3 54 3Q70 0 73 13Q79 21 67 25L33 26Z','#f1e8d6',ink,2.5)+l('M31 18Q49 12 72 19','#d4c9b6',3)+p('M39 40Q44 54 54 54Q64 53 66 40L59 44L53 48L45 44Z','#45332c')+l('M87 49V133','#b18b54',5)+circ(87,44,7,gold)+l('M37 65Q51 73 66 65',gold,4)+l('M43 80L43 109M58 80L60 109',gold,2);
+  }
+  return svg(a);
+ }
 
  function chapterOneRefined(type){
   const I='#493125',S='#e7ae7d',D='#a86d4e',G='#e7bd68';
@@ -2075,6 +2131,15 @@ body{background:var(--hs-bg);}
   if(opening)opening.insertAdjacentElement('afterend',gallery);
   else originEra.querySelector('.era-expanded')?.prepend(gallery);
  }
+
+ const faithEra=document.querySelector('.era-faith');
+ if(faithEra){
+  const names=[['justinian','1 · Justinian I'],['viking','2 · Viking raider'],['charlemagne','3 · Charlemagne'],['norman','4 · Norman horseman'],['crusader','5 · Crusader knight'],['john','6 · King John'],['mongol','7 · Mongol archer'],['physician','8 · Medieval physician'],['mehmed','9 · Mehmed II']];
+  const gallery=document.createElement('details');gallery.className='mtt-gallery';
+  gallery.innerHTML='<summary>View all 9 Chapter II character designs</summary><div class="mtt-gallery-grid">'+names.map(([id,label])=>'<div class="mtt-gallery-item" data-type="'+id+'">'+chapterTwo(id)+'<span>'+label+'</span></div>').join('')+'</div>';
+  faithEra.querySelector('.c1-opening')?.insertAdjacentElement('afterend',gallery);
+ }
+
  const people=new Set(Object.keys(palette));
  const states=[...document.querySelectorAll('.era')].map(era=>{
   const layer=era.querySelector('.c1-road-layer');
@@ -2094,11 +2159,13 @@ body{background:var(--hs-bg);}
    const focus=innerHeight*.48;
    const progress=Math.max(0,Math.min(1,(focus-rect.top)/rect.height));
    const isOrigins=s.era.classList.contains('era-origins');
-   const markerCount=isOrigins?[...s.layer.querySelectorAll('[data-journey-marker]')].filter(m=>{const r=m.getBoundingClientRect();return focus>=r.top+r.height/2}).length:0;
-   const index=isOrigins?(Math.max(0,Math.min(8,markerCount-1))):Math.min(s.types.length-1,Math.floor(progress*s.types.length));
+   const isFaith=s.era.classList.contains('era-faith');
+   const markerBased=isOrigins||isFaith;
+   const markerCount=markerBased?[...s.layer.querySelectorAll('[data-journey-marker]')].filter(m=>{const r=m.getBoundingClientRect();return focus>=r.top+r.height/2}).length:0;
+   const index=markerBased?(Math.max(0,Math.min(8,markerCount-1))):Math.min(s.types.length-1,Math.floor(progress*s.types.length));
    if(index!==s.index){
     const type=s.types[Math.max(0,index)]||'traveler';
-    s.figure.innerHTML=isOrigins?chapterOne(type):type==='horse'?horse():type==='astronaut'?astronaut():people.has(type)?person(type):object(type);
+    s.figure.innerHTML=isOrigins?chapterOne(type):isFaith?chapterTwo(type):type==='horse'?horse():type==='astronaut'?astronaut():people.has(type)?person(type):object(type);
     
     s.figure.dataset.type=type;
     s.figure.title=(s.moments[index]?.querySelector('h4')?.textContent||'Historical moment').trim()+' — '+type;
@@ -2107,7 +2174,7 @@ body{background:var(--hs-bg);}
    const pt=s.path.getPointAtLength(s.path.getTotalLength()*progress);
    s.figure.style.left=pt.x+'%';
    s.figure.style.top=pt.y+'%';
-   if(s.era.classList.contains('era-origins')){
+   if(markerBased){
     const delta=.003, before=s.path.getPointAtLength(s.path.getTotalLength()*Math.max(0,progress-delta));
     const after=s.path.getPointAtLength(s.path.getTotalLength()*Math.min(1,progress+delta));
     const direction=after.x>=before.x?1:-1;
