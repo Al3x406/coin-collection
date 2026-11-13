@@ -8,6 +8,7 @@ from flask import (
     session,
     abort,
     flash,
+    jsonify,
     send_file,
 )
 from flask_sqlalchemy import SQLAlchemy
