@@ -1129,6 +1129,17 @@ def increase_existing_coin_quantity(coin_id):
     return jsonify({"id": coin.id, "quantity": coin.quantity})
 
 
+@app.after_request
+def prevent_stale_coin_entry_pages(response):
+    # The Numista search logic is embedded in the add-coin HTML.
+    # Prevent mobile browsers and intermediary caches from serving old scripts.
+    if request.path == "/add" or request.path.startswith("/api/numista/"):
+        response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
+        response.headers["Pragma"] = "no-cache"
+        response.headers["Expires"] = "0"
+    return response
+
+
 @app.route("/add", methods=["GET", "POST"])
 def add_coin():
 
