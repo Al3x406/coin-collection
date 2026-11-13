@@ -1236,6 +1236,15 @@ async function searchNumista() {
     }
 
 
+    // Catalog IDs bypass the broad text search entirely.
+    // The details loader also checks existing collection matches.
+    const exactCatalog = /^N\\s*#\\s*(\\d+)$/i.exec(name);
+    if (exactCatalog) {
+        resultsBox.innerHTML = "";
+        await loadNumistaType(Number(exactCatalog[1]));
+        return;
+    }
+
     resultsBox.innerHTML = "";
 
     statusBox.innerHTML =
