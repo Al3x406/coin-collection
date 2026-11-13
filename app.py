@@ -3090,6 +3090,37 @@ def numista_search():
             "error": "A search term is required."
         }, 400
 
+    # Numista catalog IDs are identifiers, not denomination search text.
+    # Resolve them directly so N#1038 cannot return unrelated coins.
+    catalog_match = re.fullmatch(r"N\\s*#\\s*(\\d+)", query, re.IGNORECASE)
+    if catalog_match:
+        catalog_id = int(catalog_match.group(1))
+        try:
+            catalog_response = requests.get(
+                f"{NUMISTA_BASE_URL}/types/{catalog_id}",
+                headers=headers,
+                params={"lang": "en"},
+                timeout=30,
+            )
+            if catalog_response.status_code == 404:
+                return {"count": 0, "results": [], "fallback_used": False}
+            catalog_response.raise_for_status()
+            catalog_coin = catalog_response.json()
+        except (requests.RequestException, ValueError):
+            return {"error": "Could not retrieve that Numista catalog number."}, 502
+        issuer = catalog_coin.get("issuer") or {}
+        return {
+            "count": 1,
+            "results": [{
+                "id": catalog_coin.get("id"),
+                "title": catalog_coin.get("title"),
+                "issuer": issuer.get("name"),
+                "min_year": catalog_coin.get("min_year"),
+                "max_year": catalog_coin.get("max_year"),
+            }],
+            "fallback_used": False,
+        }
+
     params = {
         "q": f'"{query}"',
         "category": "coin",
