@@ -1503,9 +1503,12 @@ function renderExistingMatches() {
             '<div><strong>' + escapeHtml(c.year ?? 'Unknown year') + '</strong> · ' +
             escapeHtml(c.mint || c.mint_mark || 'Mint not recorded') +
             ' · Quantity: ' + escapeHtml(c.quantity) + '</div>' +
+            '<div class="mt-2 d-flex flex-wrap gap-2">' +
+            '<a class="btn btn-outline-primary btn-sm" href="/coin/' + encodeURIComponent(c.id) + '">View existing coin</a>' +
             (exact
-              ? '<button type="button" class="btn btn-success btn-sm mt-2" data-increase-id="' + c.id + '">Increase quantity</button>'
-              : '<span class="small text-muted">Previously collected — different or unconfirmed year/mint</span>') +
+              ? '<button type="button" class="btn btn-success btn-sm" data-increase-id="' + c.id + '">Increase quantity</button>'
+              : '<span class="small text-muted align-self-center">Different or unconfirmed year/mint — verify before increasing quantity</span>') +
+            '</div>' +
             '</div>';
     }).join('');
     matchesPanel.innerHTML = '<div class="card border-primary my-3"><div class="card-body">' +
