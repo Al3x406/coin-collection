@@ -1236,6 +1236,15 @@ async function searchNumista() {
     }
 
 
+    // Catalog IDs bypass the broad text search entirely.
+    // The details loader also checks existing collection matches.
+    const exactCatalog = /^N\s*#\s*(\d+)$/i.exec(name);
+    if (exactCatalog) {
+        resultsBox.innerHTML = "";
+        await loadNumistaType(Number(exactCatalog[1]));
+        return;
+    }
+
     resultsBox.innerHTML = "";
 
     statusBox.innerHTML =
@@ -1469,6 +1478,94 @@ function showSearchResults(
 }
 
 
+// Existing collection matches for the selected Numista type.
+let existingTypeMatches = [];
+let existingTypeId = null;
+let matchesPanel = null;
+
+function renderExistingMatches() {
+    if (!matchesPanel) return;
+    if (!existingTypeMatches.length) {
+        matchesPanel.innerHTML = '<div class="alert alert-info">You have no recorded coins of this Numista type yet. Continue as a new coin below.</div>';
+        return;
+    }
+    const year = Number(coinYear.value);
+    const mintId = mintSelect.value;
+    const mintMarkInput = document.querySelector('[name="mint_mark"]');
+    const mintMark = (mintMarkInput?.value || '').trim().toLowerCase();
+    const rows = existingTypeMatches.map(c => {
+        const sameYear = year && c.year === year;
+        const sameMint = mintId
+            ? String(c.mint_id || '') === mintId
+            : !c.mint_id && (c.mint_mark || '').trim().toLowerCase() === mintMark;
+        const exact = sameYear && sameMint;
+        return '<div class="border rounded p-3 mb-2">' +
+            '<div><strong>' + escapeHtml(c.year ?? 'Unknown year') + '</strong> · ' +
+            escapeHtml(c.mint || c.mint_mark || 'Mint not recorded') +
+            ' · Quantity: ' + escapeHtml(c.quantity) + '</div>' +
+            '<div class="mt-2 d-flex flex-wrap gap-2">' +
+            '<a class="btn btn-outline-primary btn-sm" href="/coin/' + encodeURIComponent(c.id) + '">View existing coin</a>' +
+            (exact
+              ? '<button type="button" class="btn btn-success btn-sm" data-increase-id="' + c.id + '">Increase quantity</button>'
+              : '<span class="small text-muted align-self-center">Different or unconfirmed year/mint — verify before increasing quantity</span>') +
+            '</div>' +
+            '</div>';
+    }).join('');
+    matchesPanel.innerHTML = '<div class="card border-primary my-3"><div class="card-body">' +
+        '<h5>Previously collected (' + existingTypeMatches.length + ')</h5>' +
+        '<p class="small">Check the year and mint in the form. An exact match can increase quantity; otherwise continue adding a new coin.</p>' +
+        rows + '<button type="button" class="btn btn-outline-primary" id="continueNewCoin">Continue as New Coin</button>' +
+        '</div></div>';
+    matchesPanel.querySelectorAll('[data-increase-id]').forEach(button => {
+        button.addEventListener('click', async () => {
+            const id = Number(button.dataset.increaseId);
+            const c = existingTypeMatches.find(item => item.id === id);
+            if (!c || !confirm('Increase quantity of the existing ' + c.year + ' coin by 1?')) return;
+            button.disabled = true;
+            try {
+                const response = await fetch('/api/collection/coin/' + id + '/increase-quantity', {
+                    method: 'POST', headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({numista_type_id: existingTypeId, year: Number(coinYear.value),
+                        mint_id: mintId || null, mint_mark: mintMark, quantity: 1})
+                });
+                const data = await response.json();
+                if (!response.ok) throw new Error(data.error || 'Could not update quantity.');
+                c.quantity = data.quantity;
+                renderExistingMatches();
+                alert('Quantity updated to ' + data.quantity + '. No duplicate entry was created.');
+            } catch (error) {
+                alert(error.message);
+                button.disabled = false;
+            }
+        });
+    });
+    matchesPanel.querySelector('#continueNewCoin')?.addEventListener('click', () => {
+        matchesPanel.innerHTML = '<div class="alert alert-info">Continue completing the new coin form below.</div>';
+    });
+}
+
+async function loadExistingTypeMatches(typeId) {
+    existingTypeId = Number(typeId);
+    if (!matchesPanel) {
+        matchesPanel = document.createElement('div');
+        statusBox.insertAdjacentElement('afterend', matchesPanel);
+    }
+    matchesPanel.innerHTML = '<div class="text-muted">Checking your collection...</div>';
+    try {
+        const response = await fetch('/api/collection/numista-matches/' + encodeURIComponent(typeId));
+        if (!response.ok) throw new Error('Collection lookup unavailable.');
+        const data = await response.json();
+        if (existingTypeId !== Number(typeId)) return;
+        existingTypeMatches = data.matches || [];
+        renderExistingMatches();
+    } catch (error) {
+        matchesPanel.innerHTML = '<div class="alert alert-warning">Could not check existing coins. Please verify duplicates before saving.</div>';
+    }
+}
+coinYear.addEventListener('change', renderExistingMatches);
+mintSelect.addEventListener('change', renderExistingMatches);
+document.querySelector('[name="mint_mark"]')?.addEventListener('change', renderExistingMatches);
+
 // ============================================================
 // LOAD SELECTED NUMISTA TYPE
 // ============================================================
@@ -1545,6 +1642,8 @@ async function loadNumistaType(
         showSelectedCoin(
             coin
         );
+
+        await loadExistingTypeMatches(typeId);
 
 
         const searchResultCards =
