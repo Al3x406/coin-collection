@@ -1083,6 +1083,51 @@ def ensure_coin_date_schema():
         raise
 
 
+@app.route("/api/collection/numista-matches/<int:type_id>", methods=["GET"])
+def collection_numista_matches(type_id):
+    """Show all existing years and mints for a Numista coin type."""
+    matches = Coin.query.filter_by(numista_type_id=type_id).order_by(Coin.year.desc(), Coin.id.desc()).all()
+    return jsonify({"matches": [{
+        "id": coin.id, "year": coin.year,
+        "mint": coin.mint or "", "mint_mark": coin.mint_mark or "",
+        "mint_id": coin.mint_id, "quantity": coin.quantity or 1,
+        "name": coin.name or ""
+    } for coin in matches]})
+
+
+@app.route("/api/collection/coin/<int:coin_id>/increase-quantity", methods=["POST"])
+def increase_existing_coin_quantity(coin_id):
+    """Increment an explicitly selected matching coin without overwriting its details."""
+    coin = db.session.get(Coin, coin_id)
+    if coin is None:
+        return jsonify({"error": "Coin not found."}), 404
+    payload = request.get_json(silent=True) or {}
+    try:
+        type_id = int(payload.get("numista_type_id"))
+        year = int(payload.get("year"))
+        amount = int(payload.get("quantity", 1))
+    except (TypeError, ValueError):
+        return jsonify({"error": "Valid type, year, and quantity are required."}), 400
+    if amount < 1 or amount > 10000:
+        return jsonify({"error": "Quantity must be between 1 and 10000."}), 400
+    if coin.numista_type_id != type_id or coin.year != year:
+        return jsonify({"error": "Type or year does not match the selected coin."}), 409
+    mint_id = payload.get("mint_id")
+    mint_mark = (payload.get("mint_mark") or "").strip().casefold()
+    if mint_id not in (None, ""):
+        try:
+            mint_id = int(mint_id)
+        except (TypeError, ValueError):
+            return jsonify({"error": "Invalid mint."}), 400
+        if coin.mint_id != mint_id:
+            return jsonify({"error": "Mint does not match."}), 409
+    elif coin.mint_id is not None or (coin.mint_mark or "").strip().casefold() != mint_mark:
+        return jsonify({"error": "Mint must match exactly."}), 409
+    coin.quantity = (coin.quantity or 1) + amount
+    db.session.commit()
+    return jsonify({"id": coin.id, "quantity": coin.quantity})
+
+
 @app.route("/add", methods=["GET", "POST"])
 def add_coin():
 
