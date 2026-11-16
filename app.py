@@ -3237,6 +3237,31 @@ def globe():
     # This does not rename Coin.country and does not change the database.
     # It only gives the Geography page extra labels it may use when matching
     # a coin issuer to a historical boundary polygon.
+    # Modern GeoJSON labels are not always the same as numismatic issuer names.
+    # These are display-only aliases; original country fields remain unchanged.
+    modern_geo_aliases = {
+        "United States": ["USA"],
+        "United States of America": ["USA"],
+        "Bahamas, The": ["The Bahamas"],
+        "Bahamas": ["The Bahamas"],
+        "United Kingdom": ["England"],
+        "Great Britain": ["England"],
+        "Czechia": ["Czech Republic"],
+        "Czech Republic": ["Czech Republic"],
+        "North Macedonia": ["Macedonia"],
+        "Serbia": ["Republic of Serbia"],
+        "South Korea": ["South Korea"],
+        "Korea, Republic of": ["South Korea"],
+        "Korea, Democratic People's Republic of": ["North Korea"],
+        "Côte d'Ivoire": ["Ivory Coast"],
+        "Tanzania": ["United Republic of Tanzania"],
+        "Eswatini": ["Swaziland"],
+        "Timor-Leste": ["East Timor"],
+        "Türkiye": ["Turkey"],
+        "Russian Federation": ["Russia"],
+        "Viet Nam": ["Vietnam"],
+    }
+
     issuer_historical_map_aliases = {
         # Ancient collection issuers. These aliases are names that actually
         # appear in the installed Cliopatria snapshots.
@@ -3322,6 +3347,7 @@ def globe():
                     issuer,
                     []
                 )
+                + modern_geo_aliases.get(issuer, [])
             )),
             "historical_entity": historical_entity,
             "coin_count": 0,
