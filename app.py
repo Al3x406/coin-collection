@@ -603,6 +603,7 @@ class Coin(db.Model):
     # above remains untouched for historically accurate catalog display.
     set_country = db.Column(db.String(100))
     set_country_review = db.Column(db.Boolean, default=False, nullable=False)
+    globe_country = db.Column(db.String(100))
 
     year = db.Column(
         db.Integer
@@ -1059,6 +1060,7 @@ def ensure_coin_date_schema():
             "date_is_approx": "BOOLEAN DEFAULT 0",
             "set_country": "VARCHAR(100)",
             "set_country_review": "BOOLEAN DEFAULT 0",
+            "globe_country": "VARCHAR(100)",
         }
         for column, sql_type in additions.items():
             if column not in columns:
@@ -3382,6 +3384,16 @@ def globe():
         ],
     }
 
+    manual_globe_assignments = [
+        {"id": coin.id, "name": coin.name, "issuer": coin.country,
+         "year": coin.year, "globe_country": coin.globe_country}
+        for coin in all_coins if coin.globe_country
+    ]
+    globe_coin_options = [
+        {"id": coin.id, "name": coin.name, "issuer": coin.country, "year": coin.year}
+        for coin in all_coins
+    ]
+
     grouped = {}
     for coin in all_coins:
         issuer = (coin.country or "").strip() or "Unknown issuer"
@@ -3455,9 +3467,28 @@ def globe():
 
     return render_template(
         "globe.html", country_data=country_data, mint_data=mint_data,
+        manual_globe_assignments=manual_globe_assignments, globe_coin_options=globe_coin_options,
         timeline_min=min(historical_years) if historical_years else -500,
         timeline_max=current_year
     )
+
+
+@app.route("/globe/assign", methods=["POST"])
+def assign_globe_coin():
+    if not session.get("is_owner"):
+        abort(403)
+    try:
+        coin_id = int(request.form.get("coin_id", ""))
+    except (ValueError, TypeError):
+        abort(400)
+    coin = Coin.query.get_or_404(coin_id)
+    target = (request.form.get("globe_country") or "").strip()
+    if len(target) > 100:
+        abort(400)
+    coin.globe_country = target or None
+    db.session.commit()
+    flash("Globe assignment saved.", "success")
+    return redirect(url_for("globe"))
 
 
 @app.route("/coin/<int:coin_id>")
