@@ -2113,7 +2113,14 @@ if (
         // LINKED LOCAL MINT
         // ====================================================
 
-        const matchingLocalOption = Array.from(mintSelect.options).find(option => option.value && [option.dataset.name, option.dataset.city, option.textContent].some(v => (v || "").trim().toLowerCase().includes(mintName) || (v || "").trim().toLowerCase() === mintName));
+        // Recognize common Numista aliases for the Royal Mint.
+        const mintAliases = /royal mint|royal british mint/.test(mintName)
+            ? ["royal mint", "royal british mint", "tower hill"]
+            : [mintName];
+        const matchingLocalOption = Array.from(mintSelect.options).find(option =>
+            option.value && [option.dataset.name, option.dataset.city, option.textContent]
+                .some(v => mintAliases.some(alias => (v || "").trim().toLowerCase().includes(alias)))
+        );
         const resolvedMintId = mint.local_mint_id || (matchingLocalOption && matchingLocalOption.value);
         if (resolvedMintId) {
 
@@ -2581,14 +2588,11 @@ showVariantsForSelectedMint(
     }
 
 
-    // If there is exactly one linked mint button,
-    // select it only AFTER its click listener exists.
-    if (
-        mintButtons.length === 1
-    ) {
-
-        mintButtons[0].click();
-
+    // Do not assume the only linked mint is correct: other Numista mints
+    // may be unlinked. Require an explicit collector selection.
+    if (mintSelect) {
+        mintSelect.value = "";
+        mintSelect.dispatchEvent(new Event("change", { bubbles: true }));
     }
 
 }
