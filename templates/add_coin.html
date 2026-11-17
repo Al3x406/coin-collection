@@ -2014,7 +2014,15 @@ if (
         // LINKED LOCAL MINT
         // ====================================================
 
-        const matchingLocalOption = Array.from(mintSelect.options).find(option => option.value && [option.dataset.name, option.dataset.city, option.textContent].some(v => (v || "").trim().toLowerCase().includes(mintName) || (v || "").trim().toLowerCase() === mintName));
+        // Numista uses "Royal Mint (Tower Hill)" while our local database may
+        // call the same institution "Royal British Mint".
+        const mintAliases = /royal mint|royal british mint/.test(mintName)
+            ? ["royal mint", "royal british mint", "tower hill"]
+            : [mintName];
+        const matchingLocalOption = Array.from(mintSelect.options).find(option =>
+            option.value && [option.dataset.name, option.dataset.city, option.textContent]
+                .some(v => mintAliases.some(alias => (v || "").trim().toLowerCase().includes(alias)))
+        );
         const resolvedMintId = mint.local_mint_id || (matchingLocalOption && matchingLocalOption.value);
         if (resolvedMintId) {
 
@@ -2482,14 +2490,12 @@ showVariantsForSelectedMint(
     }
 
 
-    // If there is exactly one linked mint button,
-    // select it only AFTER its click listener exists.
-    if (
-        mintButtons.length === 1
-    ) {
-
-        mintButtons[0].click();
-
+    // Never auto-select the only linked mint: other mints can be
+    // unlinked locally, and Numista types span multiple issue years.
+    // A mint must be explicitly confirmed by the collector.
+    if (mintSelect) {
+        mintSelect.value = "";
+        mintSelect.dispatchEvent(new Event("change", { bubbles: true }));
     }
 
 }
