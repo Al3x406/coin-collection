@@ -1054,19 +1054,33 @@
     if (nav) {
         const rail = document.getElementById("yearRail"), jump = document.getElementById("jumpYear");
         document.body.appendChild(rail);
-        function goYear(y) {
-            if (!y) return;
-            const url = new URL(location.href);
-            url.searchParams.delete("page");
-            url.searchParams.set("year", y);
-            location.href = url.href;
+        async function goYear(low, high) {
+            if (jumping) return;
+            jumping = true;
+            try {
+                while (true) {
+                    const active = grid.hidden ? table : grid;
+                    const entries = Array.from(active.querySelectorAll("[data-year]"));
+                    const target = entries.find(e => e.dataset.year !== "" && Number(e.dataset.year) >= low && Number(e.dataset.year) <= high);
+                    if (target) {
+                        target.scrollIntoView({block:"center",behavior:"smooth"});
+                        break;
+                    }
+                    if (!next || next.hidden || failed) {
+                        status.textContent = "No items found in this period with the current filters.";
+                        break;
+                    }
+                    if (busy) { await new Promise(resolve => setTimeout(resolve,100)); continue; }
+                    await loadMore();
+                }
+            } finally { jumping = false; }
         }
 
-        const years = Array.from(jump.options).slice(1).map(o => Number(o.value));
+        const years = Array.from(jump.options).map(o => Number(o.value));
         for (const [label, low, high] of [["2000",2000,9999],["1950",1950,1999],["1900",1900,1949],["1850",1850,1899],["1800",1800,1849],["1700",1700,1799],["1600",1600,1699],["Older",-99999,1599]]) {
             const y = years.filter(v=>v>=low && v<=high).sort((a,b)=>a-b)[0];
             if (y === undefined) continue;
-            const b = document.createElement("button"); b.type="button"; b.textContent=label; b.onclick=()=>goYear(String(y)); rail.append(b);
+            const b = document.createElement("button"); b.type="button"; b.textContent=label; b.onclick=()=>goYear(low, high); rail.append(b);
         }
         function updateRail() {
             const active = grid.hidden ? table : grid;
@@ -1089,12 +1103,11 @@
     const next = document.getElementById("collectionNext");
     const status = document.getElementById("collectionLoadStatus");
     const count = document.getElementById("collectionCount");
-    if (!next) return;
-    let busy = false, failed = false;
+    let busy = false, failed = false, jumping = false;
     let observer;
     async function loadMore(event) {
         if (event) event.preventDefault();
-        if (busy || next.hidden) return;
+        if (busy || !next || next.hidden) return;
         busy = true;
         failed = false;
         status.textContent = "Loading more items…";
@@ -1123,16 +1136,17 @@
             next.textContent = "Retry";
         } finally {
             busy = false;
-            if (observer && !next.hidden && !failed) {
+            if (observer && !next.hidden && !failed && !jumping) {
                 observer.unobserve(next);
                 observer.observe(next);
             }
         }
     }
+    if (!next) return;
     next.addEventListener("click", loadMore);
     if ("IntersectionObserver" in window) {
         observer = new IntersectionObserver(entries => {
-            if (!failed && entries.some(entry => entry.isIntersecting)) loadMore();
+            if (!jumping && !failed && entries.some(entry => entry.isIntersecting)) loadMore();
         }, {rootMargin:"300px"});
         observer.observe(next);
     }
