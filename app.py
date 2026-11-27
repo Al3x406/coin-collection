@@ -13,7 +13,9 @@ from flask import (
 )
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import joinedload, selectinload
-from sqlalchemy import text, create_engine, select
+from sqlalchemy import text, create_engine, select, event
+from sqlalchemy.orm import Session
+from threading import RLock
 from datetime import datetime
 from io import BytesIO
 import os
@@ -996,25 +998,15 @@ def home():
         selections_by_set.setdefault((row.set_id, row.slot_type), []).append(row)
 
     for coin_set in coin_sets:
-        key = None
-
-        if hasattr(coin_set, "ww2_slots") and coin_set.ww2_slots:
+        if coin_set.ww2_slots:
             key = "ww2"
-            matches = _ww2_slot_matches(coin_set, matching_coins, selections_by_set.get((coin_set.id, "ww2"), []))
-
         elif coin_set.name.startswith("A Coin From Every Year"):
             key = "timeline"
-            matches = _match_set_requirements(coin_set, matching_coins, selections_by_set.get((coin_set.id, "requirement"), []))
-
         elif coin_set.name.startswith("Around the World"):
             key = "world"
-            matches = _match_set_requirements(coin_set, matching_coins, selections_by_set.get((coin_set.id, "requirement"), []))
-
         else:
             continue
-
-        total = len(matches)
-        completed = sum(1 for item in matches if item["coin"] is not None)
+        completed, total = _cached_set_counts(coin_set, matching_coins, selections_by_set, "home")
         percent = round((completed / total * 100) if total else 0)
 
         home_sets[key] = {
@@ -2346,6 +2338,35 @@ def _ww2_slot_matches(coin_set, all_coins=None, selections=None):
 
 # --- SETS FEATURE ROUTES ---
 
+# Cache only numeric progress, never ORM objects or session-specific HTML.
+_set_progress_cache = {}
+_set_progress_lock = RLock()
+_set_progress_generation = 0
+
+@event.listens_for(Session, "after_commit")
+def _invalidate_set_progress(session):
+    global _set_progress_generation
+    with _set_progress_lock:
+        _set_progress_generation += 1
+        _set_progress_cache.clear()
+
+def _cached_set_counts(coin_set, coins, selections, scope):
+    key = (scope, coin_set.id)
+    with _set_progress_lock:
+        generation = _set_progress_generation
+        cached = _set_progress_cache.get(key)
+        if cached and time.monotonic() - cached[0] < 30:
+            return cached[1]
+    if coin_set.ww2_slots:
+        matches = _ww2_slot_matches(coin_set, coins, selections.get((coin_set.id, "ww2"), []))
+    else:
+        matches = _match_set_requirements(coin_set, coins, selections.get((coin_set.id, "requirement"), []))
+    result = (sum(1 for item in matches if item["coin"] is not None), len(matches))
+    with _set_progress_lock:
+        if generation == _set_progress_generation:
+            _set_progress_cache[key] = (time.monotonic(), result)
+    return result
+
 @app.route("/sets")
 def sets():
     coin_sets = (
@@ -2373,20 +2394,8 @@ def sets():
         completed = 0
         total = 0
 
-        if coin_set.ww2_slots:
-            matches = _ww2_slot_matches(coin_set, all_coins, selections_by_set.get((coin_set.id, "ww2"), []))
-            total = len(matches)
-            completed = sum(
-                1 for item in matches
-                if item["coin"] is not None
-            )
-        elif coin_set.requirements:
-            matches = _match_set_requirements(coin_set, all_coins, selections_by_set.get((coin_set.id, "requirement"), []))
-            total = len(matches)
-            completed = sum(
-                1 for item in matches
-                if item["coin"] is not None
-            )
+        if coin_set.ww2_slots or coin_set.requirements:
+            completed, total = _cached_set_counts(coin_set, all_coins, selections_by_set, "sets")
         else:
             total = len(coin_set.coins)
             completed = total
