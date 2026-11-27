@@ -750,13 +750,8 @@
     #yearRail button {background:transparent;color:#e6c477;border:0;font-size:11px;padding:5px 3px}
     @media(max-width:600px){ #yearRail{right:1px} #collectionGrid,#collectionTable{margin-right:37px}}
     </style>
-    <div id="yearNavigator">
-      <strong id="visibleYear">Year</strong>
-      <select id="jumpYear" aria-label="Jump to year"><option value="">Jump to year</option>{% for y in filter_years %}<option value="{{ y }}">{{ -y if y < 0 else y }}{{ ' BC' if y < 0 else '' }}</option>{% endfor %}</select>
-      <button type="button" id="hideYearNav" class="collection-table-action">Hide</button>
-    </div>
     <div id="yearRail" aria-label="Jump to era"></div>
-    <button type="button" id="showYearNav" class="collection-table-action" hidden>Show year navigation</button>
+    <select id="jumpYear" hidden aria-hidden="true">{% for y in filter_years %}<option value="{{ y }}">{{ y }}</option>{% endfor %}</select>
     {% endif %}
     {% if coins or banknotes %}
 
@@ -1055,19 +1050,9 @@
         const row = event.target.closest("tr[data-href]");
         if (row && !event.target.closest("a, button, input")) window.location.href = row.dataset.href;
     });
-    const nav = document.getElementById("yearNavigator");
+    const nav = document.getElementById("yearRail");
     if (nav) {
         const rail = document.getElementById("yearRail"), jump = document.getElementById("jumpYear");
-        const show = document.getElementById("showYearNav");
-        function toggleYearNav(hidden) {
-            nav.style.display = hidden ? "none" : "";
-            rail.style.display = hidden ? "none" : "";
-            show.hidden = !hidden;
-            localStorage.setItem("hideCollectionYearNav", hidden ? "1" : "0");
-        }
-        document.getElementById("hideYearNav").onclick = () => toggleYearNav(true);
-        show.onclick = () => toggleYearNav(false);
-        toggleYearNav(localStorage.getItem("hideCollectionYearNav") === "1");
         function goYear(y) {
             if (!y) return;
             const url = new URL(location.href);
@@ -1075,28 +1060,23 @@
             url.searchParams.set("year", y);
             location.href = url.href;
         }
-        jump.onchange = () => goYear(jump.value);
+
         const years = Array.from(jump.options).slice(1).map(o => Number(o.value));
         for (const [label, low, high] of [["2000",2000,9999],["1950",1950,1999],["1900",1900,1949],["1850",1850,1899],["1800",1800,1849],["1700",1700,1799],["1600",1600,1699],["Older",-99999,1599]]) {
             const y = years.filter(v=>v>=low && v<=high).sort((a,b)=>a-b)[0];
             if (y === undefined) continue;
             const b = document.createElement("button"); b.type="button"; b.textContent=label; b.onclick=()=>goYear(String(y)); rail.append(b);
         }
-        let ticking=false;
-        function updateYear() {
-            ticking=false;
-            const entries = (grid.hidden ? table : grid).querySelectorAll("[data-year]");
-            const top = Math.max(90,nav.getBoundingClientRect().bottom);
-            const entry = Array.from(entries).find(e=>e.getBoundingClientRect().bottom>top);
-            if (entry) {
-                const y=entry.dataset.year;
-                document.getElementById("visibleYear").textContent = !y ? "Undated" : Number(y)<0 ? Math.abs(Number(y))+" BC" : y;
-            }
+        function updateRail() {
+            const active = grid.hidden ? table : grid;
+            const rect = active.getBoundingClientRect();
+            rail.style.visibility = rect.top < innerHeight * 0.65 && rect.bottom > innerHeight * 0.35 ? "visible" : "hidden";
         }
-        window.addEventListener("scroll",()=>{if(!ticking){ticking=true;requestAnimationFrame(updateYear)}},{passive:true});
-        gridButton.addEventListener("click",updateYear);
-        tableButton.addEventListener("click",updateYear);
-        updateYear();
+        window.addEventListener("scroll", updateRail, {passive:true});
+        window.addEventListener("resize", updateRail);
+        gridButton.addEventListener("click",updateRail);
+        tableButton.addEventListener("click",updateRail);
+        updateRail();
     }
     const next = document.getElementById("collectionNext");
     const status = document.getElementById("collectionLoadStatus");
