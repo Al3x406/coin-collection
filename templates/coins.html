@@ -1057,13 +1057,19 @@
         async function goYear(low, high) {
             if (jumping) return;
             jumping = true;
+            failed = false;
+            const notice = document.createElement("div");
+            notice.setAttribute("role","status");
+            notice.style.cssText = "position:fixed;top:15%;left:50%;transform:translateX(-50%);z-index:1000;background:#141919;color:#e6c477;padding:12px;border:1px solid #55503b;border-radius:10px;white-space:nowrap";
+            notice.textContent = "Finding " + (low < 0 ? "older coins" : low + "s") + "…";
+            document.body.append(notice);
             try {
                 while (true) {
                     const active = grid.hidden ? table : grid;
                     const entries = Array.from(active.querySelectorAll("[data-year]"));
                     const target = entries.find(e => e.dataset.year !== "" && Number(e.dataset.year) >= low && Number(e.dataset.year) <= high);
                     if (target) {
-                        target.scrollIntoView({block:"center",behavior:"smooth"});
+                        target.scrollIntoView({block:"center",behavior:"instant"});
                         break;
                     }
                     if (!next || next.hidden || failed) {
@@ -1073,7 +1079,11 @@
                     if (busy) { await new Promise(resolve => setTimeout(resolve,100)); continue; }
                     await loadMore();
                 }
-            } finally { jumping = false; }
+            } finally {
+                jumping = false;
+                notice.remove();
+                if (observer && next && !next.hidden && !failed) { observer.unobserve(next); observer.observe(next); }
+            }
         }
 
         const years = Array.from(jump.options).map(o => Number(o.value));
@@ -1123,7 +1133,11 @@
             grid.append(...cards);
             table.querySelector("tbody").append(...rows);
             if (count) count.textContent = "Showing " + grid.children.length + " of " + count.dataset.total + " records.";
-            if (following) next.href = following.href;
+            if (following) {
+                const followingUrl = new URL(following.getAttribute("href"), response.url).href;
+                if (followingUrl === response.url) throw new Error("Pagination did not advance");
+                next.href = followingUrl;
+            }
             else {
                 next.hidden = true;
                 if (observer) observer.disconnect();
