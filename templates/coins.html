@@ -748,7 +748,7 @@
     #yearNavigator select {max-width:130px;color:inherit;background:#202525;border:1px solid #55503b;border-radius:6px;padding:5px}
     #yearRail {position:fixed;right:4px;top:50%;transform:translateY(-50%);z-index:21;background:#141919ee;border:1px solid #55503b;border-radius:12px;display:flex;flex-direction:column;padding:4px;gap:2px}
     #yearRail button {background:transparent;color:#e6c477;border:0;font-size:11px;padding:5px 3px}
-    @media(max-width:600px){ #yearRail{right:1px} #collectionGrid,#collectionTable{margin-right:37px}}
+    @media(max-width:600px){ #yearRail{right:1px} #collectionGrid,#collectionTable{margin-right:0}}
     </style>
     <div id="yearRail" aria-label="Jump to era"></div>
     <select id="jumpYear" hidden aria-hidden="true">{% for y in filter_years %}<option value="{{ y }}">{{ y }}</option>{% endfor %}</select>
@@ -1053,6 +1053,7 @@
     const nav = document.getElementById("yearRail");
     if (nav) {
         const rail = document.getElementById("yearRail"), jump = document.getElementById("jumpYear");
+        document.body.appendChild(rail);
         function goYear(y) {
             if (!y) return;
             const url = new URL(location.href);
@@ -1070,10 +1071,17 @@
         function updateRail() {
             const active = grid.hidden ? table : grid;
             const rect = active.getBoundingClientRect();
+            const viewport = window.visualViewport;
+            const height = viewport ? viewport.height : window.innerHeight;
+            rail.style.top = ((viewport ? viewport.offsetTop : 0) + height / 2) + "px";
             rail.style.visibility = rect.top < innerHeight * 0.65 && rect.bottom > innerHeight * 0.35 ? "visible" : "hidden";
         }
         window.addEventListener("scroll", updateRail, {passive:true});
         window.addEventListener("resize", updateRail);
+        if (window.visualViewport) {
+            window.visualViewport.addEventListener("scroll", updateRail);
+            window.visualViewport.addEventListener("resize", updateRail);
+        }
         gridButton.addEventListener("click",updateRail);
         tableButton.addEventListener("click",updateRail);
         updateRail();
