@@ -1679,11 +1679,25 @@ def coins():
         "displayed_records": len(all_coins) + len(all_banknotes),
     }
 
+    page_size = 48
+    total_records = len(currency_entries)
+    total_pages = max(1, (total_records + page_size - 1) // page_size)
+    page = min(total_pages, max(1, request.args.get("page", 1, type=int)))
+    start = (page - 1) * page_size
+    page_entries = currency_entries[start:start + page_size]
+    page_args = request.args.to_dict()
+    page_args.pop("page", None)
+
     return render_template(
         "coins.html",
-        coins=all_coins,
-        banknotes=all_banknotes,
-        currency_entries=currency_entries,
+        coins=[item for kind, item in page_entries if kind == "coin"],
+        banknotes=[item for kind, item in page_entries if kind == "banknote"],
+        currency_entries=page_entries,
+        page=page,
+        total_pages=total_pages,
+        page_start=start + 1 if total_records else 0,
+        page_end=start + len(page_entries),
+        page_args=page_args,
         currency_type=currency_type,
         search=search,
         country=country,
