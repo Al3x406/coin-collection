@@ -1733,10 +1733,21 @@ def coins():
     total_records = len(currency_entries)
     total_pages = max(1, (total_records + page_size - 1) // page_size)
     page = min(total_pages, max(1, request.args.get("page", 1, type=int)))
+    jump_low = request.args.get("jump_low", type=int)
+    jump_high = request.args.get("jump_high", type=int)
+    jump_index = None
+    if sort_by == "age" and jump_low is not None and jump_high is not None:
+        for idx, entry in enumerate(currency_entries):
+            if jump_low <= currency_sort_key(entry)[0] <= jump_high:
+                jump_index = idx
+                page = idx // page_size + 1
+                break
     start = (page - 1) * page_size
     page_entries = currency_entries[start:start + page_size]
     page_args = request.args.to_dict()
     page_args.pop("page", None)
+    page_args.pop("jump_low", None)
+    page_args.pop("jump_high", None)
 
     return render_template(
         "coins.html",
@@ -1744,6 +1755,7 @@ def coins():
         banknotes=[item for kind, item in page_entries if kind == "banknote"],
         currency_entries=page_entries,
         page=page,
+        jump_index=jump_index,
         total_pages=total_pages,
         page_start=start + 1 if total_records else 0,
         page_end=start + len(page_entries),
