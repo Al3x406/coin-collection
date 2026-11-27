@@ -755,6 +755,9 @@
     {% endif %}
     {% if coins or banknotes %}
 
+    <div id="collectionEarlier" style="text-align:center;margin:12px 0">
+    {% if page > 1 %}<a id="collectionPrevious" class="collection-table-action" href="{{ url_for('coins', page=page-1, **page_args) }}">Load previous items</a>{% endif %}
+    </div>
     <section id="collectionGrid" class="collection-grid">
         {% for kind, item in currency_entries %}
         {% if kind == "coin" %}
@@ -1054,36 +1057,15 @@
     if (nav) {
         const rail = document.getElementById("yearRail"), jump = document.getElementById("jumpYear");
         document.body.appendChild(rail);
-        async function goYear(low, high) {
-            if (jumping) return;
-            jumping = true;
-            failed = false;
-            const notice = document.createElement("div");
-            notice.setAttribute("role","status");
-            notice.style.cssText = "position:fixed;top:15%;left:50%;transform:translateX(-50%);z-index:1000;background:#141919;color:#e6c477;padding:12px;border:1px solid #55503b;border-radius:10px;white-space:nowrap";
-            notice.textContent = "Finding " + (low < 0 ? "older coins" : low + "s") + "…";
-            document.body.append(notice);
-            try {
-                while (true) {
-                    const active = grid.hidden ? table : grid;
-                    const entries = Array.from(active.querySelectorAll("[data-year]"));
-                    const target = entries.find(e => e.dataset.year !== "" && Number(e.dataset.year) >= low && Number(e.dataset.year) <= high);
-                    if (target) {
-                        target.scrollIntoView({block:"center",behavior:"instant"});
-                        break;
-                    }
-                    if (!next || next.hidden || failed) {
-                        status.textContent = "No items found in this period with the current filters.";
-                        break;
-                    }
-                    if (busy) { await new Promise(resolve => setTimeout(resolve,100)); continue; }
-                    await loadMore();
-                }
-            } finally {
-                jumping = false;
-                notice.remove();
-                if (observer && next && !next.hidden && !failed) { observer.unobserve(next); observer.observe(next); }
-            }
+        function goYear(low, high) {
+            const active = grid.hidden ? table : grid;
+            const target = Array.from(active.querySelectorAll("[data-year]")).find(e=>e.dataset.year!=="" && Number(e.dataset.year)>=low && Number(e.dataset.year)<=high);
+            if (target) { target.scrollIntoView({block:"center",behavior:"instant"}); return; }
+            const url = new URL(location.href);
+            url.searchParams.delete("page");
+            url.searchParams.set("jump_low",low);
+            url.searchParams.set("jump_high",high);
+            location.href=url.href;
         }
 
         const years = Array.from(jump.options).map(o => Number(o.value));
@@ -1110,6 +1092,45 @@
         tableButton.addEventListener("click",updateRail);
         updateRail();
     }
+    const previous = document.getElementById("collectionPrevious");
+    let previousBusy=false;
+    async function loadPrevious(event) {
+        if(event) event.preventDefault();
+        if(!previous || previous.hidden || previousBusy) return;
+        previousBusy=true;
+        try {
+            const response=await fetch(previous.href,{credentials:"same-origin"});
+            if(!response.ok) throw Error("Request failed");
+            const doc=new DOMParser().parseFromString(await response.text(),"text/html");
+            const cards=doc.querySelectorAll("#collectionGrid > article");
+            const rows=doc.querySelectorAll("#collectionTable tbody > tr");
+            if(!cards.length || cards.length!==rows.length) throw Error("Invalid response");
+            const anchor=(grid.hidden?table.querySelector("tbody"):grid).firstElementChild;
+            const before=anchor.getBoundingClientRect().top;
+            grid.prepend(...cards); table.querySelector("tbody").prepend(...rows);
+            window.scrollBy(0,anchor.getBoundingClientRect().top-before);
+            const prior=doc.getElementById("collectionPrevious");
+            if(prior) previous.href=new URL(prior.getAttribute("href"),response.url).href;
+            else previous.hidden=true;
+            const count=document.getElementById("collectionCount");
+            if(count) count.textContent="Loaded "+grid.children.length+" of "+count.dataset.total+" records.";
+        } catch(e) {previous.textContent="Retry loading previous items";}
+        finally {previousBusy=false;}
+    }
+    if(previous) {
+        previous.addEventListener("click",loadPrevious);
+        if("IntersectionObserver" in window) {
+            const priorObserver=new IntersectionObserver(entries=>{if(entries.some(e=>e.isIntersecting)) loadPrevious();},{rootMargin:"100px"});
+            priorObserver.observe(previous);
+        }
+    }
+    {% if jump_index is not none %}
+    requestAnimationFrame(()=>{
+        const entries=(grid.hidden?table:grid).querySelectorAll("[data-year]");
+        const target=entries[{{ jump_index - page_start + 1 }}];
+        if(target) target.scrollIntoView({block:"center",behavior:"instant"});
+    });
+    {% endif %}
     const next = document.getElementById("collectionNext");
     const status = document.getElementById("collectionLoadStatus");
     const count = document.getElementById("collectionCount");
