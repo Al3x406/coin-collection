@@ -978,8 +978,8 @@ def home():
     coin_sets = (
         CoinSet.query
         .options(
-            joinedload(CoinSet.ww2_slots),
-            joinedload(CoinSet.requirements),
+            selectinload(CoinSet.ww2_slots),
+            selectinload(CoinSet.requirements),
         )
         .order_by(CoinSet.name.asc())
         .all()
@@ -2281,9 +2281,9 @@ def sets():
     coin_sets = (
         CoinSet.query
         .options(
-            joinedload(CoinSet.ww2_slots),
-            joinedload(CoinSet.requirements),
-            joinedload(CoinSet.coins),
+            selectinload(CoinSet.ww2_slots),
+            selectinload(CoinSet.requirements),
+            selectinload(CoinSet.coins),
         )
         .order_by(CoinSet.name.asc())
         .all()
@@ -2580,8 +2580,8 @@ def set_detail(set_id):
         CoinSet.query
         .options(
             joinedload(CoinSet.coins),
-            joinedload(CoinSet.ww2_slots),
-            joinedload(CoinSet.requirements),
+            selectinload(CoinSet.ww2_slots),
+            selectinload(CoinSet.requirements),
         )
         .filter(CoinSet.id == set_id)
         .first_or_404()
