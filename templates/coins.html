@@ -738,7 +738,7 @@
         </div>
 
         <div class="collection-result-note">
-            Showing {{ page_start }}–{{ page_end }} of {{ collection_stats.displayed_records }} records.
+            <span id="collectionCount" data-total="{{ collection_stats.displayed_records }}">Showing {{ page_start }}–{{ page_end }} of {{ collection_stats.displayed_records }} records.</span>
         </div>
     </form>
 
@@ -987,17 +987,12 @@
 
     {% endif %}
 
-    {% if total_pages > 1 %}
-    <nav aria-label="Collection pages" style="display:flex;justify-content:center;align-items:center;gap:1rem;margin:1.5rem 0;flex-wrap:wrap">
-        {% if page > 1 %}
-        <a class="collection-table-action" href="{{ url_for('coins', page=page-1, **page_args) }}">Previous</a>
-        {% endif %}
-        <span>Page {{ page }} of {{ total_pages }}</span>
+    <div id="collectionMore" style="display:flex;justify-content:center;align-items:center;gap:1rem;margin:1.5rem 0;flex-wrap:wrap">
         {% if page < total_pages %}
-        <a class="collection-table-action" href="{{ url_for('coins', page=page+1, **page_args) }}">Next</a>
+        <a id="collectionNext" class="collection-table-action" href="{{ url_for('coins', page=page+1, **page_args) }}">Load more items</a>
         {% endif %}
-    </nav>
-    {% endif %}
+        <span id="collectionLoadStatus" role="status" aria-live="polite"></span>
+    </div>
 
 </div>
 
@@ -1040,15 +1035,60 @@
         setView("grid");
     }
 
-    document.querySelectorAll(".collection-table tbody tr[data-href]").forEach(function (row) {
-        row.addEventListener("click", function (event) {
-            if (event.target.closest("a, button, input")) {
-                return;
-            }
-
-            window.location.href = row.dataset.href;
-        });
+    table.addEventListener("click", function(event) {
+        const row = event.target.closest("tr[data-href]");
+        if (row && !event.target.closest("a, button, input")) window.location.href = row.dataset.href;
     });
+    const next = document.getElementById("collectionNext");
+    const status = document.getElementById("collectionLoadStatus");
+    const count = document.getElementById("collectionCount");
+    if (!next) return;
+    let busy = false, failed = false;
+    let observer;
+    async function loadMore(event) {
+        if (event) event.preventDefault();
+        if (busy || next.hidden) return;
+        busy = true;
+        failed = false;
+        status.textContent = "Loading more items…";
+        next.textContent = "Loading…";
+        try {
+            const response = await fetch(next.href, {credentials:"same-origin"});
+            if (!response.ok) throw new Error("Request failed");
+            const doc = new DOMParser().parseFromString(await response.text(), "text/html");
+            const cards = doc.querySelectorAll("#collectionGrid > article");
+            const rows = doc.querySelectorAll("#collectionTable tbody > tr");
+            if (!cards.length || cards.length !== rows.length) throw new Error("Invalid collection response");
+            const following = doc.getElementById("collectionNext");
+            grid.append(...cards);
+            table.querySelector("tbody").append(...rows);
+            if (count) count.textContent = "Showing " + grid.children.length + " of " + count.dataset.total + " records.";
+            if (following) next.href = following.href;
+            else {
+                next.hidden = true;
+                if (observer) observer.disconnect();
+            }
+            status.textContent = next.hidden ? "All items loaded" : "";
+            next.textContent = "Load more items";
+        } catch (error) {
+            failed = true;
+            status.textContent = "Could not load more items. Tap to retry.";
+            next.textContent = "Retry";
+        } finally {
+            busy = false;
+            if (observer && !next.hidden && !failed) {
+                observer.unobserve(next);
+                observer.observe(next);
+            }
+        }
+    }
+    next.addEventListener("click", loadMore);
+    if ("IntersectionObserver" in window) {
+        observer = new IntersectionObserver(entries => {
+            if (!failed && entries.some(entry => entry.isIntersecting)) loadMore();
+        }, {rootMargin:"300px"});
+        observer.observe(next);
+    }
 })();
 </script>
 {% endblock %}
