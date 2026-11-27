@@ -738,7 +738,7 @@
         </div>
 
         <div class="collection-result-note">
-            Showing {{ collection_stats.displayed_records }} record{% if collection_stats.displayed_records != 1 %}s{% endif %}.
+            Showing {{ page_start }}–{{ page_end }} of {{ collection_stats.displayed_records }} records.
         </div>
     </form>
 
@@ -985,6 +985,18 @@
         Try changing your search or filters.
     </section>
 
+    {% endif %}
+
+    {% if total_pages > 1 %}
+    <nav aria-label="Collection pages" style="display:flex;justify-content:center;align-items:center;gap:1rem;margin:1.5rem 0;flex-wrap:wrap">
+        {% if page > 1 %}
+        <a class="collection-table-action" href="{{ url_for('coins', page=page-1, **page_args) }}">Previous</a>
+        {% endif %}
+        <span>Page {{ page }} of {{ total_pages }}</span>
+        {% if page < total_pages %}
+        <a class="collection-table-action" href="{{ url_for('coins', page=page+1, **page_args) }}">Next</a>
+        {% endif %}
+    </nav>
     {% endif %}
 
 </div>
