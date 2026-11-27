@@ -758,6 +758,7 @@
     <div id="collectionEarlier" style="text-align:center;margin:12px 0">
     {% if page > 1 %}<a id="collectionPrevious" class="collection-table-action" href="{{ url_for('coins', page=page-1, **page_args) }}">Load previous items</a>{% endif %}
     </div>
+    <template id="gridTemplate">
     <section id="collectionGrid" class="collection-grid">
         {% for kind, item in currency_entries %}
         {% if kind == "coin" %}
@@ -891,6 +892,8 @@
         {% endfor %}
     </section>
 
+    </template>
+    <template id="tableTemplate">
     <section id="collectionTable" hidden>
         <div class="collection-table-shell">
             <table class="collection-table">
@@ -992,6 +995,8 @@
         </div>
     </section>
 
+    </template>
+    <div id="collectionViewMount"></div>
     {% else %}
 
     <section class="collection-empty">
@@ -1012,178 +1017,64 @@
 
 <script>
 (function () {
-    const grid = document.getElementById("collectionGrid");
-    const table = document.getElementById("collectionTable");
-    const gridButton = document.getElementById("gridViewButton");
-    const tableButton = document.getElementById("tableViewButton");
-
-    if (!grid || !table || !gridButton || !tableButton) {
-        return;
-    }
-
-    function setView(view) {
-        const tableMode = view === "table";
-
-        grid.hidden = tableMode;
-        table.hidden = !tableMode;
-
-        gridButton.classList.toggle("active", !tableMode);
-        tableButton.classList.toggle("active", tableMode);
-
-        localStorage.setItem("coinCollectionView", tableMode ? "table" : "grid");
-    }
-
-    gridButton.addEventListener("click", function () {
-        setView("grid");
-    });
-
-    tableButton.addEventListener("click", function () {
-        setView("table");
-    });
-
-    const savedView = localStorage.getItem("coinCollectionView");
-
-    if (savedView === "table") {
-        setView("table");
-    } else {
-        setView("grid");
-    }
-
-    table.addEventListener("click", function(event) {
-        const row = event.target.closest("tr[data-href]");
-        if (row && !event.target.closest("a, button, input")) window.location.href = row.dataset.href;
-    });
-    const nav = document.getElementById("yearRail");
-    if (nav) {
-        const rail = document.getElementById("yearRail"), jump = document.getElementById("jumpYear");
-        document.body.appendChild(rail);
-        function goYear(low, high) {
-            const active = grid.hidden ? table : grid;
-            const target = Array.from(active.querySelectorAll("[data-year]")).find(e=>e.dataset.year!=="" && Number(e.dataset.year)>=low && Number(e.dataset.year)<=high);
-            if (target) { target.scrollIntoView({block:"center",behavior:"instant"}); return; }
-            const url = new URL(location.href);
-            url.searchParams.delete("page");
-            url.searchParams.set("jump_low",low);
-            url.searchParams.set("jump_high",high);
-            location.href=url.href;
-        }
-
-        const years = Array.from(jump.options).map(o => Number(o.value));
-        for (const [label, low, high] of [["2000",2000,9999],["1950",1950,1999],["1900",1900,1949],["1850",1850,1899],["1800",1800,1849],["1700",1700,1799],["1600",1600,1699],["Older",-99999,1599]]) {
-            const y = years.filter(v=>v>=low && v<=high).sort((a,b)=>a-b)[0];
-            if (y === undefined) continue;
-            const b = document.createElement("button"); b.type="button"; b.textContent=label; b.onclick=()=>goYear(low, high); rail.append(b);
-        }
-        function updateRail() {
-            const active = grid.hidden ? table : grid;
-            const rect = active.getBoundingClientRect();
-            const viewport = window.visualViewport;
-            const height = viewport ? viewport.height : window.innerHeight;
-            rail.style.top = ((viewport ? viewport.offsetTop : 0) + height / 2) + "px";
-            rail.style.visibility = rect.top < innerHeight * 0.65 && rect.bottom > innerHeight * 0.35 ? "visible" : "hidden";
-        }
-        window.addEventListener("scroll", updateRail, {passive:true});
-        window.addEventListener("resize", updateRail);
-        if (window.visualViewport) {
-            window.visualViewport.addEventListener("scroll", updateRail);
-            window.visualViewport.addEventListener("resize", updateRail);
-        }
-        gridButton.addEventListener("click",updateRail);
-        tableButton.addEventListener("click",updateRail);
+    const mount=document.getElementById("collectionViewMount");
+    if(!mount) return;
+    const gridButton=document.getElementById("gridViewButton"), tableButton=document.getElementById("tableViewButton");
+    let active, view;
+    function setView(mode) {
+        view=mode;
+        mount.replaceChildren(document.getElementById(mode==="table"?"tableTemplate":"gridTemplate").content.cloneNode(true));
+        active=mount.firstElementChild;
+        active.hidden=false;
+        gridButton.classList.toggle("active",mode==="grid");
+        tableButton.classList.toggle("active",mode==="table");
+        localStorage.setItem("coinCollectionView",mode);
         updateRail();
     }
-    const previous = document.getElementById("collectionPrevious");
-    let previousBusy=false;
-    async function loadPrevious(event) {
-        if(event) event.preventDefault();
-        if(!previous || previous.hidden || previousBusy) return;
-        previousBusy=true;
-        try {
-            const response=await fetch(previous.href,{credentials:"same-origin"});
-            if(!response.ok) throw Error("Request failed");
-            const doc=new DOMParser().parseFromString(await response.text(),"text/html");
-            const cards=doc.querySelectorAll("#collectionGrid > article");
-            const rows=doc.querySelectorAll("#collectionTable tbody > tr");
-            if(!cards.length || cards.length!==rows.length) throw Error("Invalid response");
-            const anchor=(grid.hidden?table.querySelector("tbody"):grid).firstElementChild;
-            const before=anchor.getBoundingClientRect().top;
-            grid.prepend(...cards); table.querySelector("tbody").prepend(...rows);
-            window.scrollBy(0,anchor.getBoundingClientRect().top-before);
-            const prior=doc.getElementById("collectionPrevious");
-            if(prior) previous.href=new URL(prior.getAttribute("href"),response.url).href;
-            else previous.hidden=true;
-            const count=document.getElementById("collectionCount");
-            if(count) count.textContent="Loaded "+grid.children.length+" of "+count.dataset.total+" records.";
-        } catch(e) {previous.textContent="Retry loading previous items";}
-        finally {previousBusy=false;}
+    const rail=document.getElementById("yearRail");
+    const periods=[["2000",2000,9999],["1950",1950,1999],["1900",1900,1949],["1850",1850,1899],["1800",1800,1849],["1700",1700,1799],["1600",1600,1699],["Older",-99999,1599]];
+    function entries(){return Array.from(active.querySelectorAll("[data-year]"));}
+    function updateRail(){
+        if(!rail || !active) return;
+        const rect=active.getBoundingClientRect();
+        const viewport=window.visualViewport;
+        const height=viewport?viewport.height:innerHeight;
+        rail.style.top=((viewport?viewport.offsetTop:0)+height/2)+"px";
+        rail.style.visibility=rect.top<height*.65 && rect.bottom>height*.35?"visible":"hidden";
+        const current=entries().find(e=>e.getBoundingClientRect().bottom>height*.25);
+        const y=current && current.dataset.year!==""?Number(current.dataset.year):NaN;
+        rail.querySelectorAll("button").forEach(b=>{
+            const selected=y>=Number(b.dataset.low)&&y<=Number(b.dataset.high);
+            b.style.background=selected?"#e6c477":"transparent";
+            b.style.color=selected?"#141919":"#e6c477";
+            b.style.borderRadius="6px";
+        });
     }
-    if(previous) {
-        previous.addEventListener("click",loadPrevious);
-        if("IntersectionObserver" in window) {
-            const priorObserver=new IntersectionObserver(entries=>{if(entries.some(e=>e.isIntersecting)) loadPrevious();},{rootMargin:"100px"});
-            priorObserver.observe(previous);
-        }
-    }
-    {% if jump_index is not none %}
-    requestAnimationFrame(()=>{
-        const entries=(grid.hidden?table:grid).querySelectorAll("[data-year]");
-        const target=entries[{{ jump_index - page_start + 1 }}];
-        if(target) target.scrollIntoView({block:"center",behavior:"instant"});
+    setView(localStorage.getItem("coinCollectionView")==="table"?"table":"grid");
+    gridButton.onclick=()=>setView("grid");
+    tableButton.onclick=()=>setView("table");
+    mount.addEventListener("click",event=>{
+        const row=event.target.closest("tr[data-href]");
+        if(row&&!event.target.closest("a,button,input")) location.href=row.dataset.href;
     });
-    {% endif %}
-    const next = document.getElementById("collectionNext");
-    const status = document.getElementById("collectionLoadStatus");
-    const count = document.getElementById("collectionCount");
-    let busy = false, failed = false, jumping = false;
-    let observer;
-    async function loadMore(event) {
-        if (event) event.preventDefault();
-        if (busy || !next || next.hidden) return;
-        busy = true;
-        failed = false;
-        status.textContent = "Loading more items…";
-        next.textContent = "Loading…";
-        try {
-            const response = await fetch(next.href, {credentials:"same-origin"});
-            if (!response.ok) throw new Error("Request failed");
-            const doc = new DOMParser().parseFromString(await response.text(), "text/html");
-            const cards = doc.querySelectorAll("#collectionGrid > article");
-            const rows = doc.querySelectorAll("#collectionTable tbody > tr");
-            if (!cards.length || cards.length !== rows.length) throw new Error("Invalid collection response");
-            const following = doc.getElementById("collectionNext");
-            grid.append(...cards);
-            table.querySelector("tbody").append(...rows);
-            if (count) count.textContent = "Showing " + grid.children.length + " of " + count.dataset.total + " records.";
-            if (following) {
-                const followingUrl = new URL(following.getAttribute("href"), response.url).href;
-                if (followingUrl === response.url) throw new Error("Pagination did not advance");
-                next.href = followingUrl;
-            }
-            else {
-                next.hidden = true;
-                if (observer) observer.disconnect();
-            }
-            status.textContent = next.hidden ? "All items loaded" : "";
-            next.textContent = "Load more items";
-        } catch (error) {
-            failed = true;
-            status.textContent = "Could not load more items. Tap to retry.";
-            next.textContent = "Retry";
-        } finally {
-            busy = false;
-            if (observer && !next.hidden && !failed && !jumping) {
-                observer.unobserve(next);
-                observer.observe(next);
-            }
+    if(rail){
+        document.body.appendChild(rail);
+        for(const [label,low,high] of periods){
+            if(!entries().some(e=>e.dataset.year!==""&&Number(e.dataset.year)>=low&&Number(e.dataset.year)<=high)) continue;
+            const b=document.createElement("button");
+            b.type="button";b.textContent=label;b.dataset.low=low;b.dataset.high=high;
+            b.onclick=()=>{
+                const target=entries().find(e=>e.dataset.year!==""&&Number(e.dataset.year)>=low&&Number(e.dataset.year)<=high);
+                if(target) target.scrollIntoView({block:"center",behavior:"instant"});
+                updateRail();
+            };
+            rail.append(b);
         }
-    }
-    if (!next) return;
-    next.addEventListener("click", loadMore);
-    if ("IntersectionObserver" in window) {
-        observer = new IntersectionObserver(entries => {
-            if (!jumping && !failed && entries.some(entry => entry.isIntersecting)) loadMore();
-        }, {rootMargin:"300px"});
-        observer.observe(next);
+        let pending=false;
+        window.addEventListener("scroll",()=>{if(!pending){pending=true;requestAnimationFrame(()=>{pending=false;updateRail();});}},{passive:true});
+        window.addEventListener("resize",updateRail);
+        if(window.visualViewport){visualViewport.addEventListener("resize",updateRail);visualViewport.addEventListener("scroll",updateRail);}
+        updateRail();
     }
 })();
 </script>
