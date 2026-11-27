@@ -1662,7 +1662,7 @@ def coins():
         for coin in complete_collection
     )
 
-    complete_banknotes = Banknote.query.all()
+    complete_banknotes = Banknote.query.options(selectinload(Banknote.photos)).all()
     countries = sorted(set(countries) | {n.country.strip() for n in complete_banknotes if n.country and n.country.strip()})
     years = sorted(set(years) | {n.year for n in complete_banknotes if n.year is not None}, reverse=True)
     all_banknotes = list(complete_banknotes)
