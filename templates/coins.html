@@ -943,7 +943,7 @@
                             {% endif %}
                         </td>
 
-                        <td class="collection-table-name">{{ coin.name }}</td>
+                        <td class="collection-table-name">{{ coin.name }}<span class="collection-mobile-meta"><strong>{{ coin.date_display }}</strong> · {{ coin.country or "—" }}</span></td>
                         <td>{{ coin.date_display }}</td>
                         <td>{{ coin.country or "—" }}</td>
                         <td>{{ coin.mint or "—" }}</td>
@@ -980,7 +980,7 @@
                     {% set note = item %}
                     <tr data-year="{{ item.year if item.year is not none else (item.date_start_year if item.date_start_year is not none else '') }}" data-href="{{ url_for('banknotes.detail_note',note_id=note.id) }}">
                         <td>{% if note.current_photos %}<img class="collection-table-photo banknote-rectangle-preview" src="{{ url_for('static',filename=note.current_photos[0].filename) }}" alt="" loading="lazy">{% else %}—{% endif %}</td>
-                        <td class="collection-table-name">{{ note.name }} <span class="badge bg-secondary">Banknote</span></td>
+                        <td class="collection-table-name">{{ note.name }} <span class="badge bg-secondary">Banknote</span><span class="collection-mobile-meta"><strong>{{ note.year or note.date_start_year or "—" }}</strong> · {{ note.country or "—" }}</span></td>
                         <td>{{ note.year or note.date_start_year or '—' }}</td>
                         <td>{{ note.country or '—' }}</td>
                         <td>—</td><td>—</td><td>—</td>
@@ -1015,6 +1015,24 @@
 
 </div>
 
+<style>
+.collection-mobile-meta {display:none}
+@media(max-width:600px) {
+    #collectionViewMount.has-year-rail #collectionTable {margin-right:48px}
+    #collectionTable .collection-table-shell {overflow:visible}
+    #collectionTable .collection-table {width:100%;min-width:0;table-layout:fixed}
+    #collectionTable thead {display:none}
+    #collectionTable tbody tr {display:grid;grid-template-columns:48px minmax(0,1fr);align-items:center;gap:9px;padding:9px 8px;border-bottom:1px solid #303638}
+    #collectionTable tbody td {display:none;border:0;padding:0;min-width:0;background:transparent!important}
+    #collectionTable tbody td:nth-child(1),#collectionTable tbody td:nth-child(2) {display:block}
+    #collectionTable .collection-table-photo {width:44px;height:44px;object-fit:contain}
+    #collectionTable .collection-table-name {font-size:14px;line-height:1.35;white-space:normal;overflow-wrap:anywhere}
+    #collectionTable .collection-mobile-meta {display:block;font-size:11px;font-weight:400;color:#aeb8bc;margin-top:4px}
+    .collection-mobile-meta strong {color:#e6c477;font-weight:600}
+    #yearRail {width:44px;box-sizing:border-box;right:3px;padding:3px;max-height:76dvh;background:#141919}
+    #yearRail button {font-size:10px;padding:3px 0;min-height:22px;width:100%}
+}
+</style>
 <script>
 (function () {
     const mount=document.getElementById("collectionViewMount");
@@ -1032,6 +1050,7 @@
         updateRail();
     }
     const rail=document.getElementById("yearRail");
+    mount.classList.toggle("has-year-rail",Boolean(rail));
     const basePeriods=[["2000",2000,9999],["1950",1950,1999],["1900",1900,1949],["1850",1850,1899],["1800",1800,1849],["1700",1700,1799],["1600",1600,1699],["Older",-99999,1599]];
     function entries(){return Array.from(active.querySelectorAll("[data-year]"));}
     function updateRail(){
@@ -1080,6 +1099,16 @@
             };
             rail.append(b);
         }
+        let dragStart=null, lastDrag=null;
+        rail.addEventListener("touchstart",e=>{dragStart=e.touches[0].clientY;lastDrag=null;},{passive:true});
+        rail.addEventListener("touchmove",e=>{
+            if(dragStart===null || Math.abs(e.touches[0].clientY-dragStart)<8) return;
+            // Preserve native sidebar scrolling when the index exceeds its height.
+            if(rail.scrollHeight>rail.clientHeight+2) return;
+            const t=e.touches[0], b=document.elementFromPoint(t.clientX,t.clientY)?.closest("#yearRail button");
+            if(b && b!==lastDrag){e.preventDefault();lastDrag=b;b.click();}
+        },{passive:false});
+        rail.addEventListener("touchend",()=>{dragStart=null;});
         let pending=false;
         window.addEventListener("scroll",()=>{if(!pending){pending=true;requestAnimationFrame(()=>{pending=false;updateRail();});}},{passive:true});
         window.addEventListener("resize",updateRail);
