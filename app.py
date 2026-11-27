@@ -2080,6 +2080,10 @@ ISSUER_EQUIVALENTS = {
 }
 
 
+from functools import lru_cache
+
+
+@lru_cache(maxsize=32768)
 def _issuer_matches_term(issuer, term):
     issuer_norm = _normalize_issuer(issuer)
     term_norm = _normalize_issuer(term)
@@ -2177,18 +2181,13 @@ def _coin_matches_requirement(coin, requirement):
     return True
 
 
-def _match_set_requirements(coin_set, all_coins=None):
+def _match_set_requirements(coin_set, all_coins=None, selections=None):
     if all_coins is None:
         all_coins = Coin.query.order_by(Coin.year.asc(), Coin.name.asc()).all()
 
-    SetSlotSelection.__table__.create(bind=db.engine, checkfirst=True)
-    overrides = {
-        row.slot_id: row
-        for row in SetSlotSelection.query.filter_by(
-            set_id=coin_set.id,
-            slot_type="requirement"
-        ).all()
-    }
+    if selections is None:
+        selections = SetSlotSelection.query.filter_by(set_id=coin_set.id, slot_type="requirement").all()
+    overrides = {row.slot_id: row for row in selections}
     coin_by_id = {coin.id: coin for coin in all_coins}
     used_ids = set()
     matches = []
@@ -2299,31 +2298,33 @@ def _ww2_coin_matches_slot(coin, slot):
         for term in _ww2_terms(slot.country_terms)
     )
 
-def _ww2_slot_matches(coin_set, all_coins=None):
+def _ww2_slot_matches(coin_set, all_coins=None, selections=None):
     if all_coins is None:
         all_coins = Coin.query.order_by(Coin.year.asc(), Coin.name.asc()).all()
 
-    SetSlotSelection.__table__.create(bind=db.engine, checkfirst=True)
-    overrides = {
-        row.slot_id: row
-        for row in SetSlotSelection.query.filter_by(
-            set_id=coin_set.id,
-            slot_type="ww2"
-        ).all()
-    }
+    if selections is None:
+        selections = SetSlotSelection.query.filter_by(set_id=coin_set.id, slot_type="ww2").all()
+    overrides = {row.slot_id: row for row in selections}
     coin_by_id = {coin.id: coin for coin in all_coins}
     used_ids = {
         row.coin_id for row in overrides.values()
         if row.coin_id in coin_by_id
     }
     matches = []
+    coins_by_year = {}
+    for coin in all_coins:
+        try:
+            year = int(str(coin.year).strip())
+        except (TypeError, ValueError):
+            continue
+        coins_by_year.setdefault(year, []).append(coin)
     slots = sorted(coin_set.ww2_slots, key=lambda s: (s.sort_order or 0, s.country_label.lower(), s.year))
     for slot in slots:
         selection = overrides.get(slot.id)
         match = coin_by_id.get(selection.coin_id) if selection else None
         manual = match is not None
         if match is None:
-            for coin in all_coins:
+            for coin in coins_by_year.get(slot.year, []):
                 if coin.id in used_ids:
                     continue
                 if _ww2_coin_matches_slot(coin, slot):
@@ -2354,20 +2355,23 @@ def sets():
     ).all()
 
     set_progress = {}
+    selections_by_set = {}
+    for row in SetSlotSelection.query.all():
+        selections_by_set.setdefault((row.set_id, row.slot_type), []).append(row)
 
     for coin_set in coin_sets:
         completed = 0
         total = 0
 
         if coin_set.ww2_slots:
-            matches = _ww2_slot_matches(coin_set, all_coins)
+            matches = _ww2_slot_matches(coin_set, all_coins, selections_by_set.get((coin_set.id, "ww2"), []))
             total = len(matches)
             completed = sum(
                 1 for item in matches
                 if item["coin"] is not None
             )
         elif coin_set.requirements:
-            matches = _match_set_requirements(coin_set, all_coins)
+            matches = _match_set_requirements(coin_set, all_coins, selections_by_set.get((coin_set.id, "requirement"), []))
             total = len(matches)
             completed = sum(
                 1 for item in matches
