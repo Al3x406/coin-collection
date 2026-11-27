@@ -746,8 +746,8 @@
     <style>
     #yearNavigator {position:sticky;top:env(safe-area-inset-top, 0px);z-index:20;background:#141919;border:1px solid #55503b;border-radius:10px;padding:8px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:10px 0;color:#e6c477}
     #yearNavigator select {max-width:130px;color:inherit;background:#202525;border:1px solid #55503b;border-radius:6px;padding:5px}
-    #yearRail {position:fixed;right:4px;top:50%;transform:translateY(-50%);z-index:21;background:#141919ee;border:1px solid #55503b;border-radius:12px;display:flex;flex-direction:column;padding:4px;gap:2px}
-    #yearRail button {background:transparent;color:#e6c477;border:0;font-size:11px;padding:5px 3px}
+    #yearRail {position:fixed;right:4px;top:50%;transform:translateY(-50%);z-index:21;background:#141919ee;border:1px solid #55503b;border-radius:12px;display:flex;flex-direction:column;padding:4px;gap:1px;max-height:70dvh;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:none}
+    #yearRail button {background:transparent;color:#e6c477;border:0;font-size:11px;padding:4px 5px;flex-shrink:0;min-height:24px;touch-action:manipulation}
     @media(max-width:600px){ #yearRail{right:1px} #collectionGrid,#collectionTable{margin-right:0}}
     </style>
     <div id="yearRail" aria-label="Jump to era"></div>
@@ -1032,7 +1032,7 @@
         updateRail();
     }
     const rail=document.getElementById("yearRail");
-    const periods=[["2000",2000,9999],["1950",1950,1999],["1900",1900,1949],["1850",1850,1899],["1800",1800,1849],["1700",1700,1799],["1600",1600,1699],["Older",-99999,1599]];
+    const basePeriods=[["2000",2000,9999],["1950",1950,1999],["1900",1900,1949],["1850",1850,1899],["1800",1800,1849],["1700",1700,1799],["1600",1600,1699],["Older",-99999,1599]];
     function entries(){return Array.from(active.querySelectorAll("[data-year]"));}
     function updateRail(){
         if(!rail || !active) return;
@@ -1041,7 +1041,7 @@
         const height=viewport?viewport.height:innerHeight;
         rail.style.top=((viewport?viewport.offsetTop:0)+height/2)+"px";
         rail.style.visibility=rect.top<height*.65 && rect.bottom>height*.35?"visible":"hidden";
-        const current=entries().find(e=>e.getBoundingClientRect().bottom>height*.25);
+        const current=entries().find(e=>e.getBoundingClientRect().bottom>(viewport?viewport.offsetTop:0)+100);
         const y=current && current.dataset.year!==""?Number(current.dataset.year):NaN;
         rail.querySelectorAll("button").forEach(b=>{
             const selected=y>=Number(b.dataset.low)&&y<=Number(b.dataset.high);
@@ -1059,13 +1059,27 @@
     });
     if(rail){
         document.body.appendChild(rail);
+        const dated=entries().filter(e=>e.dataset.year!=="").map(e=>Number(e.dataset.year));
+        const periods=[];
+        for(const [label,low,high] of basePeriods){
+            const matching=dated.filter(y=>y>=low&&y<=high);
+            if(!matching.length) continue;
+            if(low>=1800 && matching.length>=30){
+                const decades=[...new Set(matching.map(y=>Math.floor(y/10)*10))].sort((a,b)=>b-a);
+                for(const d of decades) periods.push([String(d),d,d+9]);
+            } else periods.push([label,low,high]);
+        }
+        periods.sort((a,b)=>{{ order|tojson }}==="asc"?a[1]-b[1]:b[1]-a[1]);
         for(const [label,low,high] of periods){
             if(!entries().some(e=>e.dataset.year!==""&&Number(e.dataset.year)>=low&&Number(e.dataset.year)<=high)) continue;
             const b=document.createElement("button");
             b.type="button";b.textContent=label;b.dataset.low=low;b.dataset.high=high;
             b.onclick=()=>{
                 const target=entries().find(e=>e.dataset.year!==""&&Number(e.dataset.year)>=low&&Number(e.dataset.year)<=high);
-                if(target) target.scrollIntoView({block:"center",behavior:"instant"});
+                if(target) {
+                    const offset=(window.visualViewport?window.visualViewport.offsetTop:0)+100;
+                    window.scrollBy({top:target.getBoundingClientRect().top-offset,behavior:"instant"});
+                }
                 updateRail();
             };
             rail.append(b);
