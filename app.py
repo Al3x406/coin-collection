@@ -927,12 +927,7 @@ def home():
         for coin in all_coins
     )
 
-    all_artifacts_home = Artifact.query.all()
-
-    artifact_estimated_value = sum(
-        artifact.estimated_value or 0
-        for artifact in all_artifacts_home
-    )
+    artifact_estimated_value = db.session.query(db.func.sum(Artifact.estimated_value)).scalar() or 0
 
     estimated_value = (
         coin_estimated_value
@@ -996,20 +991,24 @@ def home():
         ),
     )
 
+    selections_by_set = {}
+    for row in SetSlotSelection.query.all():
+        selections_by_set.setdefault((row.set_id, row.slot_type), []).append(row)
+
     for coin_set in coin_sets:
         key = None
 
         if hasattr(coin_set, "ww2_slots") and coin_set.ww2_slots:
             key = "ww2"
-            matches = _ww2_slot_matches(coin_set, matching_coins)
+            matches = _ww2_slot_matches(coin_set, matching_coins, selections_by_set.get((coin_set.id, "ww2"), []))
 
         elif coin_set.name.startswith("A Coin From Every Year"):
             key = "timeline"
-            matches = _match_set_requirements(coin_set, matching_coins)
+            matches = _match_set_requirements(coin_set, matching_coins, selections_by_set.get((coin_set.id, "requirement"), []))
 
         elif coin_set.name.startswith("Around the World"):
             key = "world"
-            matches = _match_set_requirements(coin_set, matching_coins)
+            matches = _match_set_requirements(coin_set, matching_coins, selections_by_set.get((coin_set.id, "requirement"), []))
 
         else:
             continue
@@ -2206,13 +2205,24 @@ def _match_set_requirements(coin_set, all_coins=None, selections=None):
         if row.coin_id in coin_by_id:
             used_ids.add(row.coin_id)
 
+    coins_by_year = {}
+    for coin in all_coins:
+        try:
+            year = int(str(coin.year).strip())
+        except (TypeError, ValueError):
+            continue
+        coins_by_year.setdefault(year, []).append(coin)
+
     for requirement in requirements:
         selection = overrides.get(requirement.id)
         match = coin_by_id.get(selection.coin_id) if selection else None
         manual = match is not None
 
         if match is None:
-            for coin in all_coins:
+            candidates = all_coins
+            if requirement.year_start is not None and requirement.year_start == requirement.year_end:
+                candidates = coins_by_year.get(requirement.year_start, [])
+            for coin in candidates:
                 if coin.id in used_ids:
                     continue
                 if _coin_matches_requirement(coin, requirement):
